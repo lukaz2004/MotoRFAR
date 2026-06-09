@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Base.Theme.KV4PHT" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/jost</item>
+        <item name="fontFamily">@font/jost</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+
+        <!-- Colores Material3 correctamente asignados -->
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/accent_veryfaint</item>
+        <item name="colorOnPrimaryContainer">@color/primary</item>
+
+        <item name="colorSecondary">@color/primary</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/primary</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/primary_deselected</item>
+
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorOnBackground">@color/primary</item>
+
+        <item name="colorOutline">@color/primary_deselected</item>
+
+        <!-- Menú popup grande para pantalla táctil -->
+        <item name="android:popupMenuStyle">@style/Custom.PopupMenu</item>
+    </style>
+
+    <style name="Theme.BottomNavigationView.ActiveIndicator"
+        parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/accent_veryfaint</item>
+    </style>
+
+    <style name="Custom.PopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/primary</item>
+    </style>
+
+    <style name="Theme.KV4PHT" parent="Base.Theme.KV4PHT" />
+</resources>

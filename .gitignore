@@ -1,0 +1,43 @@
+# Build outputs
+**/build/
+**/.gradle/
+**/local.properties
+**/gradle/wrapper/gradle-wrapper.jar
+**/*.iml
+**/.idea/
+**/captures/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs / temp
+*.log
+*.tmp
+*.bak
+
+# Build artifacts
+*.apk
+*.aab
+*.dex
+
+# Secrets
+**/secrets.properties
+**/keystore.properties
+**/*.keystore
+**/*.jks
+**/google-services.json
+**/.env
+**/.env.local
+
+# Node (por si se agrega algo)
+node_modules/
+
+# Python (scripts auxiliares)
+__pycache__/
+*.pyc
+.venv/
+venv/

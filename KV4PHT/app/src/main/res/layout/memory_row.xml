@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="3dp">
+
+    <LinearLayout
+        android:id="@+id/memoryContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/memory_channel_bg"
+        android:padding="7dp">
+
+        <!-- Oculto — se mantiene para compatibilidad con el código Java -->
+        <View
+            android:id="@+id/memoryMenu"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/memoryName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="@color/primary_deselected"
+            android:fontFamily="@font/jost"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:lineSpacingMultiplier="1.1"/>
+
+        <TextView
+            android:id="@+id/memoryFrequency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary"
+            android:fontFamily="@font/jost"/>
+
+    </LinearLayout>
+
+</LinearLayout>

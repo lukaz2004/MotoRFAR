@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.AddEditMemoryActivity"
+    android:background="@drawable/bg"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/addEditToolbarTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_memory_display"
+            android:textSize="32sp"
+            app:fontWeight="500"
+            android:textColor="@color/primary"
+            android:layout_marginBottom="16dp"
+            android:layout_gravity="center"
+            android:layout_weight="0"/>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:orientation="vertical"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Nombre -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:hint="@string/memory_name_display"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected"
+                    android:paddingBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editNameTextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textSize="20dp"
+                        android:textColor="@color/primary"
+                        android:inputType="text"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Grupo -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:layout_marginTop="8dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:hint="@string/memory_group_optional_display"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected"
+                    android:paddingBottom="16dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/editMemoryGroupTextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textSize="20dp"
+                        android:textColor="@color/primary"
+                        android:inputType="text"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Selector de frecuencia con botones -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Frecuencia habilitada (ENACOM Argentina)"
+                        android:textSize="13sp"
+                        android:textColor="@color/primary_deselected"
+                        android:layout_marginBottom="10dp"/>
+
+                    <!-- Campo oculto que guarda la frecuencia seleccionada -->
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editFrequencyTextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:visibility="gone"
+                        android:inputType="numberDecimal"/>
+
+                    <!-- Frecuencia seleccionada actualmente (display) -->
+                    <TextView
+                        android:id="@+id/selectedFrequencyDisplay"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="— Sin seleccionar —"
+                        android:textSize="22sp"
+                        android:textColor="@color/primary"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- Botones VHF (visibles con módulo VHF) -->
+                    <LinearLayout
+                        android:id="@+id/vhfFrequencyButtons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="VHF — Uso libre sin licencia"
+                            android:textSize="12sp"
+                            android:textColor="@color/primary_deselected"
+                            android:layout_marginBottom="6dp"/>
+
+                        <Button
+                            android:id="@+id/freqVhf1"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="138.510 MHz  —  Canal secundario"
+                            android:textSize="16sp"
+                            android:textAllCaps="false"
+                            android:tag="138.5100"/>
+
+                        <Button
+                            android:id="@+id/freqVhf2"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="139.970 MHz  —  Canal prioritario"
+                            android:textSize="16sp"
+                            android:textAllCaps="false"
+                            android:tag="139.9700"/>
+
+                        <Button
+                            android:id="@+id/freqVhf3"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="140.970 MHz  —  Solo emergencias"
+                            android:textSize="16sp"
+                            android:textAllCaps="false"
+                            android:tag="140.9700"/>
+
+                    </LinearLayout>
+
+                    <!-- Botones UHF PMR446 (visibles con módulo UHF) -->
+                    <LinearLayout
+                        android:id="@+id/uhfFrequencyButtons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="UHF PMR446 — 16 canales de uso libre"
+                            android:textSize="12sp"
+                            android:textColor="@color/primary_deselected"
+                            android:layout_marginBottom="6dp"/>
+
+                        <!-- Fila 1: canales 1-4 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+                            <Button android:id="@+id/freqUhf1"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 1\n446.006" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0063"/>
+                            <Button android:id="@+id/freqUhf2"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 2\n446.019" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0188"/>
+                            <Button android:id="@+id/freqUhf3"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 3\n446.031" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0313"/>
+                            <Button android:id="@+id/freqUhf4"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="CH 4\n446.044" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0438"/>
+                        </LinearLayout>
+
+                        <!-- Fila 2: canales 5-8 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+                            <Button android:id="@+id/freqUhf5"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 5\n446.056" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0563"/>
+                            <Button android:id="@+id/freqUhf6"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 6\n446.069" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0688"/>
+                            <Button android:id="@+id/freqUhf7"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 7\n446.081" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0813"/>
+                            <Button android:id="@+id/freqUhf8"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="CH 8\n446.094" android:textSize="12sp" android:textAllCaps="false" android:tag="446.0938"/>
+                        </LinearLayout>
+
+                        <!-- Fila 3: canales 9-12 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+                            <Button android:id="@+id/freqUhf9"  android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 9\n446.106" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1063"/>
+                            <Button android:id="@+id/freqUhf10" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 10\n446.119" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1188"/>
+                            <Button android:id="@+id/freqUhf11" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 11\n446.131" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1313"/>
+                            <Button android:id="@+id/freqUhf12" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="CH 12\n446.144" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1438"/>
+                        </LinearLayout>
+
+                        <!-- Fila 4: canales 13-16 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginBottom="8dp">
+                            <Button android:id="@+id/freqUhf13" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 13\n446.156" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1563"/>
+                            <Button android:id="@+id/freqUhf14" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 14\n446.169" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1688"/>
+                            <Button android:id="@+id/freqUhf15" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:layout_marginEnd="4dp" android:text="CH 15\n446.181" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1813"/>
+                            <Button android:id="@+id/freqUhf16" android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1" android:text="CH 16\n446.194" android:textSize="12sp" android:textAllCaps="false" android:tag="446.1938"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- Offset -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:layout_marginTop="8dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:hint="@string/offset_direction_display"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected"
+                    android:paddingBottom="16dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/editOffsetTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:inputType="none"
+                        android:text="@string/none_display1"
+                        android:textSize="20dp"
+                        android:textColor="@color/primary"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Tono TX -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:layout_marginTop="8dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:hint="@string/tone_tx_display"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected"
+                    android:paddingBottom="16dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/editToneTxTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:inputType="none"
+                        android:text="@string/none_display2"
+                        android:textSize="20dp"
+                        android:textColor="@color/primary"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Botón opciones avanzadas -->
+                <Button
+                    android:id="@+id/advancedMemoryOptionsButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="56dp"
+                    android:layout_weight="0"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:text="@string/show_advanced_options_display"
+                    android:textSize="20dp"
+                    android:textFontWeight="500"
+                    android:textColor="@color/primary"
+                    android:textAllCaps="false"
+                    android:enabled="true"
+                    android:onClick="advancedMemoryOptionsButtonClicked"/>
+
+                <!-- Tono RX (avanzado) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/editToneRxTextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:layout_marginTop="8dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:hint="@string/tone_rx_display"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected"
+                    android:paddingBottom="16dp"
+                    android:visibility="gone">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/editToneRxTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:inputType="none"
+                        android:text="@string/none_display"
+                        android:textSize="20dp"
+                        android:textColor="@color/primary"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Offset personalizado (avanzado) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/customOffsetTextInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:layout_marginTop="8dp"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:hint="@string/custom_offset_khz_display"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected"
+                    android:paddingBottom="16dp"
+                    android:visibility="gone">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/customOffsetTextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textSize="20dp"
+                        android:inputType="numberDecimal"
+                        android:textColor="@color/primary"
+                        android:text="600"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Skip during scan (avanzado) -->
+                <Switch
+                    android:id="@+id/skipDuringScanSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/skip_during_scan_display"
+                    android:textSize="18dp"
+                    android:textColor="@color/primary"
+                    android:layout_marginTop="8dp"
+                    android:trackTintMode="add"
+                    android:visibility="gone"/>
+
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- Botones Cancelar / Guardar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="0">
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:background="@color/primary"
+            android:gravity="center_vertical"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="right"
+            android:layout_weight="0"
+            android:layout_alignParentBottom="true">
+
+            <Button
+                android:id="@+id/cancelButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_weight="0"
+                android:background="?android:attr/selectableItemBackground"
+                android:text="@string/cancel_display"
+                android:textSize="20dp"
+                android:textFontWeight="500"
+                android:textColor="@color/primary"
+                android:textAllCaps="false"
+                android:enabled="true"
+                android:onClick="cancelButtonClicked"/>
+
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="56dp"
+                android:layout_weight="0"
+                android:layout_marginBottom="16dp"
+                android:text="@string/save_display"
+                android:textSize="20dp"
+                android:textFontWeight="500"
+                android:textColor="@color/black"
+                android:textAllCaps="false"
+                android:enabled="true"
+                android:onClick="saveButtonClicked"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

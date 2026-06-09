@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta base -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="medium_gray">#FF353533</color>
+
+    <!-- Modo claro: texto oscuro sobre fondo claro -->
+    <color name="primary">#FF0D1B2A</color>
+    <color name="primary_deselected">#FF5C6E82</color>
+    <color name="primary_veryfaint">#1A0D1B2A</color>
+
+    <!-- Acento: naranja ámbar -->
+    <color name="accent">#FFE07B39</color>
+    <color name="accent_veryfaint">#33E07B39</color>
+
+    <!-- Fondo general -->
+    <color name="background">#FFF0EFE9</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface_variant">#FFE4E3DC</color>
+
+    <!-- Botones de canal (grilla) -->
+    <color name="channel_bg">#FFFFFFFF</color>
+    <color name="channel_border">#FFDDDDDD</color>
+
+    <!-- Botones de frecuencia -->
+    <color name="freq_button_selected_bg">#FFE07B39</color>
+    <color name="freq_button_selected_text">#FFFFFFFF</color>
+    <color name="freq_button_unselected_bg">#FFE4E3DC</color>
+    <color name="freq_button_unselected_text">#FF0D1B2A</color>
+
+    <!-- PTT -->
+    <color name="ptt_active">#FFCC3333</color>
+    <color name="ptt_inactive">#FF2E7D32</color>
+
+    <!-- Estado radio -->
+    <color name="status_ok">#FF2E7D32</color>
+    <color name="status_error">#FFCC3333</color>
+    <color name="status_warning">#FFE07B39</color>
+
+    <!-- Material overrides -->
+    <color name="band">#FF0D1B2A</color>
+    <color name="clear">#00FFFFFF</color>
+    <color name="mtrl_textinput_default_box_stroke_color">#FF5C6E82</color>
+    <color name="light_blue_400">#FF29B6F6</color>
+    <color name="light_blue_600">#FF039BE5</color>
+    <color name="gray_400">#FFBDBDBD</color>
+    <color name="gray_600">#FF757575</color>
+</resources>
+

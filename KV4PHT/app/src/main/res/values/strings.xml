@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MotoRFAR</string>
+
+    <!-- Navegación -->
+    <string name="next">Siguiente</string>
+    <string name="previous">Anterior</string>
+    <string name="first_fragment_label">Primera sección</string>
+    <string name="second_fragment_label">Segunda sección</string>
+
+    <!-- Pantalla principal -->
+    <string name="voice_display">Voz</string>
+    <string name="aprs_chat_display">Chat APRS</string>
+    <string name="push_to_talk_display">Pulsar para transmitir</string>
+    <string name="scan">ESCANEAR</string>
+    <string name="stop_scan">DETENER ESCANEO</string>
+    <string name="simplex">Símplex</string>
+    <string name="squelch">Silenciador</string>
+    <string name="filters">Filtros</string>
+    <string name="highpass">Paso alto</string>
+    <string name="lowpass">Paso bajo</string>
+    <string name="pre_amp_de_emphasis"><![CDATA[Pre- & De-énfasis]]></string>
+    <string name="bandwidth">Ancho de banda</string>
+    <string name="rf_power">Potencia</string>
+    <string-array name="rf_power_options">
+        <item>Alta</item>
+        <item>Baja</item>
+    </string-array>
+
+    <!-- Memorias / Canales -->
+    <string name="memory_name_display">Nombre del canal</string>
+    <string name="memory_group_optional_display">Grupo (opcional)</string>
+    <string name="frequency_display">Frecuencia</string>
+    <string name="offset_direction_display">Dirección del offset</string>
+    <string name="tone_tx_display">Tono (TX)</string>
+    <string name="tone_rx_display">Tono (RX)</string>
+    <string name="add_memory_display">Agregar canal</string>
+    <string name="add_memory_display1">Agregar canal</string>
+    <string name="edit_memory">Editar canal</string>
+    <string name="show_advanced_options_display">Mostrar opciones avanzadas</string>
+    <string name="custom_offset_khz_display">Offset personalizado (kHz)</string>
+    <string name="skip_during_scan_display">Omitir durante el escaneo</string>
+    <string name="all_memories_display1">TODOS LOS CANALES ▼</string>
+    <string name="all_memories">Todos los canales</string>
+    <string name="memory_menu">Menú de canal</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Eliminar</string>
+
+    <!-- Opciones comunes -->
+    <string name="none_display">Ninguno</string>
+    <string name="none_display1">Ninguno</string>
+    <string name="none_display2">Ninguno</string>
+    <string name="cancel_display">Cancelar</string>
+    <string name="cancel_display1">Cancelar</string>
+    <string name="save_display">Guardar</string>
+    <string name="done">Listo</string>
+    <string name="download_display">Descargar</string>
+    <string name="set_now">Configurar ahora</string>
+
+    <!-- Firmware -->
+    <string name="firmware_update_display">Actualización de firmware</string>
+    <string name="connecting_to_bootloader_display">Conectando al bootloader...</string>
+    <string name="firmware_update_01">Foto de la parte inferior del PCB mostrando el botón Reset a la izquierda y el botón Boot a la derecha.</string>
+    <string name="firmware_update_02">Mantené el dispositivo conectado al teléfono y presioná estos botones:\n\n1. Mantené presionado "Boot"\n2. Presioná y soltá "Reset"\n3. Soltá "Boot"\n4. Esperá unos 30 segundos para que conecte</string>
+    <string name="firmware_update_03">Mantené la pantalla encendida, esta app abierta y no desconectes el dispositivo hasta que termine el proceso.\n\nGeneralmente tarda unos 30 segundos.</string>
+    <string name="successfully_updated_firmware">Firmware actualizado correctamente</string>
+    <string name="no_firmware_installed">Sin firmware instalado</string>
+    <string name="new_firmware_available">Nueva versión de firmware disponible</string>
+    <string name="flash_firmware_menu_item">Actualizar firmware</string>
+    <string name="flash_firmware_title">¿Actualizar firmware?</string>
+    <string name="flash_firmware_message">Esto reemplazará el firmware del dispositivo.</string>
+    <string name="flash_firmware_button">Actualizar</string>
+    <string name="firmware_version">Versión de firmware</string>
+
+    <!-- Estado del radio -->
+    <string name="radio_not_found">Dispositivo no encontrado, ¿está conectado?</string>
+    <string name="handshake_message">Buscando dispositivo...</string>
+    <string name="module_not_found_message">El módulo de radio no responde, revisá las soldaduras del PCB</string>
+    <string name="can_t_tx_outside_ham_band">No se puede transmitir en esa frecuencia</string>
+    <string name="radio">Radio</string>
+
+    <!-- APRS -->
+    <string name="send_aprs_position_beacond_display">Enviar baliza de posición APRS</string>
+    <string name="beacon_my_position">Balizarme en APRS</string>
+    <string name="beacon_to_frequency">Balizar en frecuencia</string>
+    <string name="beaconing_aprs_on">Balizando APRS en %1$s...</string>
+    <string name="set_your_callsign_to_beacon_your_position">Configurá tu indicativo para balizar tu posición</string>
+    <string name="set_your_callsign_to_send_text_chat">Configurá tu indicativo para enviar mensajes</string>
+    <string name="position_beacon_message_1">"Balizando tu posición "</string>
+    <string name="position_beacon_message_2">" en la frecuencia activa"</string>
+    <string name="current">Actual</string>
+    <string name="my_position_accuracy">Precisión de mi posición</string>
+    <string name="exact">Exacta</string>
+    <string name="approx">Aproximada</string>
+    <string name="write_up_to_67_chars">Escribí tu mensaje...</string>
+    <string name="callsign_or_cq">Indicativo o CQ</string>
+    <string name="send_message_display">Enviar mensaje</string>
+    <string name="to_display">Para:</string>
+    <string name="nearby_repeaters_found">Repetidoras cercanas encontradas:&#160;</string>
+    <string name="save_repeaters_group_instructions">¿En qué grupo de canales querés guardar estas repetidoras?</string>
+    <string name="find_repeaters_menu_item">Buscar repetidoras cercanas</string>
+    <string name="find_repeaters_title">Repetidoras cercanas</string>
+    <string name="find_repeaters_instructions">Iniciá sesión en RepeaterBook o creá una cuenta si no tenés. Las repetidoras cercanas se descargarán automáticamente. Si no, tocá "Descargar".</string>
+
+    <!-- Configuración -->
+    <string name="settings_display">Ajustes</string>
+    <string name="settings">Ajustes</string>
+    <string name="more_display">Más</string>
+    <string name="accessibility">Accesibilidad</string>
+    <string name="closed_captions">Subtítulos automáticos</string>
+    <string name="system_setting">Ajuste del sistema</string>
+    <string name="disable_animations">Desactivar animaciones</string>
+    <string name="your_callsign">Tu indicativo</string>
+    <string name="advanced">Avanzado</string>
+    <string name="versions">Versiones</string>
+    <string name="app_version">Versión de la app</string>
+    <string name="mic_gain_boost">Ganancia del micrófono</string>
+    <string name="min_2m_tx_frequency">Frec. TX mínima 2m</string>
+    <string name="max_2m_tx_frequency">Frec. TX máxima 2m</string>
+    <string name="min_70cm_tx_frequency">Frec. TX mínima 70cm</string>
+    <string name="max_70cm_tx_frequency">Frec. TX máxima 70cm</string>
+    <string name="sticky_ptt" translatable="false">PTT fijo</string>
+
+    <!-- Créditos -->
+    <string name="credits_title">Créditos</string>
+    <string name="credits_body">MotoRFAR está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (KV4P).\n\nLicencia: GNU GPL v3\nFuente original: github.com/VanceVagell/kv4p-ht\n\nModificaciones para Argentina por el autor de esta versión.</string>
+
+    <!-- No traducir -->
+    <string name="welcome_to_display">Bienvenido a</string>
+    <string name="visualization_of_current_receive_audio_volume_display" translatable="false">Visualización del volumen de recepción</string>
+    <string name="visualization_of_current_transmit_audio_volume" translatable="false">Visualización del volumen de transmisión</string>
+    <string name="kv4p_ht" translatable="false">MotoRFAR</string>
+    <string name="vhf" translatable="false">VHF</string>
+    <string name="uhf" translatable="false">UHF</string>
+    <string name="aprs" translatable="false">APRS</string>
+    <string name="cq" translatable="false">CQ</string>
+    <string name="to" translatable="false">a&#160;</string>
+    <string name="kv4p_aprs_message" translatable="false">KV4P</string>
+    <string name="message_body_example">El veloz murciélago hindú comía feliz cardillo y kiwi.</string>
+    <string name="wide" translatable="false">25kHz</string>
+    <string name="narrow" translatable="false">12.5kHz</string>
+    <string name="mhz">MHz</string>
+
+    <!-- Frecuencias APRS -->
+    <string name="freq_144_3900" translatable="false">144.3900</string>
+    <string name="freq_144_5750" translatable="false">144.5750</string>
+    <string name="freq_144_6400" translatable="false">144.6400</string>
+    <string name="freq_144_6600" translatable="false">144.6600</string>
+    <string name="freq_144_8000" translatable="false">144.8000</string>
+    <string name="freq_145_1750" translatable="false">145.1750</string>
+    <string name="freq_145_8250" translatable="false">145.8250</string>
+</resources>

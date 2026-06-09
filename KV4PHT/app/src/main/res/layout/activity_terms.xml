@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg"
+    android:fitsSystemWindows="true">
+
+    <!-- Encabezado -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="36dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MotoRFAR"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary"
+            android:fontFamily="@font/jost"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Comunicación de grupo para motociclistas"
+            android:textSize="13sp"
+            android:textColor="@color/primary_deselected"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/jost"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Términos de Uso — Versión 1.0"
+            android:textSize="11sp"
+            android:textColor="@color/accent"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/jost"/>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:background="@color/primary_deselected"
+        android:alpha="0.3"/>
+
+    <!-- Contenido scrolleable -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Introducción -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/jost"
+                android:textColor="@color/primary_deselected"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.5"
+                android:layout_marginBottom="16dp"
+                android:text="Antes de usar MotoRFAR leé atentamente estos términos. Al tildar la casilla y presionar Aceptar confirmás que los leíste, los comprendiste y acordás cumplirlos en su totalidad."/>
+
+            <!-- 1 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Naturaleza de la aplicación" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="MotoRFAR es una herramienta de comunicación por radio de frecuencia libre diseñada para uso entre grupos de motociclistas. No es un servicio de emergencias oficial, no reemplaza al sistema de emergencias del Estado, y no garantiza cobertura, disponibilidad ni recepción de mensajes en ninguna circunstancia.\n\nPara emergencias reales que requieran intervención de servicios de salud, seguridad o rescate, llamá al 911 o al organismo de emergencias correspondiente a tu ubicación."/>
+
+            <!-- 2 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. Marco legal y uso del espectro" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="El uso del espectro radioeléctrico en la República Argentina está regulado por el ENACOM bajo la Ley Nacional de Telecomunicaciones N° 19.798 y sus normas complementarias.\n\nMotoRFAR opera exclusivamente en frecuencias de uso libre habilitadas por el ENACOM, que no requieren licencia para su utilización. Cualquier modificación a las frecuencias configuradas en la aplicación que resulte en la transmisión en bandas no autorizadas es responsabilidad exclusiva del usuario.\n\nPara operar en bandas de radioaficionados (fuera del alcance de esta versión) se requiere licencia ASOC emitida por el ENACOM. El usuario que cuente con dicha habilitación asume plena responsabilidad por su uso."/>
+
+            <!-- 3 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. Condiciones de uso" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="El usuario se compromete a:\n\n• Usar la aplicación exclusivamente para fines lícitos y dentro del marco legal vigente.\n\n• No transmitir contenido ofensivo, discriminatorio, amenazante o ilegal por ninguna de las funciones de la app.\n\n• No interferir intencionalmente con comunicaciones de terceros.\n\n• No operar el dispositivo de manera que comprometa su propia seguridad vial o la de otros. El uso de la app mientras se conduce debe realizarse con el dispositivo montado de forma segura y sin distraer la atención del manejo.\n\n• Mantener el dispositivo y la placa PCB en condiciones adecuadas para evitar interferencias no deseadas.\n\n• Informar a los demás miembros del grupo sobre el alcance y las limitaciones de la herramienta."/>
+
+            <!-- 4 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4. Uso responsable de las alertas" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="Las funciones de alerta grupal (Emergencia, Detención y Reagrupamiento) son herramientas de coordinación entre miembros de un mismo grupo. Su uso implica la transmisión de la posición GPS del usuario junto con un mensaje de texto por la frecuencia activa.\n\nEl usuario se compromete expresamente a:\n\n• Usar las alertas únicamente cuando correspondan a la situación real que se describe.\n\n• No enviar alertas falsas, de prueba en entornos reales, ni con fines de broma o manipulación.\n\n• Comprender que cualquier persona dentro del alcance de radio puede recibir las alertas.\n\nEl envío de alertas falsas puede constituir una infracción a la Ley N° 19.798 y derivar en sanciones administrativas o penales para el usuario. El desarrollador de MotoRFAR no asume responsabilidad alguna por el contenido de las transmisiones realizadas."/>
+
+            <!-- 5 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="5. Limitaciones y exención de responsabilidad" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="MotoRFAR se provee tal como está (as-is), sin garantías de ningún tipo, expresas o implícitas, incluyendo pero no limitado a:\n\n• Garantía de funcionamiento continuo o libre de errores.\n• Garantía de alcance, cobertura o recepción de mensajes.\n• Garantía de idoneidad para un propósito particular.\n\nEl desarrollador de MotoRFAR no será responsable bajo ninguna circunstancia por daños directos, indirectos, incidentales, especiales o consecuentes que surjan del uso o la imposibilidad de uso de la aplicación, incluyendo pero no limitado a: accidentes de tránsito, lesiones personales, daños materiales, pérdidas económicas, o consecuencias legales derivadas del uso indebido de las funciones de comunicación o alerta.\n\nEl usuario acepta usar la aplicación bajo su exclusiva responsabilidad."/>
+
+            <!-- 6 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="6. Privacidad y datos" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="MotoRFAR no recopila, almacena ni transmite datos personales a servidores externos. Toda la información (canales, configuración, historial de mensajes APRS) se almacena exclusivamente en el dispositivo del usuario.\n\nLa posición GPS del usuario se transmite por radio únicamente cuando el usuario activa explícitamente una función que la requiere (baliza APRS o alertas de grupo). Esta transmisión es audible y visible para cualquier receptor dentro del alcance de la frecuencia activa."/>
+
+            <!-- 7 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="7. Código abierto y créditos" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
+                android:text="MotoRFAR está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (indicativo KV4P), distribuido bajo licencia GNU General Public License v3 (GPL-3.0).\n\nFuente original: github.com/VanceVagell/kv4p-ht\n\nEsta versión modificada mantiene la misma licencia GPL-3.0, los avisos de copyright originales en el código fuente, y los créditos al proyecto y su autor."/>
+
+            <!-- 8 -->
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="8. Modificaciones a estos términos" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="24dp"
+                android:text="El desarrollador se reserva el derecho de actualizar estos términos en futuras versiones de la aplicación. Ante una actualización de versión mayor, se solicitará al usuario que acepte los nuevos términos antes de continuar usando la app."/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:background="@color/primary_deselected"
+        android:alpha="0.3"/>
+
+    <!-- Checkbox y botones -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <CheckBox
+            android:id="@+id/termsCheckBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Leí y acepto los términos de uso. Entiendo que soy el único responsable del uso que hago de esta aplicación y de las transmisiones que realizo."
+            android:textColor="@color/primary"
+            android:textSize="13sp"
+            android:fontFamily="@font/jost"
+            android:lineSpacingMultiplier="1.4"
+            android:layout_marginBottom="16dp"
+            android:buttonTint="@color/accent"/>
+
+        <Button
+            android:id="@+id/termsAcceptButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Acepto — Ingresar a MotoRFAR"
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:textAllCaps="false"
+            android:fontFamily="@font/jost"
+            android:backgroundTint="@color/accent"
+            android:layout_marginBottom="8dp"
+            android:enabled="false"/>
+
+        <Button
+            android:id="@+id/termsRejectButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:text="No acepto — Cerrar la app"
+            android:textSize="13sp"
+            android:textColor="@color/primary_deselected"
+            android:textAllCaps="false"
+            android:fontFamily="@font/jost"
+            android:background="@android:color/transparent"/>
+
+    </LinearLayout>
+
+</LinearLayout>
