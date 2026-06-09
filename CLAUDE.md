@@ -60,8 +60,12 @@ Si alguno falta, recomendar instalación pero no bloquear el trabajo.
 
 ## Próxima acción al abrir el proyecto
 
-Si es la primera sesión post-setup, ejecutar:
+El plan del sprint actual ya está escrito y auditado en `docs/SPRINT-1.md` — **no hacer brainstorming de cosas ya decididas** (los ADRs de `docs/03-DECISIONES.md` cubren las decisiones de fondo). Ir directo a ejecución:
 
 ```
-/brainstorm Auditar el estado actual del código KV4PHT, identificar archivos que requieren modificación para implementar la migración a 3 canales VHF según docs/04-ROADMAP.md sprint 1, y generar plan de ejecución.
+Leé docs/SPRINT-1.md. Es el design doc con la auditoría de código incluida.
+Usá /write-plan tomando SPRINT-1.md como input y ejecutá por fases en orden (A → B → C → D),
+con TDD: test primero, código después. Commit atómico al cerrar cada fase.
 ```
+
+Usar `/brainstorm` únicamente si aparece una decisión NO cubierta por los ADRs existentes.
