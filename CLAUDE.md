@@ -35,6 +35,16 @@ Es un fork especializado de [kv4p HT](https://github.com/VanceVagell/kv4p-ht) (d
 | `docs/04-ROADMAP.md` | v1.0 / v1.1 / v2.0 con features explícitas |
 | `docs/05-DISEÑO.md` | Sistema visual: paleta ámbar/verde, tipografía, mockup |
 | `docs/06-HARDWARE.md` | Especificación de PCB, SA818-V, antena, PTT externo |
+| `docs/SESSION-LOG.md` | Bitácora cronológica de lo que se hizo en cada sesión de Claude Code |
+
+## Ritual de cierre de sesión
+
+Al final de cada sesión de Claude Code, antes de cerrar:
+
+1. Actualizar `docs/SESSION-LOG.md` con una entrada nueva: fecha, qué se hizo, decisiones tomadas, qué quedó pendiente, trampas/descubrimientos. Conciso (15-20 líneas máximo).
+2. Si se introdujeron decisiones de arquitectura nuevas, escribir el ADR correspondiente en `docs/03-DECISIONES.md`.
+3. `git add . && git commit -m "session: <descripción corta>"`.
+4. Esto reemplaza a sistemas tipo claude-mem para nuestro caso: control total, cero dependencias.
 
 ## Stack de tooling esperado (instalado a nivel usuario)
 
