@@ -1,43 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Base.Theme.KV4PHT" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- =====================================================
+         MotoRFAR — Theme CRT Ámbar Militar
+         Basado en Material3 forzado a modo oscuro permanente
+         ===================================================== -->
+
+    <style name="Base.Theme.KV4PHT" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:fontFamily">@font/jost</item>
         <item name="fontFamily">@font/jost</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
 
-        <!-- Colores Material3 correctamente asignados -->
+        <!-- Fondo de la ventana — negro CRT -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:windowBackground">@color/background</item>
+
+        <!-- Colores primarios — ámbar sobre negro -->
         <item name="colorPrimary">@color/accent</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorPrimaryContainer">@color/accent_veryfaint</item>
+        <item name="colorOnPrimary">@color/crt_black</item>
+        <item name="colorPrimaryContainer">@color/border_faint</item>
         <item name="colorOnPrimaryContainer">@color/primary</item>
 
-        <item name="colorSecondary">@color/primary</item>
-        <item name="colorOnSecondary">@color/white</item>
+        <!-- Secundario — ámbar medio -->
+        <item name="colorSecondary">@color/primary_deselected</item>
+        <item name="colorOnSecondary">@color/crt_black</item>
+        <item name="colorSecondaryContainer">@color/surface_variant</item>
+        <item name="colorOnSecondaryContainer">@color/primary</item>
 
+        <!-- Superficie — capas oscuras con tinte ámbar -->
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/primary</item>
         <item name="colorSurfaceVariant">@color/surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/primary_deselected</item>
+        <item name="colorSurfaceContainer">@color/surface_variant</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_elevated</item>
 
+        <!-- Fondo general -->
         <item name="android:colorBackground">@color/background</item>
         <item name="colorOnBackground">@color/primary</item>
 
-        <item name="colorOutline">@color/primary_deselected</item>
+        <!-- Outline / bordes -->
+        <item name="colorOutline">@color/border_subtle</item>
+        <item name="colorOutlineVariant">@color/border_faint</item>
 
-        <!-- Menú popup grande para pantalla táctil -->
+        <!-- Error / Emergencia -->
+        <item name="colorError">@color/status_error</item>
+        <item name="colorOnError">@color/white</item>
+
+        <!-- Íconos y texto de barra de sistema -->
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+
+        <!-- Menú popup grande para pantalla táctil con guantes -->
         <item name="android:popupMenuStyle">@style/Custom.PopupMenu</item>
+
+        <!-- Input fields -->
+        <item name="android:editTextStyle">@style/CRT.EditText</item>
     </style>
 
+    <!-- Tema principal de la app -->
+    <style name="Theme.KV4PHT" parent="Base.Theme.KV4PHT" />
+
+    <!-- BottomNav indicador activo -->
     <style name="Theme.BottomNavigationView.ActiveIndicator"
         parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/accent_veryfaint</item>
     </style>
 
+    <!-- Popup menu táctil grande -->
     <style name="Custom.PopupMenu" parent="Widget.AppCompat.PopupMenu">
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">@color/primary</item>
+        <item name="android:background">@color/surface_variant</item>
     </style>
 
-    <style name="Theme.KV4PHT" parent="Base.Theme.KV4PHT" />
+    <!-- EditText con estilo CRT -->
+    <style name="CRT.EditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textColorHint">@color/text_dim</item>
+        <item name="android:background">@color/surface</item>
+    </style>
+
+    <!-- Diálogos — fondo oscuro -->
+    <style name="CRT.Dialog" parent="ThemeOverlay.Material3.Dialog">
+        <item name="android:background">@color/surface</item>
+        <item name="colorSurface">@color/surface_variant</item>
+        <item name="colorOnSurface">@color/primary</item>
+        <item name="colorPrimary">@color/accent</item>
+    </style>
 </resources>
