@@ -69,27 +69,66 @@ GitHub: https://github.com/lukaz2004/MotoRFAR
 
 ---
 
-## Para la próxima sesión — PRIORIDAD VISUAL
+## 2026-06-10 · Sesión 3 — Plan Sprint 4 (write-plan)
+
+**Lo que se hizo:**
+- Lectura de CLAUDE.md, SESSION-LOG.md, docs/04-ROADMAP.md, docs/05-DISEÑO.md, 03-DECISIONES.md
+- Auditoría de build.gradle: detectado que Kotlin plugin NO estaba en el proyecto (solo kotlin-bom como impl dep), Compose no habilitado, kotlin 1.8.22 incompatible con Compose Compiler 1.5.x
+- Auditoría de activity_main.xml (463 líneas) → mapeados todos los componentes XML a equivalentes Compose
+- Escrito docs/SPRINT-4.md con plan completo de 3 fases (A: infra, B: binding service, C: OSMDroid)
+- Escrito ADR-008 en docs/03-DECISIONES.md: documenta la decisión de migrar a Compose y por qué
+
+**Decisiones tomadas:**
+- Kotlin 1.9.22 + Compose Compiler 1.5.10 + Compose BOM 2024.02.02 (tabla oficial de compatibilidad)
+- MainActivity.java → MainActivityLegacy.java (referencia), MainActivity.kt es el nuevo entry point
+- MemoriesAdapter.java reemplazado por ChannelRow composable (3 canales no necesitan RecyclerView)
+- Colors CRT como parámetros de función (Brush.radialGradient, Canvas) — no herencia de tema
+- OSMDroid via AndroidView wrapper dentro de MapScreen composable
+
+**Qué queda pendiente:**
+- EJECUCIÓN completa del plan (Fases A → B → C en Claude Code)
+- Crear branch sprint/4-compose-ui
+- A0: smoke test 59 tests antes de tocar nada
+- A1: rename MainActivity.java → MainActivityLegacy.java
+
+---
+
+## Para la próxima sesión — Sprint 4 (Compose migration)
 
 Arrancar Claude Code en MotoRFAR-MTTT con este prompt:
 
 ```
-Leé CLAUDE.md, docs/SESSION-LOG.md y docs/05-DISEÑO.md.
+Leé CLAUDE.md, docs/SESSION-LOG.md y docs/SPRINT-4.md.
 
-El objetivo de esta sesión es cerrar la brecha visual entre la app y el mockup.
-El mockup objetivo es la imagen verde táctico en docs/assets/motorfar_preview.png
-(o recrearlo desde docs/05-DISEÑO.md si no está).
+El plan de Sprint 4 ya está escrito y auditado. Ir directo a ejecución:
 
-Los problemas pendientes son:
-1. S-meter puede mostrar color ámbar — MainActivity.updateSMeter() + showModuleTxState()
-   deben usar #4FBD3B hardcodeado, no referencias a R.color que pueden ser overrideadas
-2. Canal PRINCIPAL necesita borde verde visible cuando está activo —
-   verificar que MemoriesAdapter.setHighlighted(true) se llama correctamente al inicio
-3. Canal EMERGENCIA necesita borde rojo siempre — verificar primer bind del adapter
-4. El texto de frecuencia grande en el header (MotoRFAR/139.970) necesita ser más
-   dramático cuando no hay hardware — posible estado placeholder con 139.970 fijo
+1. Crear branch sprint/4-compose-ui
+2. Ejecutar Fase A → B → C en orden, con TDD
+3. Commit atómico al cerrar cada fase
 
-Usar /write-plan con estos 4 puntos como input. TDD: test visual → fix → verificar en emulador.
+No hacer brainstorming — las decisiones están en ADR-008 (docs/03-DECISIONES.md).
+La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan antes de tocar nada.
 ```
+
+---
+
+## 2026-06-10 · Sesión 4 — Sprint 4 ejecutado (Compose UI completo)
+
+**Lo que se hizo:**
+
+- A0: confirmados 59 tests pre-existentes antes de tocar nada
+- Branch `sprint/4-compose-ui` creado
+- A1: `git mv MainActivity.java → MainActivityLegacy.java`, manifest y refs actualizadas
+- A2: Gradle — Kotlin 2.2.0 + Compose Compiler bundled + Compose BOM 2024.02.02 + OSMDroid 6.1.18
+- A3-A7: theme CRT (Color.kt, Type.kt, AppTheme.kt, MotoRFARTheme.kt), estado (MainUiState, MainUiAction), 5 componentes Compose, MainScreen.kt
+- Fase A: 16 tests nuevos, commit `feat(A)`
+- Fase B: MainActivity.kt Kotlin — ServiceConnection con RadioBinder, MutableStateFlow, callbacks, handleAction, alert flow con GPS permission — commit `feat(B)`
+- Fase C: MapScreen.kt (OSMDroid via AndroidView), GroupMember.kt, NavHost + NavigationBar — commit `feat(C)`
+
+**Tests al cierre:** 75/75 PASS (unit). `assembleDebug` SUCCESSFUL.
+
+**Decisiones nuevas:** ADR-009 (Kotlin 2.2.0 bundled Compose Compiler), ADR-010 (RadioServiceAccessor bridge Kotlin↔Lombok).
+
+**Pendiente:** push + PR, tests instrumented en dispositivo, GroupMember conectado a GPS real (Sprint 5).
 
 ---

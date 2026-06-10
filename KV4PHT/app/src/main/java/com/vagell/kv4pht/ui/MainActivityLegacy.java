@@ -108,7 +108,9 @@ import static android.view.View.VISIBLE;
 import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 import static com.vagell.kv4pht.radio.RadioAudioService.INTENT_OPEN_CHAT;
 
-public class MainActivity extends AppCompatActivity {
+/** @deprecated Replaced by MainActivity.kt (Compose). Remove in Sprint 5. */
+@Deprecated
+public class MainActivityLegacy extends AppCompatActivity {
     // For transmitting audio to ESP32 / radio
     private AudioRecord audioRecord;
     private boolean isRecording = false;
@@ -300,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         checkTermsAccepted();
     }
 
-    final MainActivity context = this;
+    final MainActivityLegacy context = this;
 
     /** Defines callbacks for service binding, passed to bindService(). */
     private ServiceConnection connection = new ServiceConnection() {
@@ -337,7 +339,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         showBand(BandType.BAND_UNKNOWN);
                     }
-                    runOnUiThread(MainActivity.this::updateMemoryBandFilter);
+                    runOnUiThread(MainActivityLegacy.this::updateMemoryBandFilter);
                 }
 
                 @Override
@@ -466,8 +468,8 @@ public class MainActivity extends AppCompatActivity {
                  * for example while firmware is transmitting an APRS packet.
                  */
                 private void showModuleTxState(boolean txActive) {
-                    int bandColor = ContextCompat.getColor(MainActivity.this, txActive ? R.color.accent : R.color.band);
-                    int sMeterColor = ContextCompat.getColor(MainActivity.this, txActive ? R.color.accent : R.color.primary);
+                    int bandColor = ContextCompat.getColor(MainActivityLegacy.this, txActive ? R.color.accent : R.color.band);
+                    int sMeterColor = ContextCompat.getColor(MainActivityLegacy.this, txActive ? R.color.accent : R.color.primary);
 
                     TextView activeBand = findViewById(R.id.activeBand);
                     activeBand.setTextColor(bandColor);
@@ -1936,7 +1938,7 @@ public class MainActivity extends AppCompatActivity {
         Context themedContext = new ContextThemeWrapper(this, R.style.Custom_PopupMenu);
         PopupMenu moreMenu = new PopupMenu(themedContext, view);
         moreMenu.inflate(R.menu.more_menu);
-        MainActivity activity = this;
+        MainActivityLegacy activity = this;
         moreMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -1985,7 +1987,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         // If they tap the notification when doing something else, come back to this app
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, MainActivityLegacy.class);
         intent.setAction(tapIntentName);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);

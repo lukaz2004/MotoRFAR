@@ -93,7 +93,7 @@ public class AddEditMemoryActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            isAdd = (extras.getInt("requestCode") == MainActivity.REQUEST_ADD_MEMORY);
+            isAdd = (extras.getInt("requestCode") == MainActivityLegacy.REQUEST_ADD_MEMORY);
             isVhfRadio = extras.getBoolean("isVhfRadio");
 
             if (!isAdd) {

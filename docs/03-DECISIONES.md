@@ -181,3 +181,106 @@ Ver `docs/06-HARDWARE.md` para detalle. SA818-V por banda. ESP32-S3 por USB-C. P
 - Target user es argentino primario
 - Codigo en ingles abre puerta a colaboracion futura, alineado a kv4p HT upstream
 - Sincretismo es estandar de industria
+
+---
+
+## ADR-008 — Migración de UI a Jetpack Compose
+
+**Fecha:** 2026-06-10
+**Estado:** ACEPTADA
+
+### Contexto
+
+Los Sprints 2 y 3 revelaron un problema estructural: Material3 sobreescribía los colores hardcodeados en nuestros custom drawables XML. Múltiples sesiones intentaron fijarlo con workarounds (setBackgroundColor() programático, AppCompatButton, hardcodeo de #4FBD3B en lugar de @color/...) sin éxito sostenible. La causa raíz es que el sistema de temas XML de Android tiene múltiples capas de override y Material3 gana en el nivel más específico. No es un bug: es el diseño del sistema.
+
+### Decisión
+
+Migrar la capa de UI (activity_main.xml y layouts hijos) a Jetpack Compose. Las capas de negocio y protocolo de radio (RadioAudioService, Protocol, TxWhitelist, ArgentinaChannels) no se tocan.
+
+En Compose los colores son parámetros de función, no herencia de tema. Un Canvas.drawCircle(color = Color(0xFF4FBD3B)) siempre dibuja ese verde. El problema del override desaparece por construcción.
+
+### Arquitectura de la migración
+
+- MainActivity.java → renombrar a MainActivityLegacy.java (referencia de binding)
+- MainActivity.kt → nuevo entry point, extiende ComponentActivity
+- MainViewModel.java → no se toca; se observa con observeAsState() desde Kotlin
+- MemoriesAdapter.java → reemplazado por ChannelRow composable (3 canales, RecyclerView es overhead innecesario)
+- AndroidManifest.xml → apunta al nuevo MainActivity.kt
+
+### Versiones adoptadas
+
+- Kotlin 1.9.22
+- Compose Compiler 1.5.10
+- Compose BOM 2024.02.02
+- AGP 8.13.2 (sin cambio)
+
+Compatibilidad verificada contra tabla oficial Kotlin a Compose Compiler.
+
+### Consecuencias
+
+**Positivas:**
+- Colores CRT garantizados; ningun theme del sistema puede sobreescribir un Brush.radialGradient de Canvas
+- Efectos imposibles en XML (scan lines, glow de fosforo, LED pulsante) se vuelven triviales
+- Elimina toda la logica workaround de los Sprints 2-3
+- Preview en Android Studio sin correr dispositivo
+- MainUiState hace explicito todo lo que la UI necesita saber
+
+**Negativas / riesgos:**
+- Requiere Kotlin en el proyecto (hasta ahora solo Java) — posibles conflictos Gradle
+- Tiempo de compilacion incrementa ~30s con Compose symbol processing
+- OSMDroid en Compose requiere AndroidView (wrapper de View clasica); no es nativo pero es la unica opcion
+
+**No cambia:**
+- Protocol.java, RadioAudioService.java, TxWhitelist.java, ArgentinaChannels.java — intocables
+
+---
+
+## ADR-009 — Kotlin 2.2.0 con Compose Compiler bundled (descarte de 1.9.22)
+
+**Fecha:** 2026-06-10
+**Estado:** ACEPTADA
+**Supera:** ADR-008 (versiones adoptadas)
+
+### Contexto
+
+ADR-008 documentó Kotlin 1.9.22 + Compose Compiler 1.5.10. Al ejecutar Sprint 4, `navigation-compose:2.7.7` y `lifecycle-viewmodel-compose:2.7.0` traen transitivamente `kotlin-stdlib:2.0.21`, que Gradle resuelve a 2.2.0. El compilador 1.9.x no puede leer metadata de stdlib 2.x → error "incompatible version of Kotlin. actual metadata version is 2.2.0, but the compiler version 1.9.0 can read versions up to 2.0.0."
+
+### Decision
+
+Upgradar Kotlin plugin a 2.2.0 y usar `org.jetbrains.kotlin.plugin.compose:2.2.0`. En Kotlin 2.0+ el Compose Compiler está bundled: se elimina el bloque `composeOptions { kotlinCompilerExtensionVersion }` del build.gradle.
+
+### Consecuencias
+
+**Positivas:**
+- Elimina el conflicto de stdlib de raíz
+- No hay tabla de compatibilidad Kotlin↔ComposeCompiler que mantener
+- Kotlin 2.x tiene mejor inferencia de tipos para Compose lambdas
+
+**Negativas:**
+- Si en el futuro se agrega kapt para otra biblioteca, puede haber tensión con el modo K2 del compilador Kotlin 2.x
+
+---
+
+## ADR-010 — RadioServiceAccessor.java como bridge Kotlin↔Lombok
+
+**Fecha:** 2026-06-10
+**Estado:** ACEPTADA
+
+### Contexto
+
+`MainViewModel.java` y `RadioAudioService.java` usan Lombok (`@Getter`, `@Setter`, `@Builder`). Los métodos generados por Lombok son invisibles al compilador Kotlin cuando Lombok corre como `annotationProcessor` (no kapt). Intentar `kapt 'org.projectlombok:lombok'` + `compileOnly` rompe la compilación Java de otras clases que consumen Lombok (`Protocol.java`, `RadioAudioService.java`).
+
+### Decision
+
+Mantener Lombok con `implementation + annotationProcessor` (sin kapt). Crear `RadioServiceAccessor.java` — clase Java final con métodos estáticos que delegan a los métodos Lombok-generados. Kotlin llama a `RadioServiceAccessor` en lugar de llamar directamente a los getters/setters.
+
+### Consecuencias
+
+**Positivas:**
+- Ningún cambio a las clases intocables (RadioAudioService.java, MainViewModel.java)
+- La compilación Java y Kotlin coexisten sin conflicto
+- Patrón estándar y reversible
+
+**Negativas:**
+- Un archivo de indirección extra por cada clase Java+Lombok que Kotlin necesite consumir
+- Si se migran las clases Java a Kotlin en el futuro, RadioServiceAccessor queda obsoleto (borrar)
