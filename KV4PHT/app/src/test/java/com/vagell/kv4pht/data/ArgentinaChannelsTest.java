@@ -63,6 +63,6 @@ public class ArgentinaChannelsTest {
     @Test
     public void preloadVersion_isV3MtttVhf() {
         // Bumping this value forces existing installs to re-seed channels.
-        assertEquals("v3_mttt_vhf", ArgentinaChannels.PRELOADED_VALUE);
+        assertEquals("v4_principal_vhf", ArgentinaChannels.PRELOADED_VALUE);
     }
 }

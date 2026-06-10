@@ -15,7 +15,7 @@ import java.util.List;
 public class ArgentinaChannels {
 
     public static final String PRELOADED_KEY   = "argentina_channels_preloaded";
-    public static final String PRELOADED_VALUE = "v3_mttt_vhf";
+    public static final String PRELOADED_VALUE = "v4_principal_vhf";
 
     public static List<ChannelMemory> getAll() {
         return Arrays.asList(
