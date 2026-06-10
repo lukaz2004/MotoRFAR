@@ -133,6 +133,9 @@ class MainActivity : ComponentActivity() {
             _uiState.update { it.copy(isTxActive = false) }
         }
         override fun moduleTxStateChanged(txActive: Boolean) {
+            if (!txActive) {
+                ToneHelper.playStaticBurst(alertVolume / 100f)
+            }
             _uiState.update { it.copy(isTxActive = txActive) }
         }
         override fun tunedToFreq(frequencyStr: String) {
@@ -314,13 +317,14 @@ class MainActivity : ComponentActivity() {
 
     // ── Action handler ────────────────────────────────────────────────
     private fun handleAction(action: MainUiAction) {
+        val vol = alertVolume / 100f
         when (action) {
-            MainUiAction.PttPressed    -> radioService?.startPtt()
-            MainUiAction.PttReleased   -> radioService?.endPtt()
+            MainUiAction.PttPressed    -> { ToneHelper.playPttDown(vol); radioService?.startPtt() }
+            MainUiAction.PttReleased   -> { ToneHelper.playPttUp(vol);   radioService?.endPtt() }
             is MainUiAction.ChannelSelected -> tuneToChannel(action.freq)
-            MainUiAction.EmergencyAlert -> showEmergencyDialog = true
-            MainUiAction.StopAlert     -> showAlertDialog(AlertHelper.AlertType.STOP)
-            MainUiAction.RegroupAlert  -> showAlertDialog(AlertHelper.AlertType.REGROUP)
+            MainUiAction.EmergencyAlert -> { ToneHelper.playEmergencyBeep(vol); showEmergencyDialog = true }
+            MainUiAction.StopAlert     -> { ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.STOP) }
+            MainUiAction.RegroupAlert  -> { ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP) }
         }
     }
 
