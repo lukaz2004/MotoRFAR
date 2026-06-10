@@ -62,7 +62,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- ── PANEL DE FRECUENCIA ACTIVA (sin barra superior) ── -->
+            <!-- ── PANEL DE FRECUENCIA ACTIVA ── -->
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/frequencyContainer"
                 android:layout_width="match_parent"
@@ -89,7 +89,7 @@
                     android:letterSpacing="0.1"
                     android:maxLines="1"/>
 
-                <!-- Frecuencia en grande — ámbar brillante, monospace -->
+                <!-- Frecuencia en grande -->
                 <EditText
                     android:id="@+id/activeFrequency"
                     android:layout_width="match_parent"
@@ -192,7 +192,6 @@
                     android:paddingEnd="8dp"
                     android:onClick="groupSelectorClicked" />
 
-                <!-- 3 puntos — menú principal -->
                 <ImageButton
                     android:id="@+id/moreButton"
                     android:layout_width="40dp"
@@ -222,7 +221,7 @@
                 android:paddingEnd="8dp"
                 android:clipToPadding="false"/>
 
-            <!-- ── BOTONES DE ALERTA ── -->
+            <!-- ── CONTROLES VOZ: alertas + PTT ── -->
             <LinearLayout
                 android:id="@+id/voiceModeBottomControls"
                 android:layout_width="match_parent"
@@ -233,7 +232,6 @@
                 android:paddingTop="8dp"
                 android:paddingBottom="4dp">
 
-                <!-- scanButton oculto — se mantiene en código Java -->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/scanButton"
                     android:layout_width="0dp"
@@ -241,26 +239,12 @@
                     android:visibility="gone"
                     android:onClick="scanClicked" />
 
-                <!-- EMERGENCIA -->
-                <Button
-                    android:id="@+id/emergencyAlertButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-                    android:layout_marginBottom="6dp"
-                    android:text="⚠  EMERGENCIA  —  Solicitar asistencia"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="#FFFFFF"
-                    android:textAllCaps="false"
-                    android:fontFamily="@font/jost"
-                    android:backgroundTint="#CC3333"
-                    android:onClick="emergencyAlertClicked"
-                    android:elevation="2dp"/>
-
+                <!-- Fila: DETENCIÓN + REAGRUPAR -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dp">
 
                     <Button
                         android:id="@+id/stopAlertButton"
@@ -293,6 +277,41 @@
                         android:backgroundTint="#2E7D32"
                         android:onClick="regroupAlertClicked"
                         android:elevation="2dp"/>
+
+                </LinearLayout>
+
+                <!-- EMERGENCIA -->
+                <Button
+                    android:id="@+id/emergencyAlertButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginBottom="10dp"
+                    android:text="⚠  EMERGENCIA  —  Solicitar asistencia"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:textAllCaps="false"
+                    android:fontFamily="@font/jost"
+                    android:backgroundTint="#CC3333"
+                    android:onClick="emergencyAlertClicked"
+                    android:elevation="2dp"/>
+
+                <!-- PTT centrado debajo de alertas -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingBottom="8dp">
+
+                    <ImageButton
+                        android:id="@+id/pttButton"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:background="@drawable/ptt_button"
+                        android:elevation="8dp"
+                        android:contentDescription="@string/push_to_talk_display"
+                        android:clickable="false" />
 
                 </LinearLayout>
 
@@ -427,18 +446,6 @@
                 app:itemIconTint="@color/bottom_nav_icon"
                 app:itemActiveIndicatorStyle="@style/Theme.BottomNavigationView.ActiveIndicator"
                 android:background="@color/surface_variant"/>
-
-            <!-- ── BOTÓN PTT ── -->
-            <ImageButton
-                android:id="@+id/pttButton"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                android:background="@drawable/ptt_button"
-                android:layout_gravity="center"
-                android:layout_marginTop="-168dp"
-                android:elevation="8dp"
-                android:contentDescription="@string/push_to_talk_display"
-                android:clickable="false" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
     </FrameLayout>
