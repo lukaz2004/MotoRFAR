@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Borde exterior verde brillante -->
     <item>
         <shape>
-            <gradient android:type="linear" android:angle="270"
-                android:startColor="#0c1a0c" android:endColor="#060e06"/>
-            <stroke android:width="1dp" android:color="@color/channel_border_active"/>
+            <solid android:color="#4FBD3B"/>
             <corners android:radius="8dp"/>
+        </shape>
+    </item>
+    <!-- Relleno interior con gradiente oscuro -->
+    <item android:top="1.5dp" android:left="1.5dp" android:right="1.5dp" android:bottom="1.5dp">
+        <shape>
+            <gradient android:type="linear" android:angle="270"
+                android:startColor="#1a3a1a"
+                android:endColor="#0a1a0a"/>
+            <corners android:radius="7dp"/>
         </shape>
     </item>
 </layer-list>

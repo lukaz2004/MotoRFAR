@@ -83,10 +83,10 @@
                     android:fontFamily="@font/share_tech_mono"
                     android:gravity="center"
                     android:text="@string/welcome_to_display"
-                    android:textColor="@color/text_ghost"
-                    android:textSize="10sp"
+                    android:textColor="@color/text_dim"
+                    android:textSize="9sp"
                     android:textAllCaps="true"
-                    android:letterSpacing="0.15"
+                    android:letterSpacing="0.2"
                     android:maxLines="1"/>
 
                 <!-- Frecuencia en grande — Share Tech Mono, verde brillante -->
@@ -97,7 +97,7 @@
                     android:fontFamily="@font/share_tech_mono"
                     android:gravity="center"
                     android:textColor="@color/primary"
-                    android:textSize="52sp"
+                    android:textSize="56sp"
                     android:textStyle="bold"
                     android:text="@string/kv4p_ht"
                     android:background="@color/clear"
@@ -105,7 +105,21 @@
                     android:maxLines="1"
                     android:singleLine="true"
                     android:inputType="numberDecimal"
-                    android:layout_marginTop="-4dp"/>
+                    android:layout_marginTop="-6dp"/>
+
+                <!-- Modo — MHz · FM -->
+                <TextView
+                    android:id="@+id/freqModeLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/share_tech_mono"
+                    android:gravity="center"
+                    android:text="MHz · FM · SIMPLEX"
+                    android:textColor="@color/text_ghost"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.15"
+                    android:layout_marginTop="-4dp"
+                    android:layout_marginBottom="4dp"/>
 
                 <!-- Fila: banda + S-meter -->
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -214,8 +228,8 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/memoriesList"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
                 android:orientation="vertical"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
