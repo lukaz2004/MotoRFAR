@@ -7,4 +7,7 @@ data class GroupMember(
     val distanceM: Int,
     val bearing: Float,
     val lastSeenMs: Long
-)
+) {
+    fun isStale(nowMs: Long, thresholdMs: Long = 5 * 60 * 1000L): Boolean =
+        (nowMs - lastSeenMs) > thresholdMs
+}

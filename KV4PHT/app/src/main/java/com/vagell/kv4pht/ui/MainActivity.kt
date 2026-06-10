@@ -48,6 +48,14 @@ import com.vagell.kv4pht.ui.compose.theme.AppTheme
 import com.vagell.kv4pht.ui.compose.theme.EmergencyText
 import com.vagell.kv4pht.ui.compose.theme.LocalMotoRFARColors
 import com.vagell.kv4pht.ui.compose.theme.MotoRFARTheme
+import com.vagell.kv4pht.ui.compose.GpsBeaconManager
+import com.vagell.kv4pht.aprs.parser.APRSPacket
+import com.vagell.kv4pht.aprs.parser.APRSTypes
+import com.vagell.kv4pht.aprs.parser.PositionField
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -69,8 +77,18 @@ class MainActivity : ComponentActivity() {
     private var beaconIntervalSec: Int = 60
     private var alertVolume: Int = 70
 
+    private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
+
     private var showEmergencyDialog by mutableStateOf(false)
     private var pendingAlertType: AlertHelper.AlertType? = null
+
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val beaconManager by lazy {
+        GpsBeaconManager(
+            onSendBeacon = { radioService?.sendPositionBeacon() },
+            intervalMs   = beaconIntervalSec * 1000L
+        )
+    }
 
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -121,6 +139,20 @@ class MainActivity : ComponentActivity() {
             _uiState.update { it.copy(activeFrequency = frequencyStr) }
             activeFrequencyStr = frequencyStr
         }
+        override fun packetReceived(aprsPacket: APRSPacket) {
+            val infoField = RadioServiceAccessor.getAprsPayload(aprsPacket) ?: return
+            val posField  = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField ?: return
+            val alias = RadioServiceAccessor.getAprsSourceCall(aprsPacket)?.trim() ?: return
+            val member = GroupMember(
+                alias      = alias,
+                lat        = posField.position.latitude,
+                lon        = posField.position.longitude,
+                distanceM  = 0,
+                bearing    = 0f,
+                lastSeenMs = System.currentTimeMillis()
+            )
+            _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+        }
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────
@@ -134,6 +166,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val state by uiState.collectAsState()
+            val groupMembers by _groupMembers.collectAsState()
             MotoRFARTheme(AppTheme.GREEN) {
                 val colors = LocalMotoRFARColors.current
                 val navController = rememberNavController()
@@ -174,7 +207,7 @@ class MainActivity : ComponentActivity() {
                             MainScreen(state = state, onAction = ::handleAction)
                         }
                         composable("map") {
-                            MapScreen(groupMembers = emptyList())
+                            MapScreen(groupMembers = groupMembers)
                         }
                         composable("settings") {
                             AliasSettingScreen(
@@ -211,10 +244,12 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         startAndBindService()
+        beaconManager.start(serviceScope)
     }
 
     override fun onStop() {
         super.onStop()
+        beaconManager.stop()
         if (radioServiceBound) {
             unbindService(serviceConnection)
             radioServiceBound = false
@@ -223,13 +258,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceScope.cancel()
         executor.shutdownNow()
     }
 
     // ── Service binding ───────────────────────────────────────────────
     private fun startAndBindService() {
+        val effectiveCallsign = userAlias.ifBlank { callsign }
         val intent = Intent(this, RadioAudioService::class.java)
-            .putExtra(AppSetting.SETTING_CALLSIGN, callsign)
+            .putExtra(AppSetting.SETTING_CALLSIGN, effectiveCallsign)
             .putExtra("activeMemoryId", activeMemoryId)
             .putExtra("activeFrequencyStr", activeFrequencyStr)
         startForegroundService(intent)
