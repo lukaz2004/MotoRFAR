@@ -37,7 +37,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Términos de Uso — Versión 1.0"
+            android:text="Términos de Uso — Versión 2.0"
             android:textSize="11sp"
             android:textColor="@color/accent"
             android:layout_marginTop="6dp"
@@ -88,7 +88,7 @@
             <!-- 2 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. Marco legal y uso del espectro" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="El uso del espectro radioeléctrico en la República Argentina está regulado por el ENACOM bajo la Ley Nacional de Telecomunicaciones N° 19.798 y sus normas complementarias.\n\nMotoRFAR opera exclusivamente en frecuencias de uso libre habilitadas por el ENACOM, que no requieren licencia para su utilización. Cualquier modificación a las frecuencias configuradas en la aplicación que resulte en la transmisión en bandas no autorizadas es responsabilidad exclusiva del usuario.\n\nPara operar en bandas de radioaficionados (fuera del alcance de esta versión) se requiere licencia ASOC emitida por el ENACOM. El usuario que cuente con dicha habilitación asume plena responsabilidad por su uso."/>
+                android:text="El espectro radioeléctrico en Argentina está regulado por el ENACOM bajo la Ley N° 19.798.\n\nMotoRFAR opera exclusivamente en las 3 frecuencias de uso libre de la Resolución 5/2015 (M.T.T.T.):\n  139.970 MHz — Grupo (prioritaria)\n  138.510 MHz — Alternativo (secundaria)\n  140.970 MHz — Emergencia (uso exclusivo)\n\nEstas frecuencias no requieren licencia para travesías, expediciones y motociclismo en zonas rurales.\n\nEl canal 140.970 MHz es monitoreado por entidades M.T.T.T. y organismos en todo el país.\n\nCualquier transmisión fuera de estas frecuencias es responsabilidad exclusiva del usuario."/>
 
             <!-- 3 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. Condiciones de uso" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MotoRFAR</string>
 
@@ -76,7 +76,7 @@
     <string name="radio_not_found">Dispositivo no encontrado, ¿está conectado?</string>
     <string name="handshake_message">Buscando dispositivo...</string>
     <string name="module_not_found_message">El módulo de radio no responde, revisá las soldaduras del PCB</string>
-    <string name="can_t_tx_outside_ham_band">No se puede transmitir en esa frecuencia</string>
+    <string name="can_t_tx_outside_ham_band">Solo se puede transmitir en los canales M.T.T.T. (Res. 5/2015)</string>
     <string name="radio">Radio</string>
 
     <!-- APRS -->
@@ -110,7 +110,7 @@
     <string name="closed_captions">Subtítulos automáticos</string>
     <string name="system_setting">Ajuste del sistema</string>
     <string name="disable_animations">Desactivar animaciones</string>
-    <string name="your_callsign">Tu indicativo</string>
+    <string name="your_callsign">Tu alias en el grupo</string>
     <string name="advanced">Avanzado</string>
     <string name="versions">Versiones</string>
     <string name="app_version">Versión de la app</string>
@@ -142,6 +142,8 @@
     <string name="mhz">MHz</string>
 
     <!-- Frecuencias APRS -->
+    <string name="freq_139_9700" translatable="false">139.9700</string>
+    <string name="freq_138_5100" translatable="false">138.5100</string>
     <string name="freq_144_3900" translatable="false">144.3900</string>
     <string name="freq_144_5750" translatable="false">144.5750</string>
     <string name="freq_144_6400" translatable="false">144.6400</string>

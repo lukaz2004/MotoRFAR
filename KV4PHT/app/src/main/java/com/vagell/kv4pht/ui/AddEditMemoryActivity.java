@@ -52,13 +52,10 @@ public class AddEditMemoryActivity extends AppCompatActivity {
         "140.9700"    // Solo emergencias (mantener despejado)
     );
 
-    // UHF: PMR446 — 16 canales, separación 12.5 kHz
-    private static final List<String> ALLOWED_UHF_FREQUENCIES_AR = Arrays.asList(
-        "446.0063", "446.0188", "446.0313", "446.0438",
-        "446.0563", "446.0688", "446.0813", "446.0938",
-        "446.1063", "446.1188", "446.1313", "446.1438",
-        "446.1563", "446.1688", "446.1813", "446.1938"
-    );
+    // UHF: sin frecuencias preconfiguradas — MotoRFAR opera solo en VHF (Res. 5/2015)
+    // La lista vacía evita que aparezcan opciones UHF en el selector de canales.
+    // Eliminación completa del panel UHF pendiente para Sprint 2 (refactor de UI).
+    private static final List<String> ALLOWED_UHF_FREQUENCIES_AR = Arrays.asList();
     // -----------------------------------------------------------------------
 
     // IDs de los botones VHF
