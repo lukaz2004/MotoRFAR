@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="3dp">
+    android:padding="4dp">
 
     <LinearLayout
         android:id="@+id/memoryContainer"
@@ -11,15 +11,16 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="@drawable/memory_channel_bg"
-        android:padding="7dp">
+        android:padding="10dp">
 
-        <!-- Oculto — se mantiene para compatibilidad con el código Java -->
+        <!-- Oculto — compatibilidad con código Java -->
         <View
             android:id="@+id/memoryMenu"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone"/>
 
+        <!-- Nombre del canal — estilo CRT etiqueta -->
         <TextView
             android:id="@+id/memoryName"
             android:layout_width="match_parent"
@@ -27,18 +28,21 @@
             android:textSize="10sp"
             android:textColor="@color/primary_deselected"
             android:fontFamily="@font/jost"
+            android:textAllCaps="true"
+            android:letterSpacing="0.08"
             android:maxLines="1"
-            android:ellipsize="end"
-            android:lineSpacingMultiplier="1.1"/>
+            android:ellipsize="end"/>
 
+        <!-- Frecuencia — monoespacio, ámbar brillante -->
         <TextView
             android:id="@+id/memoryFrequency"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/primary"
-            android:fontFamily="@font/jost"/>
+            android:fontFamily="monospace"
+            android:layout_marginTop="2dp"/>
 
     </LinearLayout>
 

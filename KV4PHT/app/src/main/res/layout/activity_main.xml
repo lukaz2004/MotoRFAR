@@ -423,7 +423,7 @@
                 app:itemTextColor="@color/bottom_nav_text"
                 app:itemIconTint="@color/bottom_nav_icon"
                 app:itemActiveIndicatorStyle="@style/Theme.BottomNavigationView.ActiveIndicator"
-                android:background="@color/medium_gray"/>
+                android:background="@color/surface_variant"/>
 
             <!-- ── BOTÓN PTT ── -->
             <ImageButton
