@@ -38,6 +38,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.vagell.kv4pht.R
+import com.vagell.kv4pht.ui.compose.AliasSettingScreen
 import com.vagell.kv4pht.ui.compose.MainScreen
 import com.vagell.kv4pht.ui.compose.MapScreen
 import com.vagell.kv4pht.ui.compose.state.GroupMember
@@ -64,6 +65,9 @@ class MainActivity : ComponentActivity() {
     private var callsign: String = ""
     private var activeMemoryId: Int = -1
     private var activeFrequencyStr: String = "139.9700"
+    private var userAlias: String by mutableStateOf("MOTO")
+    private var beaconIntervalSec: Int = 60
+    private var alertVolume: Int = 70
 
     private var showEmergencyDialog by mutableStateOf(false)
     private var pendingAlertType: AlertHelper.AlertType? = null
@@ -152,6 +156,12 @@ class MainActivity : ComponentActivity() {
                                 icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
                                 label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = com.vagell.kv4pht.ui.compose.theme.ShareTechMono) }
                             )
+                            NavigationBarItem(
+                                selected = currentRoute == "settings",
+                                onClick  = { navController.navigate("settings") { launchSingleTop = true } },
+                                icon     = { Icon(painterResource(R.drawable.ic_settings), contentDescription = "CONFIG") },
+                                label    = { androidx.compose.material3.Text("CONFIG", color = colors.textSecondary, fontFamily = com.vagell.kv4pht.ui.compose.theme.ShareTechMono) }
+                            )
                         }
                     }
                 ) { innerPadding ->
@@ -165,6 +175,14 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("map") {
                             MapScreen(groupMembers = emptyList())
+                        }
+                        composable("settings") {
+                            AliasSettingScreen(
+                                currentAlias             = userAlias,
+                                currentBeaconIntervalSec = beaconIntervalSec,
+                                currentVolume            = alertVolume,
+                                onSave                   = ::saveAliasSettings
+                            )
                         }
                     }
                 }
@@ -221,10 +239,25 @@ class MainActivity : ComponentActivity() {
     private fun loadSettings() {
         val settings = RadioServiceAccessor.getAppDb(viewModel).appSettingDao().getAll()
             .associateBy(AppSetting::name, AppSetting::value)
-        callsign = settings.getOrDefault(AppSetting.SETTING_CALLSIGN, "")
+        callsign           = settings.getOrDefault(AppSetting.SETTING_CALLSIGN, "")
         activeFrequencyStr = settings.getOrDefault("activeFrequencyStr", "139.9700")
+        userAlias          = settings.getOrDefault(AppSetting.SETTING_USER_ALIAS, "MOTO")
+        beaconIntervalSec  = settings.getOrDefault(AppSetting.SETTING_BEACON_INTERVAL_SEC, "60").toIntOrNull() ?: 60
+        alertVolume        = settings.getOrDefault(AppSetting.SETTING_ALERT_VOLUME, "70").toIntOrNull() ?: 70
         runOnUiThread {
             _uiState.update { it.copy(activeFrequency = activeFrequencyStr) }
+        }
+    }
+
+    private fun saveAliasSettings(alias: String, intervalSec: Int, volume: Int) {
+        userAlias         = alias
+        beaconIntervalSec = intervalSec
+        alertVolume       = volume
+        executor.execute {
+            val db = RadioServiceAccessor.getAppDb(viewModel)
+            db.saveAppSetting(AppSetting.SETTING_USER_ALIAS, alias)
+            db.saveAppSetting(AppSetting.SETTING_BEACON_INTERVAL_SEC, intervalSec.toString())
+            db.saveAppSetting(AppSetting.SETTING_ALERT_VOLUME, volume.toString())
         }
     }
 
