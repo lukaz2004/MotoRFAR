@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MotoRFAR</string>
 
@@ -9,8 +9,8 @@
     <string name="second_fragment_label">Segunda sección</string>
 
     <!-- Pantalla principal -->
-    <string name="voice_display">Voz</string>
-    <string name="aprs_chat_display">Chat APRS</string>
+    <string name="voice_display">PTT</string>
+    <string name="aprs_chat_display">Mensajes</string>
     <string name="push_to_talk_display">Pulsar para transmitir</string>
     <string name="scan">ESCANEAR</string>
     <string name="stop_scan">DETENER ESCANEO</string>

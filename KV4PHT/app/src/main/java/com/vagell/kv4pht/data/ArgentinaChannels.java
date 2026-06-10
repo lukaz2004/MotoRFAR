@@ -19,7 +19,7 @@ public class ArgentinaChannels {
 
     public static List<ChannelMemory> getAll() {
         return Arrays.asList(
-            channel("Grupo",       "139.9700"),
+            channel("Principal",       "139.9700"),
             channel("Alternativo", "138.5100"),
             channel("Emergencia",  "140.9700")
         );

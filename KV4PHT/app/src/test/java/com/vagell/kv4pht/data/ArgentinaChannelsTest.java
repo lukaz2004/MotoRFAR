@@ -17,7 +17,7 @@ import java.util.List;
  * (Secretaría de Comunicaciones): the three license-free VHF frequencies
  * for M.T.T.T. activities (expeditions, motorcycling, remote areas).
  *
- * 139.970 MHz — primary  ("Grupo")
+ * 139.970 MHz — primary  ("Principal")
  * 138.510 MHz — secondary ("Alternativo")
  * 140.970 MHz — emergencies ONLY ("Emergencia")
  */
@@ -33,7 +33,7 @@ public class ArgentinaChannelsTest {
     @Test
     public void firstChannel_isGrupo_139970() {
         ChannelMemory ch = ArgentinaChannels.getAll().get(0);
-        assertEquals("Grupo", ch.name);
+        assertEquals("Principal", ch.name);
         assertEquals("139.9700", ch.frequency);
     }
 

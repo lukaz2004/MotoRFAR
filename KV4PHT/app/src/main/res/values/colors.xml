@@ -1,58 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- =====================================================
-         MotoRFAR — Paleta CRT Ámbar Militar (Theme principal)
-         Referencia: AN/PRC-148 MBITR, Harris Falcon III
+         MotoRFAR — Paleta Verde Táctico (Fósforo CRT)
+         Referencia: AN/VRC-92, Leopard-1, radar táctico
          ===================================================== -->
 
-    <!-- Neutros base -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="crt_black">#FF050505</color>
+    <color name="crt_black">#FF030804</color>
 
-    <!-- === TEMA AMBAR (defecto) === -->
     <!-- Fondos -->
-    <color name="background">#FF050505</color>
-    <color name="surface">#FF0E0904</color>
-    <color name="surface_variant">#FF1A1208</color>
-    <color name="surface_elevated">#FF221808</color>
+    <color name="background">#FF030804</color>
+    <color name="surface">#FF060e06</color>
+    <color name="surface_variant">#FF0a1a0a</color>
+    <color name="surface_elevated">#FF0c1a0c</color>
 
-    <!-- Texto ámbar — escala de luminancia -->
-    <color name="primary">#FFFAC775</color>
-    <color name="primary_deselected">#FFBA7517</color>
-    <color name="primary_veryfaint">#22FAC775</color>
-    <color name="text_dim">#FF854F0B</color>
-    <color name="text_ghost">#FF633806</color>
-    <color name="text_faint">#FF412402</color>
+    <!-- Texto verde — escala de luminancia -->
+    <color name="primary">#FF8FE875</color>
+    <color name="primary_deselected">#FF4FBD3B</color>
+    <color name="primary_veryfaint">#228FE875</color>
+    <color name="text_dim">#FF27500A</color>
+    <color name="text_ghost">#FF1f5511</color>
+    <color name="text_faint">#FF173404</color>
 
     <!-- Acento / LED / borde activo -->
-    <color name="accent">#FFEF9F27</color>
-    <color name="accent_veryfaint">#33EF9F27</color>
-    <color name="accent_glow">#66EF9F27</color>
+    <color name="accent">#FF4FBD3B</color>
+    <color name="accent_veryfaint">#334FBD3B</color>
+    <color name="accent_glow">#664FBD3B</color>
 
     <!-- Bordes -->
-    <color name="border_active">#FFEF9F27</color>
-    <color name="border_subtle">#FF3A2807</color>
-    <color name="border_faint">#FF2A1C05</color>
+    <color name="border_active">#FF4FBD3B</color>
+    <color name="border_subtle">#FF1f3a1f</color>
+    <color name="border_faint">#FF0f1f0f</color>
 
-    <!-- Canal activo / seleccionado -->
-    <color name="channel_bg">#FF2A1C05</color>
-    <color name="channel_border">#FF3A2807</color>
-    <color name="channel_bg_active">#FF2A1C05</color>
-    <color name="channel_border_active">#FFEF9F27</color>
+    <!-- Canal -->
+    <color name="channel_bg">#FF060e06</color>
+    <color name="channel_border">#FF1f3a1f</color>
+    <color name="channel_bg_active">#FF0c1a0c</color>
+    <color name="channel_border_active">#FF4FBD3B</color>
 
     <!-- Botones de frecuencia -->
-    <color name="freq_button_selected_bg">#FFEF9F27</color>
-    <color name="freq_button_selected_text">#FF050505</color>
-    <color name="freq_button_unselected_bg">#FF1A1208</color>
-    <color name="freq_button_unselected_text">#FFBA7517</color>
+    <color name="freq_button_selected_bg">#FF4FBD3B</color>
+    <color name="freq_button_selected_text">#FF030804</color>
+    <color name="freq_button_unselected_bg">#FF060e06</color>
+    <color name="freq_button_unselected_text">#FF4FBD3B</color>
 
     <!-- PTT -->
-    <color name="ptt_active">#FFEF9F27</color>
-    <color name="ptt_inactive">#FFBA7517</color>
-    <color name="ptt_bg">#FF2A1C05</color>
+    <color name="ptt_active">#FF4FBD3B</color>
+    <color name="ptt_inactive">#FF27500A</color>
+    <color name="ptt_bg">#FF0c1a0c</color>
 
-    <!-- EMERGENCIA — rojo (no cambia con el tema) -->
+    <!-- EMERGENCIA — rojo (no cambia) -->
     <color name="emergency_bg">#FF501313</color>
     <color name="emergency_border">#FFE24B4A</color>
     <color name="emergency_text">#FFF09595</color>
@@ -61,17 +59,17 @@
     <color name="status_ok">#FF4FBD3B</color>
     <color name="status_error">#FFE24B4A</color>
     <color name="status_warning">#FFEF9F27</color>
-    <color name="status_gps">#FFFAC775</color>
+    <color name="status_gps">#FF8FE875</color>
 
-    <!-- Medium gray (legado, no remover — puede estar referenciado) -->
-    <color name="medium_gray">#FF353533</color>
+    <!-- Legado -->
+    <color name="medium_gray">#FF1a2a1a</color>
 
-    <!-- Material overrides — adaptados al tema oscuro -->
-    <color name="band">#FFFAC775</color>
+    <!-- Bottom navigation -->
+    <color name="band">#FF8FE875</color>
     <color name="clear">#00000000</color>
-    <color name="mtrl_textinput_default_box_stroke_color">#FFBA7517</color>
-    <color name="light_blue_400">#FFBA7517</color>
-    <color name="light_blue_600">#FFEF9F27</color>
-    <color name="gray_400">#FF854F0B</color>
-    <color name="gray_600">#FF633806</color>
+    <color name="mtrl_textinput_default_box_stroke_color">#FF4FBD3B</color>
+    <color name="light_blue_400">#FF4FBD3B</color>
+    <color name="light_blue_600">#FF27500A</color>
+    <color name="gray_400">#FF27500A</color>
+    <color name="gray_600">#FF1f5511</color>
 </resources>
