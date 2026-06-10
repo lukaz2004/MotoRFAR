@@ -138,20 +138,9 @@ public class RadioAudioService extends Service {
     private PowerManager.WakeLock wakeLock;
     private static final int SERVICE_ID = 1;
 
-    // These will be overwritten by user settings
-    @Setter
-    private float min2mTxFreq = 144.0f;
-    @Setter
-    private float max2mTxFreq = 148.0f;
-    @Setter
-    private float min70cmTxFreq = 420.0f;
-    @Setter
-    private float max70cmTxFreq = 450.0f;
-
-    @Setter
-    private float minTxFreq = min2mTxFreq;
-    @Setter
-    private float maxTxFreq = max2mTxFreq;
+    // MotoRFAR: TX restringida por whitelist Res. 5/2015 (ver TxWhitelist.java).
+    // Los campos min/maxTxFreq del diseño original fueron reemplazados.
+    private final TxWhitelist txWhitelist = new TxWhitelist();
 
     public enum RadioModuleType {UNKNOWN, VHF, UHF}
 
@@ -591,14 +580,11 @@ public class RadioAudioService extends Service {
     }
 
     /**
-     * Determines if transmission (TX) is allowed on the given frequency.
-     *
-     * @param freq The frequency to check, in MHz.
-     * @return true if the frequency is within the allowed transmission range, false otherwise.
+     * MotoRFAR: TX permitida SOLO en las 3 frecuencias de Res. 5/2015.
+     * Ver TxWhitelist.java para la lista completa y tolerancias.
      */
     private boolean canTransmitOnFrequency(float freq) {
-        final float halfBandwidth = radioModule.getHalfBandwidthMhz();
-        return  (freq >= (minTxFreq + halfBandwidth)) && (freq <= (maxTxFreq - halfBandwidth));
+        return txWhitelist.canTransmit(freq);
     }
 
     private void updateTxAllowed(float txFrequency) {
@@ -647,7 +633,7 @@ public class RadioAudioService extends Service {
             }
             return formatFreq(Math.max(getMinRadioFreq(), Math.min(freq, getMaxRadioFreq())));
         } catch (NumberFormatException e) {
-            return formatFreq(minTxFreq);
+            return formatFreq(txWhitelist.getDefaultTxFreq());
         }
     }
 
@@ -1145,18 +1131,8 @@ public class RadioAudioService extends Service {
     }
 
     public void updateTxLimitsForBand() {
-        if (RadioModuleType.VHF.equals(getRadioType())) {
-            setMinTxFreq(min2mTxFreq);
-            setMaxTxFreq(max2mTxFreq);
-        } else if (RadioModuleType.UHF.equals(getRadioType())) {
-            setMinTxFreq(min70cmTxFreq);
-            setMaxTxFreq(max70cmTxFreq);
-        }
-        Log.d(TAG, "Radio type set to: " + getRadioType());
-        Log.d(TAG, "Min radio freq: " + getMinRadioFreq());
-        Log.d(TAG, "Max radio freq: " + getMaxRadioFreq());
-        Log.d(TAG, "Min tx freq: " + minTxFreq);
-        Log.d(TAG, "Max tx freq: " + maxTxFreq);
+        // MotoRFAR: TX limitada por TxWhitelist (Res. 5/2015) — no por banda.
+        // Se mantiene el método para compatibilidad con handleHello().
         float txFrequency = radioModule.getTxFrequency() > 0 ? radioModule.getTxFrequency() : parseActiveFrequencyOrZero();
         updateTxAllowed(txFrequency);
         Log.d(TAG, String.format("Tx allowed: %b (%s)", isTxAllowed(), txFrequency));

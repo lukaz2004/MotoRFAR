@@ -955,15 +955,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void applyTxFreqLimitsSettings(Map<String, String> settings) {
+        // MotoRFAR: TX controlada por TxWhitelist (Res. 5/2015).
+        // Los settings de bandas ham (min/max 2m, 70cm) ya no aplican.
         if (radioAudioService == null) return;
-        String min2m = settings.get(AppSetting.SETTING_MIN_2_M_TX_FREQ);
-        String max2m = settings.get(AppSetting.SETTING_MAX_2_M_TX_FREQ);
-        String min70 = settings.get(AppSetting.SETTING_MIN_70_CM_TX_FREQ);
-        String max70 = settings.get(AppSetting.SETTING_MAX_70_CM_TX_FREQ);
-        if (min2m != null) radioAudioService.setMin2mTxFreq(Integer.parseInt(min2m));
-        if (max2m != null) radioAudioService.setMax2mTxFreq(Integer.parseInt(max2m));
-        if (min70 != null) radioAudioService.setMin70cmTxFreq(Integer.parseInt(min70));
-        if (max70 != null) radioAudioService.setMax70cmTxFreq(Integer.parseInt(max70));
         radioAudioService.updateTxLimitsForBand();
     }
 
