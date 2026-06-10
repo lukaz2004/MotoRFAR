@@ -49,7 +49,7 @@ public class TermsActivity extends AppCompatActivity {
                 );
                 runOnUiThread(() -> {
                     // Ir a la pantalla principal
-                    startActivity(new Intent(this, MainActivityLegacy.class));
+                    startActivity(new Intent(this, MainActivity.class));
                     finish();
                 });
             });

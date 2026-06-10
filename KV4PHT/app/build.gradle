@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -42,9 +43,7 @@ android {
         buildConfig  true
         compose      true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.10'
-    }
+    // Compose Compiler bundled en Kotlin 2.0+ — no se necesita composeOptions
     packagingOptions {
         resources.excludes.add("META-INF/*")
     }
@@ -73,7 +72,7 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.18.0'
     implementation 'com.google.zxing:core:3.4.1'
 
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.22"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.2.0"))
 
     // ── Compose BOM ──
     def composeBom = platform('androidx.compose:compose-bom:2024.02.02')
