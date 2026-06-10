@@ -208,15 +208,17 @@ public class MemoriesAdapter extends RecyclerView.Adapter<MemoriesAdapter.Memory
         public void setHighlighted(boolean highlighted) {
             if (highlighted) {
                 itemView.findViewById(R.id.memoryContainer)
-                        .setBackgroundColor(itemView.getResources().getColor(R.color.primary_veryfaint));
+                        .setBackground(itemView.getResources().getDrawable(R.drawable.memory_channel_bg_selected, null));
                 itemView.findViewById(R.id.memoryMenu).setVisibility(View.VISIBLE);
-                ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(itemView.getResources().getColor(R.color.primary));
+                ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(itemView.getResources().getColor(R.color.accent));
                 ((TextView) itemView.findViewById(R.id.memoryFrequency)).setTextColor(itemView.getResources().getColor(R.color.primary));
             } else {
+                itemView.findViewById(R.id.memoryContainer)
+                        .setBackground(itemView.getResources().getDrawable(R.drawable.memory_channel_bg, null));
                 itemView.setBackgroundColor(itemView.getResources().getColor(R.color.clear));
                 itemView.findViewById(R.id.memoryMenu).setVisibility(View.GONE);
-                ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(itemView.getResources().getColor(R.color.primary_deselected));
-                ((TextView) itemView.findViewById(R.id.memoryFrequency)).setTextColor(itemView.getResources().getColor(R.color.primary_deselected));
+                ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(itemView.getResources().getColor(R.color.text_dim));
+                ((TextView) itemView.findViewById(R.id.memoryFrequency)).setTextColor(itemView.getResources().getColor(R.color.text_ghost));
             }
         }
     }
