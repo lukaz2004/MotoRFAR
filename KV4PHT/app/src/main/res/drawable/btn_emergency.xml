@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Botón EMERGENCIA con relieve 3D -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sombra inferior (da sensación de profundidad) -->
+    <item android:top="4dp">
+        <shape>
+            <solid android:color="#1a0404"/>
+            <corners android:radius="6dp"/>
+        </shape>
+    </item>
+    <!-- Cuerpo del botón con gradiente -->
+    <item android:bottom="3dp">
+        <shape>
+            <gradient android:type="linear" android:angle="270"
+                android:startColor="#F7C1C1"
+                android:centerColor="#E24B4A"
+                android:endColor="#A32D2D"/>
+            <corners android:radius="6dp"/>
+            <stroke android:width="1dp" android:color="#F7C1C1"/>
+        </shape>
+    </item>
+</layer-list>

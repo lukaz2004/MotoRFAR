@@ -13,35 +13,34 @@
         android:background="@drawable/memory_channel_bg"
         android:padding="10dp">
 
-        <!-- Oculto — compatibilidad con código Java -->
         <View
             android:id="@+id/memoryMenu"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone"/>
 
-        <!-- Nombre del canal — estilo CRT etiqueta -->
+        <!-- Nombre del canal -->
         <TextView
             android:id="@+id/memoryName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="10sp"
-            android:textColor="@color/primary_deselected"
-            android:fontFamily="@font/jost"
+            android:textSize="9sp"
+            android:textColor="@color/text_dim"
+            android:fontFamily="@font/share_tech_mono"
             android:textAllCaps="true"
-            android:letterSpacing="0.08"
+            android:letterSpacing="0.1"
             android:maxLines="1"
             android:ellipsize="end"/>
 
-        <!-- Frecuencia — monoespacio, ámbar brillante -->
+        <!-- Frecuencia — verde brillante, monospace grande -->
         <TextView
             android:id="@+id/memoryFrequency"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold"
             android:textColor="@color/primary"
-            android:fontFamily="monospace"
+            android:fontFamily="@font/share_tech_mono"
             android:layout_marginTop="2dp"/>
 
     </LinearLayout>

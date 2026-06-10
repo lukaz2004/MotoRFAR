@@ -80,21 +80,21 @@
                     android:id="@+id/activeMemoryName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/jost"
+                    android:fontFamily="@font/share_tech_mono"
                     android:gravity="center"
                     android:text="@string/welcome_to_display"
-                    android:textColor="@color/primary_deselected"
-                    android:textSize="13sp"
+                    android:textColor="@color/text_ghost"
+                    android:textSize="10sp"
                     android:textAllCaps="true"
-                    android:letterSpacing="0.1"
+                    android:letterSpacing="0.15"
                     android:maxLines="1"/>
 
-                <!-- Frecuencia en grande -->
+                <!-- Frecuencia en grande — Share Tech Mono, verde brillante -->
                 <EditText
                     android:id="@+id/activeFrequency"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
+                    android:fontFamily="@font/share_tech_mono"
                     android:gravity="center"
                     android:textColor="@color/primary"
                     android:textSize="52sp"
@@ -246,14 +246,15 @@
                     android:layout_height="56dp"
                     android:layout_marginBottom="6dp"
                     android:text="⚠  EMERGENCIA  —  Solicitar asistencia"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#FFFFFF"
                     android:textAllCaps="false"
-                    android:fontFamily="@font/jost"
-                    android:backgroundTint="#CC3333"
+                    android:fontFamily="@font/share_tech_mono"
+                    android:background="@drawable/btn_emergency"
                     android:onClick="emergencyAlertClicked"
-                    android:elevation="2dp"/>
+                    android:stateListAnimator="@null"
+                    android:elevation="0dp"/>
 
                 <!-- Fila: DETENCIÓN + REAGRUPAR debajo -->
                 <LinearLayout
@@ -269,14 +270,15 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="6dp"
                         android:text="DETENCIÓN"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold"
-                        android:textColor="#000000"
+                        android:textColor="#1a0e00"
                         android:textAllCaps="false"
-                        android:fontFamily="@font/jost"
-                        android:backgroundTint="#E07B39"
+                        android:fontFamily="@font/share_tech_mono"
+                        android:background="@drawable/btn_stop"
                         android:onClick="stopAlertClicked"
-                        android:elevation="2dp"/>
+                        android:stateListAnimator="@null"
+                        android:elevation="0dp"/>
 
                     <Button
                         android:id="@+id/regroupAlertButton"
@@ -285,14 +287,15 @@
                         android:layout_weight="1"
                         android:layout_marginStart="6dp"
                         android:text="REAGRUPAR"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textStyle="bold"
                         android:textColor="#FFFFFF"
                         android:textAllCaps="false"
-                        android:fontFamily="@font/jost"
-                        android:backgroundTint="#2E7D32"
+                        android:fontFamily="@font/share_tech_mono"
+                        android:background="@drawable/btn_regroup"
                         android:onClick="regroupAlertClicked"
-                        android:elevation="2dp"/>
+                        android:stateListAnimator="@null"
+                        android:elevation="0dp"/>
 
                 </LinearLayout>
 
