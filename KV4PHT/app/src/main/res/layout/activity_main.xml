@@ -84,18 +84,21 @@
                     android:gravity="center"
                     android:text="@string/welcome_to_display"
                     android:textColor="@color/primary_deselected"
-                    android:textSize="16sp"
+                    android:textSize="13sp"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
                     android:maxLines="1"/>
 
-                <!-- Frecuencia en grande — solo lectura -->
+                <!-- Frecuencia en grande — ámbar brillante, monospace -->
                 <EditText
                     android:id="@+id/activeFrequency"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/jost"
+                    android:fontFamily="monospace"
                     android:gravity="center"
                     android:textColor="@color/primary"
                     android:textSize="52sp"
+                    android:textStyle="bold"
                     android:text="@string/kv4p_ht"
                     android:background="@color/clear"
                     android:maxLength="8"
@@ -143,15 +146,15 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent">
 
-                        <View android:id="@+id/sMeter1" android:layout_width="14dp" android:layout_height="3dp"  android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter2" android:layout_width="14dp" android:layout_height="5dp"  android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter3" android:layout_width="14dp" android:layout_height="7dp"  android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter4" android:layout_width="14dp" android:layout_height="9dp"  android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter5" android:layout_width="14dp" android:layout_height="11dp" android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter6" android:layout_width="14dp" android:layout_height="13dp" android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter7" android:layout_width="14dp" android:layout_height="15dp" android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter8" android:layout_width="14dp" android:layout_height="17dp" android:layout_marginEnd="5dp" android:background="@color/primary" android:alpha="0.2" />
-                        <View android:id="@+id/sMeter9" android:layout_width="14dp" android:layout_height="19dp" android:background="@color/primary" android:alpha="0.2" />
+                        <View android:id="@+id/sMeter1" android:layout_width="14dp" android:layout_height="3dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter2" android:layout_width="14dp" android:layout_height="5dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter3" android:layout_width="14dp" android:layout_height="7dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter4" android:layout_width="14dp" android:layout_height="9dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter5" android:layout_width="14dp" android:layout_height="11dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter6" android:layout_width="14dp" android:layout_height="13dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter7" android:layout_width="14dp" android:layout_height="15dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter8" android:layout_width="14dp" android:layout_height="17dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter9" android:layout_width="14dp" android:layout_height="19dp" android:background="@color/accent" android:alpha="0.3" />
                     </LinearLayout>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
