@@ -26,11 +26,26 @@ import androidx.lifecycle.Observer
 import com.vagell.kv4pht.data.AppSetting
 import com.vagell.kv4pht.data.ChannelMemory
 import com.vagell.kv4pht.radio.RadioAudioService
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.vagell.kv4pht.R
 import com.vagell.kv4pht.ui.compose.MainScreen
+import com.vagell.kv4pht.ui.compose.MapScreen
+import com.vagell.kv4pht.ui.compose.state.GroupMember
 import com.vagell.kv4pht.ui.compose.state.MainUiAction
 import com.vagell.kv4pht.ui.compose.state.MainUiState
 import com.vagell.kv4pht.ui.compose.theme.AppTheme
 import com.vagell.kv4pht.ui.compose.theme.EmergencyText
+import com.vagell.kv4pht.ui.compose.theme.LocalMotoRFARColors
 import com.vagell.kv4pht.ui.compose.theme.MotoRFARTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -116,7 +131,43 @@ class MainActivity : ComponentActivity() {
         setContent {
             val state by uiState.collectAsState()
             MotoRFARTheme(AppTheme.GREEN) {
-                MainScreen(state = state, onAction = ::handleAction)
+                val colors = LocalMotoRFARColors.current
+                val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route ?: "main"
+
+                Scaffold(
+                    containerColor = colors.background,
+                    bottomBar = {
+                        NavigationBar(containerColor = colors.surface) {
+                            NavigationBarItem(
+                                selected = currentRoute == "main",
+                                onClick  = { navController.navigate("main") { launchSingleTop = true } },
+                                icon     = { Icon(painterResource(R.drawable.ic_radio), contentDescription = "PTT") },
+                                label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = com.vagell.kv4pht.ui.compose.theme.ShareTechMono) }
+                            )
+                            NavigationBarItem(
+                                selected = currentRoute == "map",
+                                onClick  = { navController.navigate("map") { launchSingleTop = true } },
+                                icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
+                                label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = com.vagell.kv4pht.ui.compose.theme.ShareTechMono) }
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+                    NavHost(
+                        navController  = navController,
+                        startDestination = "main",
+                        modifier       = Modifier.padding(innerPadding)
+                    ) {
+                        composable("main") {
+                            MainScreen(state = state, onAction = ::handleAction)
+                        }
+                        composable("map") {
+                            MapScreen(groupMembers = emptyList())
+                        }
+                    }
+                }
                 if (showEmergencyDialog) {
                     AlertDialog(
                         onDismissRequest = { showEmergencyDialog = false },
