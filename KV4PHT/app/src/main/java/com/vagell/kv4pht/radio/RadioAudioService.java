@@ -73,7 +73,7 @@ import com.vagell.kv4pht.javAX25.ax25.Packet;
 import com.vagell.kv4pht.radio.Protocol.KissParser;
 import com.vagell.kv4pht.radio.Protocol.RcvCommand;
 import com.vagell.kv4pht.radio.Protocol.WindowUpdate;
-import com.vagell.kv4pht.ui.MainActivity;
+import com.vagell.kv4pht.ui.MainActivityLegacy;
 import com.vagell.kv4pht.ui.ToneHelper;
 import lombok.Getter;
 import lombok.Setter;
@@ -454,7 +454,7 @@ public class RadioAudioService extends Service {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Notification buildForegroundNotification() {
-        Intent openApp = new Intent(this, MainActivity.class);
+        Intent openApp = new Intent(this, MainActivityLegacy.class);
         PendingIntent pi = PendingIntent.getActivity(
                 this, 0, openApp, PendingIntent.FLAG_IMMUTABLE);
 
@@ -497,7 +497,7 @@ public class RadioAudioService extends Service {
     }
 
     private PendingIntent buildPendingIntent() {
-        Intent open = new Intent(this, MainActivity.class);
+        Intent open = new Intent(this, MainActivityLegacy.class);
         return PendingIntent.getActivity(this, 0, open,
                 PendingIntent.FLAG_IMMUTABLE);
     }

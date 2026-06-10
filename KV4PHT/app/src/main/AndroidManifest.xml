@@ -76,7 +76,7 @@
             android:theme="@style/Theme.KV4PHT"/>
 
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.MainActivityLegacy"
             android:exported="true"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize">
