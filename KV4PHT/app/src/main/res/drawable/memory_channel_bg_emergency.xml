@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tarjeta canal EMERGENCIA — borde rojo para diferenciarlo -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="#7a2020"/>
+            <corners android:radius="8dp"/>
+        </shape>
+    </item>
+    <item android:top="1.5dp" android:left="1.5dp" android:right="1.5dp" android:bottom="1.5dp">
+        <shape>
+            <gradient android:type="linear" android:angle="270"
+                android:startColor="#1a0808"
+                android:endColor="#0e0404"/>
+            <corners android:radius="7dp"/>
+        </shape>
+    </item>
+</layer-list>

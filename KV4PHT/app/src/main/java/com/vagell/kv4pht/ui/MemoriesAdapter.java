@@ -206,6 +206,10 @@ public class MemoriesAdapter extends RecyclerView.Adapter<MemoriesAdapter.Memory
         }
 
         public void setHighlighted(boolean highlighted) {
+            // Determinar si es canal EMERGENCIA por la frecuencia
+            TextView freqView = (TextView) itemView.findViewById(R.id.memoryFrequency);
+            boolean isEmergency = freqView != null && "140.9700".equals(freqView.getText().toString());
+
             if (highlighted) {
                 itemView.findViewById(R.id.memoryContainer)
                         .setBackground(itemView.getResources().getDrawable(R.drawable.memory_channel_bg_selected, null));
@@ -213,12 +217,18 @@ public class MemoriesAdapter extends RecyclerView.Adapter<MemoriesAdapter.Memory
                 ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(itemView.getResources().getColor(R.color.accent));
                 ((TextView) itemView.findViewById(R.id.memoryFrequency)).setTextColor(itemView.getResources().getColor(R.color.primary));
             } else {
+                int bg = isEmergency
+                    ? R.drawable.memory_channel_bg_emergency
+                    : R.drawable.memory_channel_bg;
                 itemView.findViewById(R.id.memoryContainer)
-                        .setBackground(itemView.getResources().getDrawable(R.drawable.memory_channel_bg, null));
+                        .setBackground(itemView.getResources().getDrawable(bg, null));
                 itemView.setBackgroundColor(itemView.getResources().getColor(R.color.clear));
                 itemView.findViewById(R.id.memoryMenu).setVisibility(View.GONE);
-                ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(itemView.getResources().getColor(R.color.text_dim));
-                ((TextView) itemView.findViewById(R.id.memoryFrequency)).setTextColor(itemView.getResources().getColor(R.color.text_ghost));
+                int textColor = isEmergency
+                    ? itemView.getResources().getColor(R.color.emergency_border)
+                    : itemView.getResources().getColor(R.color.text_dim);
+                ((TextView) itemView.findViewById(R.id.memoryName)).setTextColor(textColor);
+                ((TextView) itemView.findViewById(R.id.memoryFrequency)).setTextColor(textColor);
             }
         }
     }

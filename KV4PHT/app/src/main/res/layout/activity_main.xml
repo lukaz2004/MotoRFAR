@@ -160,15 +160,15 @@
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent">
 
-                        <View android:id="@+id/sMeter1" android:layout_width="14dp" android:layout_height="3dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
-                        <View android:id="@+id/sMeter2" android:layout_width="14dp" android:layout_height="5dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
-                        <View android:id="@+id/sMeter3" android:layout_width="14dp" android:layout_height="7dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
-                        <View android:id="@+id/sMeter4" android:layout_width="14dp" android:layout_height="9dp"  android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter1" android:layout_width="14dp" android:layout_height="3dp"  android:layout_marginEnd="5dp" android:background="#4FBD3B" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter2" android:layout_width="14dp" android:layout_height="5dp"  android:layout_marginEnd="5dp" android:background="#4FBD3B" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter3" android:layout_width="14dp" android:layout_height="7dp"  android:layout_marginEnd="5dp" android:background="#4FBD3B" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter4" android:layout_width="14dp" android:layout_height="9dp"  android:layout_marginEnd="5dp" android:background="#4FBD3B" android:alpha="0.3" />
                         <View android:id="@+id/sMeter5" android:layout_width="14dp" android:layout_height="11dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
                         <View android:id="@+id/sMeter6" android:layout_width="14dp" android:layout_height="13dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
                         <View android:id="@+id/sMeter7" android:layout_width="14dp" android:layout_height="15dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
                         <View android:id="@+id/sMeter8" android:layout_width="14dp" android:layout_height="17dp" android:layout_marginEnd="5dp" android:background="@color/accent" android:alpha="0.3" />
-                        <View android:id="@+id/sMeter9" android:layout_width="14dp" android:layout_height="19dp" android:background="@color/accent" android:alpha="0.3" />
+                        <View android:id="@+id/sMeter9" android:layout_width="14dp" android:layout_height="19dp" android:background="#4FBD3B" android:alpha="0.3" />
                     </LinearLayout>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -254,7 +254,7 @@
                     android:onClick="scanClicked" />
 
                 <!-- EMERGENCIA — ancho completo, primero -->
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/emergencyAlertButton"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
@@ -266,9 +266,7 @@
                     android:textAllCaps="false"
                     android:fontFamily="@font/share_tech_mono"
                     android:background="@drawable/btn_emergency"
-                    android:onClick="emergencyAlertClicked"
-                    android:stateListAnimator="@null"
-                    android:elevation="0dp"/>
+                    android:onClick="emergencyAlertClicked"/>
 
                 <!-- Fila: DETENCIÓN + REAGRUPAR debajo -->
                 <LinearLayout
@@ -277,7 +275,7 @@
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/stopAlertButton"
                         android:layout_width="0dp"
                         android:layout_height="52dp"
@@ -290,11 +288,9 @@
                         android:textAllCaps="false"
                         android:fontFamily="@font/share_tech_mono"
                         android:background="@drawable/btn_stop"
-                        android:onClick="stopAlertClicked"
-                        android:stateListAnimator="@null"
-                        android:elevation="0dp"/>
+                        android:onClick="stopAlertClicked"/>
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/regroupAlertButton"
                         android:layout_width="0dp"
                         android:layout_height="52dp"
@@ -307,9 +303,7 @@
                         android:textAllCaps="false"
                         android:fontFamily="@font/share_tech_mono"
                         android:background="@drawable/btn_regroup"
-                        android:onClick="regroupAlertClicked"
-                        android:stateListAnimator="@null"
-                        android:elevation="0dp"/>
+                        android:onClick="regroupAlertClicked"/>
 
                 </LinearLayout>
 
