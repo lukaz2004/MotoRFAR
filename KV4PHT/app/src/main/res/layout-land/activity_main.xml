@@ -4,14 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-        <variable name="viewModel" type="com.vagell.kv4pht.ui.MainViewModel" />
+        <variable name="viewModel" type="ar.motorfar.app.ui.MainViewModel" />
     </data>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/bg"
-        tools:context="com.vagell.kv4pht.ui.MainActivity"
+        tools:context="ar.motorfar.app.ui.MainActivity"
         android:fitsSystemWindows="true">
 
         <!-- Fondo animado RX/TX -->
