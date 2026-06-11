@@ -29,7 +29,7 @@ class MainScreenTest {
     @Test
     fun mainScreen_showsChannelName() {
         launchMainScreen()
-        composeTestRule.onNodeWithText("PRINCIPAL").assertIsDisplayed()
+        composeTestRule.onNodeWithText("GRUPO").assertIsDisplayed()
     }
 
     @Test

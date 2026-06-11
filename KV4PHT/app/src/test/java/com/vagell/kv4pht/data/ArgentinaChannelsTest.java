@@ -33,21 +33,21 @@ public class ArgentinaChannelsTest {
     @Test
     public void firstChannel_isGrupo_139970() {
         ChannelMemory ch = ArgentinaChannels.getAll().get(0);
-        assertEquals("Principal", ch.name);
+        assertEquals("GRUPO", ch.name);
         assertEquals("139.9700", ch.frequency);
     }
 
     @Test
     public void secondChannel_isAlternativo_138510() {
         ChannelMemory ch = ArgentinaChannels.getAll().get(1);
-        assertEquals("Alternativo", ch.name);
+        assertEquals("ALTERNATIVO", ch.name);
         assertEquals("138.5100", ch.frequency);
     }
 
     @Test
     public void thirdChannel_isEmergencia_140970() {
         ChannelMemory ch = ArgentinaChannels.getAll().get(2);
-        assertEquals("Emergencia", ch.name);
+        assertEquals("EMERGENCIA", ch.name);
         assertEquals("140.9700", ch.frequency);
     }
 
@@ -61,8 +61,8 @@ public class ArgentinaChannelsTest {
     }
 
     @Test
-    public void preloadVersion_isV3MtttVhf() {
+    public void preloadVersion_isV6ChannelsTactical() {
         // Bumping this value forces existing installs to re-seed channels.
-        assertEquals("v4_principal_vhf", ArgentinaChannels.PRELOADED_VALUE);
+        assertEquals("v6_channels_tactical", ArgentinaChannels.PRELOADED_VALUE);
     }
 }
