@@ -176,3 +176,27 @@ La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan a
 - Verificar hot-reload real del beacon interval en campo
 
 ---
+
+## 2026-06-11 · Sesión 7 — Sprint 7 ejecutado (Onboarding package)
+
+**Lo que se hizo:**
+
+- Branch `sprint/7-onboarding-package` ejecutado completo (Fases A → B → C → D) con flujo subagent-driven-development
+- A: `AlertBannerInstrumentedTest.kt` (testTag + 2 tests instrumentados) + `channelSelector_shows_three_channels` en `MainScreenTest.kt`
+- B: rename package `com.vagell.kv4pht` → `ar.motorfar.app` en 121 archivos vía PowerShell bulk. `applicationId "ar.motorfar.app"`. Listo para Play Store.
+- C: `TermsScreen.kt` — pantalla Compose completa con 6 secciones, cita explícita Resolución 5/2015, las 3 frecuencias legales, botón ACEPTAR. `TermsScreenTest.kt` (2 tests).
+- D: `OnboardingHelper.kt` (objeto puro, unit-testeable), `AliasSetupOnboarding.kt`, `ChannelSelectOnboarding.kt`, `OnboardingActivity.kt` con NavHost `terms→alias→channel`. Gate en `MainActivity.onCreate` — redirige al onboarding si `onboarding_complete != "true"`.
+- Post code-review: 4 fixes — `executor.shutdown()`, `noHistory=true`, `stopService` antes de redirigir, EMERGENCIA no seleccionable como canal default.
+- Unit tests al cierre: BUILD SUCCESSFUL (suite completa).
+- PR abierto: `sprint/7-onboarding-package` → `main` (gh CLI no instalado; PR creado manualmente).
+
+**Decisiones nuevas:** Ninguna estructura nueva — sigue ADR-009 (Compose), ADR-010 (RadioServiceAccessor). `TermsActivity.java` se mantiene (sus constantes las reutiliza `OnboardingActivity`).
+
+**Trampas:** GateGuard activo bloqueó cada Edit/Write hasta presentar 4 facts. Costo de sesión elevado (~$9.67) por cantidad de subagentes + rename masivo.
+
+**Pendiente para Sprint 8:**
+- Verificar onboarding en emulador físico (tests instrumentados requieren dispositivo/emulador)
+- Instalar `gh` CLI para automatizar creación de PRs (`winget install GitHub.cli`)
+- `TermsActivity.java` — evaluar si extraer sus constantes a `AppSetting` (Finding 5 MEDIUM pendiente)
+
+---
