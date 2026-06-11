@@ -102,6 +102,7 @@
         <activity
             android:name=".ui.onboarding.OnboardingActivity"
             android:exported="false"
+            android:noHistory="true"
             android:theme="@style/Theme.KV4PHT" />
 
     </application>

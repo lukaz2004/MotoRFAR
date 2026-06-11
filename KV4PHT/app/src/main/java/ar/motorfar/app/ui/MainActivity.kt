@@ -202,8 +202,11 @@ class MainActivity : ComponentActivity() {
                 .associateBy(AppSetting::name, AppSetting::value)
             if (OnboardingHelper.shouldShowOnboarding(settings)) {
                 runOnUiThread {
-                    startActivity(Intent(this, OnboardingActivity::class.java))
-                    finish()
+                    if (!isFinishing && !isDestroyed) {
+                        stopService(Intent(this, RadioAudioService::class.java))
+                        startActivity(Intent(this, OnboardingActivity::class.java))
+                        finish()
+                    }
                 }
             }
             onboardingExecutor.shutdown()

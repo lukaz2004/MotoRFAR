@@ -83,7 +83,7 @@ fun ChannelSelectOnboarding(
                     .padding(vertical = 6.dp)
                     .background(colors.surface, chipShape)
                     .border(if (isSelected || isEmergency) 2.dp else 1.dp, borderColor, chipShape)
-                    .clickable { selected = channel }
+                    .then(if (!isEmergency) Modifier.clickable { selected = channel } else Modifier)
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

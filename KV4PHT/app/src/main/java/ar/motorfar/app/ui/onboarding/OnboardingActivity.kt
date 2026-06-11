@@ -56,7 +56,7 @@ class OnboardingActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        executor.shutdownNow()
+        executor.shutdown()
     }
 
     private fun saveTermsAccepted() {
