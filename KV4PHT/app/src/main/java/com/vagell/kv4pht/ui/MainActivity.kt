@@ -82,11 +82,13 @@ class MainActivity : ComponentActivity() {
     private var showEmergencyDialog by mutableStateOf(false)
     private var pendingAlertType: AlertHelper.AlertType? = null
 
+    private val _beaconIntervalFlow = MutableStateFlow(60_000L)
+
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val beaconManager by lazy {
         GpsBeaconManager(
             onSendBeacon = { radioService?.sendPositionBeacon() },
-            intervalMs   = beaconIntervalSec * 1000L
+            intervalFlow = _beaconIntervalFlow
         )
     }
 
@@ -284,15 +286,17 @@ class MainActivity : ComponentActivity() {
         userAlias          = settings.getOrDefault(AppSetting.SETTING_USER_ALIAS, "MOTO")
         beaconIntervalSec  = settings.getOrDefault(AppSetting.SETTING_BEACON_INTERVAL_SEC, "60").toIntOrNull() ?: 60
         alertVolume        = settings.getOrDefault(AppSetting.SETTING_ALERT_VOLUME, "70").toIntOrNull() ?: 70
+        _beaconIntervalFlow.value = beaconIntervalSec * 1000L
         runOnUiThread {
             _uiState.update { it.copy(activeFrequency = activeFrequencyStr) }
         }
     }
 
     private fun saveAliasSettings(alias: String, intervalSec: Int, volume: Int) {
-        userAlias         = alias
-        beaconIntervalSec = intervalSec
-        alertVolume       = volume
+        userAlias                 = alias
+        beaconIntervalSec         = intervalSec
+        alertVolume               = volume
+        _beaconIntervalFlow.value = intervalSec * 1000L
         executor.execute {
             val db = RadioServiceAccessor.getAppDb(viewModel)
             db.saveAppSetting(AppSetting.SETTING_USER_ALIAS, alias)
