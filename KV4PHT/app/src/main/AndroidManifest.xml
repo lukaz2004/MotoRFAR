@@ -99,6 +99,11 @@
             android:exported="false"
             android:foregroundServiceType="location|mediaPlayback" />
 
+        <activity
+            android:name=".ui.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KV4PHT" />
+
     </application>
 
 </manifest>

@@ -62,6 +62,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import ar.motorfar.app.ui.OnboardingHelper
+import ar.motorfar.app.ui.onboarding.OnboardingActivity
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
@@ -193,6 +195,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val onboardingExecutor = Executors.newSingleThreadExecutor()
+        onboardingExecutor.execute {
+            val settings = RadioServiceAccessor.getAppDb(viewModel).appSettingDao().getAll()
+                .associateBy(AppSetting::name, AppSetting::value)
+            if (OnboardingHelper.shouldShowOnboarding(settings)) {
+                runOnUiThread {
+                    startActivity(Intent(this, OnboardingActivity::class.java))
+                    finish()
+                }
+            }
+            onboardingExecutor.shutdown()
+        }
 
         viewModel.loadDataAsync { loadSettings() }
 
