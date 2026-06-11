@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,7 @@ fun AlertBanner(
 
         Row(
             modifier = Modifier
+                .testTag("alert_banner")
                 .fillMaxWidth()
                 .background(bgColor, bannerShape)
                 .border(1.dp, borderColor, bannerShape)
