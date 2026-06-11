@@ -41,6 +41,7 @@ import com.vagell.kv4pht.R
 import com.vagell.kv4pht.ui.compose.AliasSettingScreen
 import com.vagell.kv4pht.ui.compose.MainScreen
 import com.vagell.kv4pht.ui.compose.MapScreen
+import com.vagell.kv4pht.ui.compose.components.EmergencyConfirmDialog
 import com.vagell.kv4pht.ui.compose.state.GroupMember
 import com.vagell.kv4pht.ui.compose.state.MainUiAction
 import com.vagell.kv4pht.ui.compose.state.MainUiState
@@ -257,21 +258,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 if (showEmergencyDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showEmergencyDialog = false },
-                        title   = { Text("⚠ EMERGENCIA", color = EmergencyText) },
-                        text    = { Text(AlertHelper.getConfirmationText(AlertHelper.AlertType.EMERGENCY)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showEmergencyDialog = false
-                                requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY)
-                            }) { Text("TRANSMITIR", color = EmergencyText) }
+                    EmergencyConfirmDialog(
+                        onConfirm = {
+                            showEmergencyDialog = false
+                            requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY)
                         },
-                        dismissButton = {
-                            TextButton(onClick = { showEmergencyDialog = false }) {
-                                Text("CANCELAR")
-                            }
-                        }
+                        onDismiss = { showEmergencyDialog = false }
                     )
                 }
             }
