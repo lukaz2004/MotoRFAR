@@ -51,7 +51,9 @@ import com.vagell.kv4pht.ui.compose.theme.MotoRFARTheme
 import com.vagell.kv4pht.ui.compose.GpsBeaconManager
 import com.vagell.kv4pht.aprs.parser.APRSPacket
 import com.vagell.kv4pht.aprs.parser.APRSTypes
+import com.vagell.kv4pht.aprs.parser.MessagePacket
 import com.vagell.kv4pht.aprs.parser.PositionField
+import com.vagell.kv4pht.ui.compose.state.ReceivedAlert
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -146,17 +148,43 @@ class MainActivity : ComponentActivity() {
         }
         override fun packetReceived(aprsPacket: APRSPacket) {
             val infoField = RadioServiceAccessor.getAprsPayload(aprsPacket) ?: return
-            val posField  = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField ?: return
             val alias = RadioServiceAccessor.getAprsSourceCall(aprsPacket)?.trim() ?: return
-            val member = GroupMember(
-                alias      = alias,
-                lat        = posField.position.latitude,
-                lon        = posField.position.longitude,
-                distanceM  = 0,
-                bearing    = 0f,
-                lastSeenMs = System.currentTimeMillis()
-            )
-            _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+
+            val posField = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField
+            if (posField != null) {
+                val member = GroupMember(
+                    alias      = alias,
+                    lat        = posField.position.latitude,
+                    lon        = posField.position.longitude,
+                    distanceM  = 0,
+                    bearing    = 0f,
+                    lastSeenMs = System.currentTimeMillis()
+                )
+                _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+            }
+
+            val msgPacket = infoField as? MessagePacket
+            if (msgPacket != null) {
+                val body = msgPacket.messageBody ?: return
+                val alertType = when {
+                    body.contains("ALERTA")        -> AlertHelper.AlertType.EMERGENCY
+                    body.contains("DETENCION")     -> AlertHelper.AlertType.STOP
+                    body.contains("REAGRUPAMIENTO") -> AlertHelper.AlertType.REGROUP
+                    else                           -> null
+                }
+                if (alertType != null) {
+                    val alert = ReceivedAlert(
+                        type          = alertType,
+                        fromAlias     = alias,
+                        receivedAtMs  = System.currentTimeMillis()
+                    )
+                    _uiState.update { it.copy(activeAlert = alert) }
+                    ToneHelper.playAlertBeep(alertVolume / 100f)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        _uiState.update { if (it.activeAlert?.fromAlias == alias) it.copy(activeAlert = null) else it }
+                    }, 30_000L)
+                }
+            }
         }
     }
 
@@ -209,7 +237,11 @@ class MainActivity : ComponentActivity() {
                         modifier       = Modifier.padding(innerPadding)
                     ) {
                         composable("main") {
-                            MainScreen(state = state, onAction = ::handleAction)
+                            MainScreen(
+                                state          = state,
+                                onAction       = ::handleAction,
+                                onDismissAlert = { _uiState.update { it.copy(activeAlert = null) } }
+                            )
                         }
                         composable("map") {
                             MapScreen(groupMembers = groupMembers)

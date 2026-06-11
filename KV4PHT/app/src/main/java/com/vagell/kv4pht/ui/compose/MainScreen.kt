@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.vagell.kv4pht.ui.compose.components.AlertBanner
 import com.vagell.kv4pht.ui.compose.components.AlertButtonsPanel
 import com.vagell.kv4pht.ui.compose.components.AppStatusBar
 import com.vagell.kv4pht.ui.compose.components.ChannelRow
@@ -27,6 +28,7 @@ import com.vagell.kv4pht.ui.compose.theme.MotoRFARTheme
 fun MainScreen(
     state: MainUiState,
     onAction: (MainUiAction) -> Unit,
+    onDismissAlert: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -43,7 +45,12 @@ fun MainScreen(
             channelName = state.activeChannelName,
             sMeterLevel = state.sMeterLevel
         )
-        Spacer(Modifier.height(8.dp))
+        AlertBanner(
+            alert = state.activeAlert,
+            onDismiss = onDismissAlert,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+        Spacer(Modifier.height(4.dp))
         ChannelRow(
             channels       = state.channels,
             activeFreq     = state.activeFrequency,
