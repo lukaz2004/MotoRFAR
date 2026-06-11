@@ -155,3 +155,24 @@ La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan a
 - Intervalo de baliza: `GpsBeaconManager` actualmente usa `beaconIntervalSec` fijo al iniciar — si cambia en settings, no recrea el manager hasta reinicio
 
 ---
+
+## 2026-06-10 · Sesión 6 — Sprint 6 ejecutado (Canales nombrados + Alertas grupales)
+
+**Lo que se hizo:**
+
+- Branch `sprint/6-channels-alerts` ejecutado completo (Fases A → B → C → D)
+- A: `GpsBeaconManager.kt` — `intervalMs: Long` reemplazado por `intervalFlow: Flow<Long>` + `collectLatest`; `_beaconIntervalFlow` en MainActivity actualizado por `loadSettings()` y `saveAliasSettings()`. `GpsBeaconManagerHotReloadTest.kt` — 3 tests nuevos. 102 tests en total.
+- B: `ArgentinaChannels.java` — canales renombrados GRUPO/ALTERNATIVO/EMERGENCIA, `PRELOADED_VALUE` bumpeado a `v6_channels_tactical` (fuerza re-seed en DB). `ChannelSelectorTest.kt` nuevo. 106 tests.
+- C: `ReceivedAlert.kt` + `activeAlert: ReceivedAlert?` en `MainUiState`. `AlertBanner.kt` con `AnimatedVisibility` (slide+fade). Detección de paquetes APRS entrantes con keywords ALERTA/DETENCION/REAGRUPAMIENTO → banner + `playAlertBeep` + auto-dismiss 30s. 124 tests.
+- D: `EmergencyConfirmDialog.kt` — hold-2s con `LinearProgressIndicator` animado via `animateFloatAsState`, `detectTapGestures.onPress` + `tryAwaitRelease`. Reemplaza `AlertDialog` legacy en MainActivity. 130 tests.
+- `assembleDebug` SUCCESSFUL al cierre.
+
+**Decisiones nuevas:** Ninguna — siguió patrones ADR-010 (RadioServiceAccessor bridge) y ADR-009 (Kotlin Compose).
+
+**Pendiente para Sprint 7:**
+- Push + PR de este branch
+- Tests instrumented en emulador (MainScreenTest.kt actualizado para GRUPO)
+- Verificar recepción real de alertas con SA818-V + dos dispositivos
+- Verificar hot-reload real del beacon interval en campo
+
+---

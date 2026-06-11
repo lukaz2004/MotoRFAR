@@ -41,6 +41,7 @@ import com.vagell.kv4pht.R
 import com.vagell.kv4pht.ui.compose.AliasSettingScreen
 import com.vagell.kv4pht.ui.compose.MainScreen
 import com.vagell.kv4pht.ui.compose.MapScreen
+import com.vagell.kv4pht.ui.compose.components.EmergencyConfirmDialog
 import com.vagell.kv4pht.ui.compose.state.GroupMember
 import com.vagell.kv4pht.ui.compose.state.MainUiAction
 import com.vagell.kv4pht.ui.compose.state.MainUiState
@@ -51,7 +52,9 @@ import com.vagell.kv4pht.ui.compose.theme.MotoRFARTheme
 import com.vagell.kv4pht.ui.compose.GpsBeaconManager
 import com.vagell.kv4pht.aprs.parser.APRSPacket
 import com.vagell.kv4pht.aprs.parser.APRSTypes
+import com.vagell.kv4pht.aprs.parser.MessagePacket
 import com.vagell.kv4pht.aprs.parser.PositionField
+import com.vagell.kv4pht.ui.compose.state.ReceivedAlert
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -82,11 +85,13 @@ class MainActivity : ComponentActivity() {
     private var showEmergencyDialog by mutableStateOf(false)
     private var pendingAlertType: AlertHelper.AlertType? = null
 
+    private val _beaconIntervalFlow = MutableStateFlow(60_000L)
+
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val beaconManager by lazy {
         GpsBeaconManager(
             onSendBeacon = { radioService?.sendPositionBeacon() },
-            intervalMs   = beaconIntervalSec * 1000L
+            intervalFlow = _beaconIntervalFlow
         )
     }
 
@@ -144,17 +149,43 @@ class MainActivity : ComponentActivity() {
         }
         override fun packetReceived(aprsPacket: APRSPacket) {
             val infoField = RadioServiceAccessor.getAprsPayload(aprsPacket) ?: return
-            val posField  = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField ?: return
             val alias = RadioServiceAccessor.getAprsSourceCall(aprsPacket)?.trim() ?: return
-            val member = GroupMember(
-                alias      = alias,
-                lat        = posField.position.latitude,
-                lon        = posField.position.longitude,
-                distanceM  = 0,
-                bearing    = 0f,
-                lastSeenMs = System.currentTimeMillis()
-            )
-            _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+
+            val posField = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField
+            if (posField != null) {
+                val member = GroupMember(
+                    alias      = alias,
+                    lat        = posField.position.latitude,
+                    lon        = posField.position.longitude,
+                    distanceM  = 0,
+                    bearing    = 0f,
+                    lastSeenMs = System.currentTimeMillis()
+                )
+                _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+            }
+
+            val msgPacket = infoField as? MessagePacket
+            if (msgPacket != null) {
+                val body = msgPacket.messageBody ?: return
+                val alertType = when {
+                    body.contains("ALERTA")        -> AlertHelper.AlertType.EMERGENCY
+                    body.contains("DETENCION")     -> AlertHelper.AlertType.STOP
+                    body.contains("REAGRUPAMIENTO") -> AlertHelper.AlertType.REGROUP
+                    else                           -> null
+                }
+                if (alertType != null) {
+                    val alert = ReceivedAlert(
+                        type          = alertType,
+                        fromAlias     = alias,
+                        receivedAtMs  = System.currentTimeMillis()
+                    )
+                    _uiState.update { it.copy(activeAlert = alert) }
+                    ToneHelper.playAlertBeep(alertVolume / 100f)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        _uiState.update { if (it.activeAlert?.fromAlias == alias) it.copy(activeAlert = null) else it }
+                    }, 30_000L)
+                }
+            }
         }
     }
 
@@ -207,7 +238,11 @@ class MainActivity : ComponentActivity() {
                         modifier       = Modifier.padding(innerPadding)
                     ) {
                         composable("main") {
-                            MainScreen(state = state, onAction = ::handleAction)
+                            MainScreen(
+                                state          = state,
+                                onAction       = ::handleAction,
+                                onDismissAlert = { _uiState.update { it.copy(activeAlert = null) } }
+                            )
                         }
                         composable("map") {
                             MapScreen(groupMembers = groupMembers)
@@ -223,21 +258,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 if (showEmergencyDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showEmergencyDialog = false },
-                        title   = { Text("⚠ EMERGENCIA", color = EmergencyText) },
-                        text    = { Text(AlertHelper.getConfirmationText(AlertHelper.AlertType.EMERGENCY)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showEmergencyDialog = false
-                                requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY)
-                            }) { Text("TRANSMITIR", color = EmergencyText) }
+                    EmergencyConfirmDialog(
+                        onConfirm = {
+                            showEmergencyDialog = false
+                            requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY)
                         },
-                        dismissButton = {
-                            TextButton(onClick = { showEmergencyDialog = false }) {
-                                Text("CANCELAR")
-                            }
-                        }
+                        onDismiss = { showEmergencyDialog = false }
                     )
                 }
             }
@@ -284,15 +310,17 @@ class MainActivity : ComponentActivity() {
         userAlias          = settings.getOrDefault(AppSetting.SETTING_USER_ALIAS, "MOTO")
         beaconIntervalSec  = settings.getOrDefault(AppSetting.SETTING_BEACON_INTERVAL_SEC, "60").toIntOrNull() ?: 60
         alertVolume        = settings.getOrDefault(AppSetting.SETTING_ALERT_VOLUME, "70").toIntOrNull() ?: 70
+        _beaconIntervalFlow.value = beaconIntervalSec * 1000L
         runOnUiThread {
             _uiState.update { it.copy(activeFrequency = activeFrequencyStr) }
         }
     }
 
     private fun saveAliasSettings(alias: String, intervalSec: Int, volume: Int) {
-        userAlias         = alias
-        beaconIntervalSec = intervalSec
-        alertVolume       = volume
+        userAlias                 = alias
+        beaconIntervalSec         = intervalSec
+        alertVolume               = volume
+        _beaconIntervalFlow.value = intervalSec * 1000L
         executor.execute {
             val db = RadioServiceAccessor.getAppDb(viewModel)
             db.saveAppSetting(AppSetting.SETTING_USER_ALIAS, alias)

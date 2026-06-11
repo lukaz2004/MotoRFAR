@@ -15,13 +15,13 @@ import java.util.List;
 public class ArgentinaChannels {
 
     public static final String PRELOADED_KEY   = "argentina_channels_preloaded";
-    public static final String PRELOADED_VALUE = "v4_principal_vhf";
+    public static final String PRELOADED_VALUE = "v6_channels_tactical";
 
     public static List<ChannelMemory> getAll() {
         return Arrays.asList(
-            channel("Principal",       "139.9700"),
-            channel("Alternativo", "138.5100"),
-            channel("Emergencia",  "140.9700")
+            channel("GRUPO",       "139.9700"),
+            channel("ALTERNATIVO", "138.5100"),
+            channel("EMERGENCIA",  "140.9700")
         );
     }
 
