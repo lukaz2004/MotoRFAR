@@ -132,3 +132,26 @@ La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan a
 **Pendiente:** push + PR, tests instrumented en dispositivo, GroupMember conectado a GPS real (Sprint 5).
 
 ---
+
+## 2026-06-10 · Sesión 5 — Sprint 5 ejecutado (GPS + Alias + Sonidos)
+
+**Lo que se hizo:**
+
+- Branch `sprint/5-gps-alias-sounds` creado desde `main` (post Sprint 4)
+- A: `AliasValidator.kt` + `SETTING_USER_ALIAS/BEACON_INTERVAL/ALERT_VOLUME` + `AliasSettingScreen.kt` (3er tab CONFIG) — 7 tests nuevos — commit `feat(A)`
+- B: `GpsBeaconManager.kt` (coroutines, llama `sendPositionBeacon()` cada N seg), `GroupMember.isStale()`, decode `packetReceived` → `GroupMember`, `MapScreen` conectado a `_groupMembers` StateFlow real — 10 tests nuevos — commit `feat(B)`  
+- C: `ToneHelper.java` con `playPttDown/Up/AlertBeep/EmergencyBeep/StaticBurst` via `AudioTrack`, conectado en `handleAction` y `moduleTxStateChanged` — 7 tests nuevos — commit `feat(C)`
+- `RadioServiceAccessor.java` extendido con `getAprsPayload()` / `getAprsSourceCall()` (bridge APRSPacket Kotlin↔Lombok)
+- `kotlinx-coroutines-test:1.7.3` agregado para tests de GpsBeaconManager con tiempo virtual
+
+**Tests al cierre:** 99/99 PASS. `assembleDebug` SUCCESSFUL.
+
+**Decisiones:** RadioServiceAccessor bridge extendido para APRSPacket (mismo patrón ADR-010). Alias como callsign APRS — se pasa al servicio en `startAndBindService()`.
+
+**Pendiente para Sprint 6:**
+- Push + PR de este branch
+- Tests instrumented en emulador (MainScreenTest.kt)
+- Verificar transmisión GPS real con SA818-V conectado
+- Intervalo de baliza: `GpsBeaconManager` actualmente usa `beaconIntervalSec` fijo al iniciar — si cambia en settings, no recrea el manager hasta reinicio
+
+---

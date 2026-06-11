@@ -1,9 +1,92 @@
 package com.vagell.kv4pht.ui;
 
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioTrack;
 import java.util.List;
 import java.util.Arrays;
 
 public class ToneHelper {
+
+    private static final int SAMPLE_RATE = 44100;
+
+    public static void playPttDown(float volume) {
+        playTone(800, 30, volume, true);
+    }
+
+    public static void playPttUp(float volume) {
+        playTone(600, 30, volume, true);
+    }
+
+    public static void playAlertBeep(float volume) {
+        playTone(1200, 100, volume, false);
+        sleep(50);
+        playTone(1200, 100, volume, false);
+    }
+
+    public static void playEmergencyBeep(float volume) {
+        playTone(800,  150, volume, false);
+        sleep(30);
+        playTone(1000, 150, volume, false);
+        sleep(30);
+        playTone(1200, 150, volume, false);
+    }
+
+    public static void playStaticBurst(float volume) {
+        playNoise(80, volume * 0.3f);
+    }
+
+    private static void playTone(int freqHz, int durationMs, float volume, boolean fadeOut) {
+        try {
+            int numSamples = SAMPLE_RATE * durationMs / 1000;
+            short[] samples = new short[numSamples];
+            for (int i = 0; i < numSamples; i++) {
+                double fade = fadeOut ? 1.0 - (double) i / numSamples : 1.0;
+                samples[i] = (short) (Short.MAX_VALUE * volume * fade
+                        * Math.sin(2 * Math.PI * freqHz * i / SAMPLE_RATE));
+            }
+            writeAndPlay(samples);
+        } catch (Exception ignored) {}
+    }
+
+    private static void playNoise(int durationMs, float volume) {
+        try {
+            int numSamples = SAMPLE_RATE * durationMs / 1000;
+            short[] samples = new short[numSamples];
+            for (int i = 0; i < numSamples; i++) {
+                samples[i] = (short) (Short.MAX_VALUE * volume * (Math.random() * 2 - 1));
+            }
+            writeAndPlay(samples);
+        } catch (Exception ignored) {}
+    }
+
+    private static void writeAndPlay(short[] samples) {
+        int minBuf = AudioTrack.getMinBufferSize(
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+        int bufSize = Math.max(minBuf, samples.length * 2);
+        AudioTrack track = new AudioTrack.Builder()
+                .setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build())
+                .setAudioFormat(new AudioFormat.Builder()
+                        .setSampleRate(SAMPLE_RATE)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build())
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .setBufferSizeInBytes(bufSize)
+                .build();
+        track.write(samples, 0, samples.length);
+        track.play();
+        track.release();
+    }
+
+    private static void sleep(int ms) {
+        try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+    }
     // Valid tones as doubles for numeric comparison
     private static final double[] VALID_TONE_VALUES = {
             67, 71.9, 74.4, 77, 79.7, 82.5, 85.4, 88.5,
