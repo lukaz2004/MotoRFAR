@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.vagell.kv4pht.data.ChannelMemory
 import com.vagell.kv4pht.ui.compose.MainScreen
 import com.vagell.kv4pht.ui.compose.state.MainUiState
 import com.vagell.kv4pht.ui.compose.theme.AppTheme
@@ -47,6 +48,26 @@ class MainScreenTest {
     @Test
     fun mainScreen_showsEmergencyButton() {
         launchMainScreen()
+        composeTestRule.onNodeWithText("EMERGENCIA").assertIsDisplayed()
+    }
+
+    @Test
+    fun channelSelector_shows_three_channels() {
+        val channels = listOf(
+            ChannelMemory().apply { name = "GRUPO";       frequency = "139.9700" },
+            ChannelMemory().apply { name = "ALTERNATIVO"; frequency = "138.5100" },
+            ChannelMemory().apply { name = "EMERGENCIA";  frequency = "140.9700" }
+        )
+        composeTestRule.setContent {
+            MotoRFARTheme(AppTheme.GREEN) {
+                MainScreen(
+                    state    = MainUiState.preview().copy(channels = channels),
+                    onAction = {}
+                )
+            }
+        }
+        composeTestRule.onNodeWithText("GRUPO").assertIsDisplayed()
+        composeTestRule.onNodeWithText("ALTERNATIVO").assertIsDisplayed()
         composeTestRule.onNodeWithText("EMERGENCIA").assertIsDisplayed()
     }
 }
