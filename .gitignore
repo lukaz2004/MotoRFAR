@@ -41,3 +41,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Claude Code / herramientas locales
+.claude/
+docs/superpowers/

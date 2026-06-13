@@ -28,7 +28,7 @@ Lo minimo viable que un grupo real puede usar en una salida.
 - [ ] Configuracion de alias del usuario (sin login, sin cuenta)
 - [ ] T&C reescrito citando Res. 5/2015
 - [ ] Onboarding inicial: aceptar T&C, configurar alias, primer canal
-- [ ] Indicadores visuales TX/RX/GPS/BAT
+- [ ] Animación PTT durante TX: 3 anillos radiales que se expanden desde el botón (estilo señal RF), staggered, fade-out al expandirse. Solo activos mientras `isTxActive == true`. Implementar en `PttButton.kt` con `InfiniteTransition` + `drawCircle` en Canvas Compose. **Opción A elegida** (descartadas: osciloscopio orbital, radar sweep, espectro de barras).
 - [ ] Sonidos: beep alerta, click PTT, static burst
 - [ ] Modo "Solo escucha" para acompañantes (TX deshabilitado)
 
@@ -59,6 +59,7 @@ Features que solo tiene sentido construir despues de feedback real de v1.0.
 - [ ] Voz a texto para mensajes urgentes en marcha
 - [ ] Grafo de calidad de enlace mutuo (quien escucha a quien)
 - [ ] CTCSS por subgrupo (codigos personalizables)
+- [ ] Filtro de grupo por nombre en beacon GPS — campo opcional en el paquete de posición que permite que dos grupos en el mismo canal (139.970) no se mezclen en el mapa. Prerequisito más simple que CTCSS para separar grupos cercanos. Considerar implementar antes que CTCSS.
 - [ ] Exportar tracks GPX de la salida
 
 ### Documentacion

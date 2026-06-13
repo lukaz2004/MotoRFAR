@@ -60,11 +60,12 @@ Si alguno falta, recomendar instalación pero no bloquear el trabajo.
 
 ## Próxima acción al abrir el proyecto
 
-El plan del sprint actual ya está escrito y auditado en `docs/SPRINT-1.md` — **no hacer brainstorming de cosas ya decididas** (los ADRs de `docs/03-DECISIONES.md` cubren las decisiones de fondo). Ir directo a ejecución:
+El plan del sprint actual ya está escrito y auditado en `docs/SPRINT-7.md` — **no hacer brainstorming de cosas ya decididas** (los ADRs de `docs/03-DECISIONES.md` cubren las decisiones de fondo). Ir directo a ejecución:
 
 ```
-Leé docs/SPRINT-1.md. Es el design doc con la auditoría de código incluida.
-Usá /write-plan tomando SPRINT-1.md como input y ejecutá por fases en orden (A → B → C → D),
+Leé docs/SPRINT-7.md. Es el design doc con la auditoría de código incluida.
+Creá el branch sprint/7-onboarding-package desde main.
+Usá /write-plan tomando SPRINT-7.md como input y ejecutá por fases en orden (A → B → C → D),
 con TDD: test primero, código después. Commit atómico al cerrar cada fase.
 ```
 
