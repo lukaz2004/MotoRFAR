@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ fun MainScreen(
     state: MainUiState,
     onAction: (MainUiAction) -> Unit,
     onDismissAlert: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -49,7 +51,7 @@ fun MainScreen(
             .systemBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Barra superior: status + toggle escucha
+        // Barra superior: status + toggle escucha + acceso a config
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -61,13 +63,22 @@ fun MainScreen(
             )
             IconToggleButton(
                 checked         = state.isListenOnly,
-                onCheckedChange = { onAction(MainUiAction.ToggleListenOnly) },
-                modifier        = Modifier.padding(end = 4.dp)
+                onCheckedChange = { onAction(MainUiAction.ToggleListenOnly) }
             ) {
                 Icon(
                     painter            = painterResource(R.drawable.ic_headphones),
                     contentDescription = if (state.isListenOnly) "Solo escucha activo" else "Modo normal",
                     tint               = if (state.isListenOnly) colors.accent else colors.textSecondary
+                )
+            }
+            IconButton(
+                onClick  = onOpenSettings,
+                modifier = Modifier.padding(end = 4.dp)
+            ) {
+                Icon(
+                    painter            = painterResource(R.drawable.ic_settings),
+                    contentDescription = "Configuración",
+                    tint               = colors.textSecondary
                 )
             }
         }
@@ -111,8 +122,9 @@ fun MainScreen(
         Spacer(Modifier.height(12.dp))
         PttButton(
             isTransmitting = state.isTxActive,
-            // PTT deshabilitado en modo escucha — EMERGENCIA sigue activa por diseño
-            enabled        = state.isConnected && !state.isListenOnly,
+            // PTT habilitado salvo en modo escucha. Sin radio conectada funciona
+            // en modo simulación (sonido + animación, sin TX real).
+            enabled        = !state.isListenOnly,
             onPttDown      = { onAction(MainUiAction.PttPressed) },
             onPttUp        = { onAction(MainUiAction.PttReleased) }
         )

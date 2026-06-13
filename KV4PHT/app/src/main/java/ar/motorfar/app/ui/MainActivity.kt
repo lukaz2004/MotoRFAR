@@ -107,6 +107,13 @@ class MainActivity : ComponentActivity() {
         pendingAlertType = null
     }
 
+    // Pedido de ubicación para el mapa (solo refresca la pantalla, sin TX)
+    private val mapLocationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        _uiState.update { it.copy(locationGranted = granted) }
+    }
+
     // ── ServiceConnection ─────────────────────────────────────────────
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -228,25 +235,33 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     containerColor = colors.background,
                     bottomBar = {
+                        // Barra inferior: solo muestra los destinos a los que SÍ podés ir
+                        // (el tab activo se oculta — navegación tipo "ir a otra parte")
                         NavigationBar(containerColor = colors.surface) {
-                            NavigationBarItem(
-                                selected = currentRoute == "main",
-                                onClick  = { navController.navigate("main") { launchSingleTop = true } },
-                                icon     = { Icon(painterResource(R.drawable.ic_radio), contentDescription = "PTT") },
-                                label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
-                            )
-                            NavigationBarItem(
-                                selected = currentRoute == "map",
-                                onClick  = { navController.navigate("map") { launchSingleTop = true } },
-                                icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
-                                label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
-                            )
-                            NavigationBarItem(
-                                selected = currentRoute == "settings",
-                                onClick  = { navController.navigate("settings") { launchSingleTop = true } },
-                                icon     = { Icon(painterResource(R.drawable.ic_settings), contentDescription = "CONFIG") },
-                                label    = { androidx.compose.material3.Text("CONFIG", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
-                            )
+                            if (currentRoute != "main") {
+                                NavigationBarItem(
+                                    selected = false,
+                                    onClick  = { navController.navigate("main") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT") },
+                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
+                                )
+                            }
+                            if (currentRoute != "map") {
+                                NavigationBarItem(
+                                    selected = false,
+                                    onClick  = { navController.navigate("map") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
+                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
+                                )
+                            }
+                            if (currentRoute != "settings") {
+                                NavigationBarItem(
+                                    selected = false,
+                                    onClick  = { navController.navigate("settings") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_settings), contentDescription = "CONFIG") },
+                                    label    = { androidx.compose.material3.Text("CONFIG", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
+                                )
+                            }
                         }
                     }
                 ) { innerPadding ->
@@ -259,11 +274,26 @@ class MainActivity : ComponentActivity() {
                             MainScreen(
                                 state          = state,
                                 onAction       = ::handleAction,
-                                onDismissAlert = { _uiState.update { it.copy(activeAlert = null) } }
+                                onDismissAlert = { _uiState.update { it.copy(activeAlert = null) } },
+                                onOpenSettings = { navController.navigate("settings") { launchSingleTop = true } }
                             )
                         }
                         composable("map") {
-                            MapScreen(groupMembers = groupMembers)
+                            // Al entrar al mapa, asegura el permiso de ubicación
+                            androidx.compose.runtime.LaunchedEffect(Unit) {
+                                val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+                                    this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION
+                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                if (granted) {
+                                    _uiState.update { it.copy(locationGranted = true) }
+                                } else {
+                                    mapLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                                }
+                            }
+                            MapScreen(
+                                groupMembers    = groupMembers,
+                                locationGranted = state.locationGranted
+                            )
                         }
                         composable("settings") {
                             AliasSettingScreen(
@@ -360,11 +390,26 @@ class MainActivity : ComponentActivity() {
             MainUiAction.PttPressed    -> {
                 // En modo escucha el PTT no transmite (guard de seguridad)
                 if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
-                ToneHelper.playPttDown(vol); radioService?.startPtt()
+                ToneHelper.playPttDown(vol)
+                val svc = radioService
+                if (svc != null && uiState.value.isConnected) {
+                    svc.startPtt()
+                } else {
+                    // Modo simulación: sin radio, solo feedback visual (anillos TX)
+                    _uiState.update { it.copy(isTxActive = true) }
+                }
             }
             MainUiAction.PttReleased   -> {
                 if (listenOnly) return
-                ToneHelper.playPttUp(vol);   radioService?.endPtt()
+                ToneHelper.playPttUp(vol)
+                val svc = radioService
+                if (svc != null && uiState.value.isConnected) {
+                    svc.endPtt()
+                } else {
+                    // Fin de simulación
+                    _uiState.update { it.copy(isTxActive = false) }
+                    ToneHelper.playStaticBurst(vol)
+                }
             }
             is MainUiAction.ChannelSelected -> tuneToChannel(action.freq)
             // EMERGENCIA siempre disponible, incluso en modo escucha (seguridad)
