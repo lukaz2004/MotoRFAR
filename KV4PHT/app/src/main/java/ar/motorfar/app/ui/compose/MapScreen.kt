@@ -3,8 +3,11 @@ package ar.motorfar.app.ui.compose
 import android.Manifest
 import android.content.pm.PackageManager
 import android.preference.PreferenceManager
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,18 +16,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.motorfar.app.R
 import ar.motorfar.app.ui.compose.state.GroupMember
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
+import ar.motorfar.app.ui.compose.theme.MotoRFARColors
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -42,11 +50,15 @@ private const val INITIAL_ZOOM = 15.0
 fun MapScreen(
     groupMembers: List<GroupMember>,
     locationGranted: Boolean = false,
+    headingDeg: Float? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val colors = LocalMotoRFARColors.current
     val accentArgb = colors.accent.toArgb()
+
+    // Estado de la UI del mapa
+    var routeOriented by remember { mutableStateOf(false) }  // mapa rota según el rumbo
 
     val hasLocationPermission = locationGranted || remember {
         ContextCompat.checkSelfPermission(
@@ -97,6 +109,17 @@ fun MapScreen(
         }
     }
 
+    // Orientación a la ruta: rota el mapa para que "arriba" sea hacia donde vas.
+    // OSMDroid usa mapOrientation = -rumbo (el mapa gira opuesto al heading).
+    androidx.compose.runtime.LaunchedEffect(routeOriented, headingDeg) {
+        if (routeOriented && headingDeg != null) {
+            mapView.mapOrientation = -headingDeg
+        } else if (!routeOriented) {
+            mapView.mapOrientation = 0f  // norte arriba
+        }
+        mapView.invalidate()
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -125,31 +148,116 @@ fun MapScreen(
             }
         )
 
-        // Botón "centrar en mi ubicación"
-        Surface(
-            shape    = CircleShape,
-            color    = colors.surface,
+        // Controles del mapa (columna derecha): zoom, orientación, mi ubicación
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .size(48.dp)
-                .clickable {
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Zoom +
+            MapControlButton(
+                label   = "+",
+                colors  = colors,
+                onClick = { mapView.controller.zoomIn() }
+            )
+            // Zoom −
+            MapControlButton(
+                label   = "−",
+                colors  = colors,
+                onClick = { mapView.controller.zoomOut() }
+            )
+            // Orientación a la ruta (toggle)
+            MapControlButton(
+                iconRes   = R.drawable.ic_pin,
+                colors    = colors,
+                active    = routeOriented,
+                onClick   = {
+                    routeOriented = !routeOriented
+                    if (routeOriented && headingDeg != null) {
+                        mapView.mapOrientation = -headingDeg
+                    } else {
+                        mapView.mapOrientation = 0f
+                    }
+                    mapView.invalidate()
+                }
+            )
+            // Centrar en mi ubicación
+            MapControlButton(
+                iconRes = R.drawable.ic_pin,
+                colors  = colors,
+                accent  = true,
+                onClick = {
                     val loc = myLocationOverlay.myLocation
                     if (loc != null) {
                         mapView.controller.animateTo(loc)
                         mapView.controller.setZoom(17.0)
                     } else {
-                        // Sin fix GPS aún: vuelve al Obelisco
                         mapView.controller.animateTo(OBELISCO)
                         mapView.controller.setZoom(INITIAL_ZOOM)
                     }
                 }
-        ) {
-            Box(contentAlignment = Alignment.Center) {
+            )
+        }
+
+        // Indicador de modo "orientado a ruta"
+        if (routeOriented) {
+            Surface(
+                color    = colors.surface.copy(alpha = 0.85f),
+                shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 12.dp)
+            ) {
+                androidx.compose.material3.Text(
+                    text     = "▲ RUTA ARRIBA",
+                    color    = colors.accent,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+/** Botón circular de control del mapa (zoom, orientación, ubicación). */
+@Composable
+private fun MapControlButton(
+    colors: MotoRFARColors,
+    onClick: () -> Unit,
+    label: String? = null,
+    iconRes: Int? = null,
+    active: Boolean = false,
+    accent: Boolean = false
+) {
+    val tint = when {
+        accent -> colors.accent
+        active -> colors.accent
+        else   -> colors.textSecondary
+    }
+    Surface(
+        shape    = CircleShape,
+        color    = if (active) colors.accent.copy(alpha = 0.18f) else colors.surface,
+        border   = androidx.compose.foundation.BorderStroke(
+            1.dp, if (active) colors.accent else colors.borderSubtle
+        ),
+        modifier = Modifier.size(46.dp).clickable(onClick = onClick)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            if (label != null) {
+                androidx.compose.material3.Text(
+                    text     = label,
+                    color    = tint,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize = 24.sp
+                )
+            } else if (iconRes != null) {
                 Icon(
-                    painter            = painterResource(R.drawable.ic_pin),
-                    contentDescription = "Mi ubicación",
-                    tint               = colors.accent
+                    painter            = painterResource(iconRes),
+                    contentDescription = null,
+                    tint               = tint
                 )
             }
         }

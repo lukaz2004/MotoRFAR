@@ -14,7 +14,8 @@ data class MainUiState(
     val theme: AppTheme                 = AppTheme.GREEN,
     val activeAlert: ReceivedAlert?     = null,
     val isListenOnly: Boolean           = false,
-    val locationGranted: Boolean        = false
+    val locationGranted: Boolean        = false,
+    val headingDeg: Float?              = null
 ) {
     companion object {
         fun preview() = MainUiState(

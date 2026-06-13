@@ -51,6 +51,7 @@ import ar.motorfar.app.ui.compose.theme.EmergencyText
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARTheme
 import ar.motorfar.app.ui.compose.GpsBeaconManager
+import ar.motorfar.app.ui.compose.MovementState
 import ar.motorfar.app.aprs.parser.APRSPacket
 import ar.motorfar.app.aprs.parser.APRSTypes
 import ar.motorfar.app.aprs.parser.MessagePacket
@@ -83,6 +84,11 @@ class MainActivity : ComponentActivity() {
     private var beaconIntervalSec: Int = 60
     private var alertVolume: Int = 70
     private var listenOnly: Boolean = false
+    private var smartBeaconEnabled: Boolean = true
+
+    // Estado de movimiento del GPS (alimenta SmartBeaconing)
+    @Volatile private var currentSpeedKmh: Double = 0.0
+    @Volatile private var currentHeadingDeg: Double? = null
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
 
@@ -97,9 +103,21 @@ class MainActivity : ComponentActivity() {
     private val beaconManager by lazy {
         GpsBeaconManager(
             // En modo escucha NO se emiten beacons de posición (RX-only real)
-            onSendBeacon = { if (!listenOnly) radioService?.sendPositionBeacon() },
-            intervalFlow = _beaconIntervalFlow
+            onSendBeacon         = { if (!listenOnly) radioService?.sendPositionBeacon() },
+            intervalFlow         = _beaconIntervalFlow,
+            smartEnabledProvider = { smartBeaconEnabled && !listenOnly },
+            movementProvider     = { MovementState(currentSpeedKmh, currentHeadingDeg) }
         )
+    }
+
+    // Listener de GPS para alimentar SmartBeaconing con velocidad y rumbo reales
+    private val movementListener = android.location.LocationListener { loc ->
+        // speed viene en m/s → km/h
+        currentSpeedKmh = (loc.speed * 3.6).toDouble()
+        if (loc.hasBearing() && loc.speed > 0.5f) {
+            currentHeadingDeg = loc.bearing.toDouble()
+            _uiState.update { it.copy(headingDeg = loc.bearing) }
+        }
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -315,7 +333,8 @@ class MainActivity : ComponentActivity() {
                             }
                             MapScreen(
                                 groupMembers    = groupMembers,
-                                locationGranted = state.locationGranted
+                                locationGranted = state.locationGranted,
+                                headingDeg      = state.headingDeg
                             )
                         }
                         composable("settings") {
@@ -323,7 +342,17 @@ class MainActivity : ComponentActivity() {
                                 currentAlias             = userAlias,
                                 currentBeaconIntervalSec = beaconIntervalSec,
                                 currentVolume            = alertVolume,
+                                currentSmartBeacon       = smartBeaconEnabled,
                                 onSave                   = ::saveAliasSettings,
+                                onToggleSmartBeacon      = { enabled ->
+                                    smartBeaconEnabled = enabled
+                                    // Reinicia el balizado con el nuevo modo
+                                    _beaconIntervalFlow.value = beaconIntervalSec * 1000L
+                                    executor.execute {
+                                        RadioServiceAccessor.getAppDb(viewModel)
+                                            .saveAppSetting(AppSetting.SETTING_SMART_BEACON, enabled.toString())
+                                    }
+                                },
                                 onDownloadMaps           = {
                                     android.widget.Toast.makeText(
                                         this@MainActivity,
@@ -349,15 +378,40 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         startAndBindService()
         beaconManager.start(serviceScope)
+        startMovementUpdates()
     }
 
     override fun onStop() {
         super.onStop()
         beaconManager.stop()
+        stopMovementUpdates()
         if (radioServiceBound) {
             unbindService(serviceConnection)
             radioServiceBound = false
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startMovementUpdates() {
+        val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasPerm) return
+        try {
+            val lm = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            // Actualizaciones cada 1s o 2m para tener velocidad/rumbo frescos
+            lm.requestLocationUpdates(
+                android.location.LocationManager.GPS_PROVIDER,
+                1000L, 2f, movementListener
+            )
+        } catch (e: Exception) { /* GPS no disponible */ }
+    }
+
+    private fun stopMovementUpdates() {
+        try {
+            val lm = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            lm.removeUpdates(movementListener)
+        } catch (e: Exception) { }
     }
 
     override fun onDestroy() {
@@ -386,6 +440,7 @@ class MainActivity : ComponentActivity() {
         beaconIntervalSec  = settings.getOrDefault(AppSetting.SETTING_BEACON_INTERVAL_SEC, "60").toIntOrNull() ?: 60
         alertVolume        = settings.getOrDefault(AppSetting.SETTING_ALERT_VOLUME, "70").toIntOrNull() ?: 70
         listenOnly         = settings.getOrDefault(AppSetting.SETTING_LISTEN_ONLY, "false").toBoolean()
+        smartBeaconEnabled = settings.getOrDefault(AppSetting.SETTING_SMART_BEACON, "true").toBoolean()
         _beaconIntervalFlow.value = beaconIntervalSec * 1000L
         runOnUiThread {
             _uiState.update { it.copy(activeFrequency = activeFrequencyStr, isListenOnly = listenOnly) }
