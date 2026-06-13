@@ -36,7 +36,7 @@
             android:theme="@style/Theme.KV4PHT"
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
-                <action android:name="com.vagell.kv4pht.FIND_REPEATERS" />
+                <action android:name="ar.motorfar.app.FIND_REPEATERS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -47,7 +47,7 @@
             android:theme="@style/Theme.KV4PHT"
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
-                <action android:name="com.vagell.kv4pht.FIRMWARE_ACTION" />
+                <action android:name="ar.motorfar.app.FIRMWARE_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -58,7 +58,7 @@
             android:theme="@style/Theme.KV4PHT"
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
-                <action android:name="com.vagell.kv4pht.SETTINGS_ACTION" />
+                <action android:name="ar.motorfar.app.SETTINGS_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -86,7 +86,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.vagell.kv4pht.OPEN_CHAT_ACTION" />
+                <action android:name="ar.motorfar.app.OPEN_CHAT_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data
@@ -98,6 +98,12 @@
             android:name=".radio.RadioAudioService"
             android:exported="false"
             android:foregroundServiceType="location|mediaPlayback" />
+
+        <activity
+            android:name=".ui.onboarding.OnboardingActivity"
+            android:exported="false"
+            android:noHistory="true"
+            android:theme="@style/Theme.KV4PHT" />
 
     </application>
 
