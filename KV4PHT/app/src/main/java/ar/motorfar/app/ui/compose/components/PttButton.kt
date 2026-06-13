@@ -55,7 +55,7 @@ fun PttButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(90.dp)
+            .size(112.dp)
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectTapGestures(
@@ -67,7 +67,7 @@ fun PttButton(
                 )
             }
     ) {
-        Canvas(modifier = Modifier.size(90.dp)) {
+        Canvas(modifier = Modifier.size(112.dp)) {
             val center   = Offset(size.width / 2f, size.height / 2f)
             val baseRadius = size.minDimension / 2f
 
@@ -112,7 +112,7 @@ fun PttButton(
             text       = if (isTransmitting) "TX" else "PTT",
             color      = if (isTransmitting) Color.White else colors.background,
             fontFamily = ShareTechMono,
-            fontSize   = 16.sp,
+            fontSize   = 20.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
         )
     }

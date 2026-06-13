@@ -112,11 +112,11 @@ fun ChatScreen(
                 onValueChange = { if (it.length <= 67) draft = it }, // límite APRS típico
                 modifier      = Modifier.weight(1f),
                 placeholder   = {
-                    Text("Mensaje...", fontFamily = ShareTechMono, fontSize = 13.sp, color = colors.textSecondary)
+                    Text("Mensaje...", fontFamily = ShareTechMono, fontSize = 15.sp, color = colors.textSecondary)
                 },
                 textStyle     = TextStyle(
                     fontFamily = ShareTechMono,
-                    fontSize   = 14.sp,
+                    fontSize   = 16.sp,
                     color      = colors.textPrimary
                 ),
                 singleLine    = true,
@@ -161,12 +161,12 @@ private fun ChatBubble(msg: ChatMessage) {
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .widthIn(max = 320.dp)
                 .background(
                     color = if (msg.isOutgoing) colors.accent.copy(alpha = 0.18f) else colors.surface,
                     shape = RoundedCornerShape(8.dp)
                 )
-                .padding(horizontal = 10.dp, vertical = 6.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             // Alias remitente (solo en mensajes entrantes)
             if (!msg.isOutgoing) {
@@ -174,7 +174,7 @@ private fun ChatBubble(msg: ChatMessage) {
                     text       = msg.fromAlias,
                     color      = colors.accent,
                     fontFamily = ShareTechMono,
-                    fontSize   = 11.sp,
+                    fontSize   = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -182,13 +182,13 @@ private fun ChatBubble(msg: ChatMessage) {
                 text       = msg.text,
                 color      = colors.textPrimary,
                 fontFamily = ShareTechMono,
-                fontSize   = 14.sp
+                fontSize   = 18.sp
             )
             Text(
                 text       = timeFmt.format(Date(msg.timestampMs)),
                 color      = colors.textSecondary.copy(alpha = 0.6f),
                 fontFamily = ShareTechMono,
-                fontSize   = 9.sp,
+                fontSize   = 11.sp,
                 modifier   = Modifier.align(Alignment.End)
             )
         }

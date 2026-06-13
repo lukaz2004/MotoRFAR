@@ -6,9 +6,11 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -64,16 +66,25 @@ fun ModulationVisualizer(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 8.dp)
+            .background(
+                color = LocalMotoRFARColors.current.surface.copy(alpha = 0.4f),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = LocalMotoRFARColors.current.borderSubtle,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Canvas(modifier = Modifier.fillMaxWidth().height(64.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
             drawSpectrum(
                 phase     = phase,
                 phaseSlow = phaseSlow,
                 isActive  = isActive,
                 barColor  = colors.accent,
-                baseAlpha = if (isActive) 0.9f else 0.25f
+                baseAlpha = if (isActive) 0.95f else 0.45f
             )
         }
     }
@@ -103,11 +114,11 @@ private fun DrawScope.drawSpectrum(
         val amplitude = if (isActive) {
             (abs(wave1) * 0.6f + abs(wave2) * 0.4f) * envelope
         } else {
-            // Inactivo: barras mínimas con leve respiración
-            0.08f + 0.04f * abs(wave2)
+            // En reposo: ondas suaves visibles (respiración del espectro), no planas
+            (0.25f + 0.18f * abs(wave1) + 0.12f * abs(wave2)) * envelope
         }
 
-        val barH = (maxH * 0.85f) * amplitude
+        val barH = (maxH * 0.92f) * amplitude
         val x    = i * (barW + gap)
         val top  = centerY - barH / 2f
 

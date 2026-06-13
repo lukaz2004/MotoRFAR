@@ -108,26 +108,34 @@ fun MainScreen(
             )
         }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
+
+        // Canales — altura fija cómoda
         ChannelRow(
             channels       = state.channels,
             activeFreq     = state.activeFrequency,
-            onChannelClick = { freq -> onAction(MainUiAction.ChannelSelected(freq)) }
+            onChannelClick = { freq -> onAction(MainUiAction.ChannelSelected(freq)) },
+            modifier       = Modifier.height(56.dp)
         )
 
-        // Visualizador de modulación — activo al transmitir o recibir
+        Spacer(Modifier.height(10.dp))
+
+        // Visualizador de modulación — ocupa el espacio libre (TX o RX lo animan)
         ModulationVisualizer(
             isActive = state.isTxActive || state.isRxActive,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 4.dp)
         )
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(10.dp))
+
         AlertButtonsPanel(
             onEmergency = { onAction(MainUiAction.EmergencyAlert) },
             onStop      = { onAction(MainUiAction.StopAlert) },
             onRegroup   = { onAction(MainUiAction.RegroupAlert) }
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(14.dp))
         PttButton(
             isTransmitting = state.isTxActive,
             // PTT habilitado salvo en modo escucha. Sin radio conectada funciona
@@ -136,7 +144,7 @@ fun MainScreen(
             onPttDown      = { onAction(MainUiAction.PttPressed) },
             onPttUp        = { onAction(MainUiAction.PttReleased) }
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(18.dp))
     }
 }
 
