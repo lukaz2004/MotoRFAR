@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -44,7 +45,8 @@ fun AliasSettingScreen(
     currentAlias: String = "",
     currentBeaconIntervalSec: Int = 60,
     currentVolume: Int = 70,
-    onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> }
+    onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> },
+    onDownloadMaps: () -> Unit = {}
 ) {
     val colors = LocalMotoRFARColors.current
 
@@ -161,6 +163,34 @@ fun AliasSettingScreen(
                 activeTrackColor = colors.borderActive
             )
         )
+
+        Spacer(Modifier.height(4.dp))
+
+        // ── Mapas offline ─────────────────────────────────────────────
+        Text(
+            text     = "MAPAS OFFLINE",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 13.sp,
+            letterSpacing = 2.sp
+        )
+        Text(
+            text     = "Descargá el mapa de Argentina para usar sin señal en ruta. Próximamente.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 11.sp
+        )
+        OutlinedButton(
+            onClick  = onDownloadMaps,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive),
+            colors   = ButtonDefaults.outlinedButtonColors(
+                contentColor = colors.accent
+            )
+        ) {
+            Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 12.sp, letterSpacing = 1.sp)
+        }
 
         Spacer(Modifier.weight(1f))
 

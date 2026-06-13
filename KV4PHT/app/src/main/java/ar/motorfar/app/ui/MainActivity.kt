@@ -39,9 +39,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ar.motorfar.app.R
 import ar.motorfar.app.ui.compose.AliasSettingScreen
+import ar.motorfar.app.ui.compose.ChatScreen
 import ar.motorfar.app.ui.compose.MainScreen
 import ar.motorfar.app.ui.compose.MapScreen
 import ar.motorfar.app.ui.compose.state.GroupMember
+import ar.motorfar.app.ui.compose.state.ChatMessage
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
 import ar.motorfar.app.ui.compose.theme.AppTheme
@@ -83,6 +85,9 @@ class MainActivity : ComponentActivity() {
     private var listenOnly: Boolean = false
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
+
+    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    private var chatMessageIdCounter = 0L
 
     private var pendingAlertType: AlertHelper.AlertType? = null
 
@@ -193,6 +198,10 @@ class MainActivity : ComponentActivity() {
                     Handler(Looper.getMainLooper()).postDelayed({
                         _uiState.update { if (it.activeAlert?.fromAlias == alias) it.copy(activeAlert = null) else it }
                     }, 30_000L)
+                } else {
+                    // Mensaje de chat normal (no es alerta) → al chat VHF
+                    addChatMessage(alias, body, outgoing = false)
+                    ToneHelper.playAlertBeep(alertVolume / 100f)
                 }
             }
         }
@@ -226,6 +235,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val state by uiState.collectAsState()
             val groupMembers by _groupMembers.collectAsState()
+            val chatMessages by _chatMessages.collectAsState()
             MotoRFARTheme(AppTheme.GREEN) {
                 val colors = LocalMotoRFARColors.current
                 val navController = rememberNavController()
@@ -254,12 +264,12 @@ class MainActivity : ComponentActivity() {
                                     label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
                                 )
                             }
-                            if (currentRoute != "settings") {
+                            if (currentRoute != "chat") {
                                 NavigationBarItem(
                                     selected = false,
-                                    onClick  = { navController.navigate("settings") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_settings), contentDescription = "CONFIG") },
-                                    label    = { androidx.compose.material3.Text("CONFIG", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
+                                    onClick  = { navController.navigate("chat") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT") },
+                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
                                 )
                             }
                         }
@@ -300,7 +310,20 @@ class MainActivity : ComponentActivity() {
                                 currentAlias             = userAlias,
                                 currentBeaconIntervalSec = beaconIntervalSec,
                                 currentVolume            = alertVolume,
-                                onSave                   = ::saveAliasSettings
+                                onSave                   = ::saveAliasSettings,
+                                onDownloadMaps           = {
+                                    android.widget.Toast.makeText(
+                                        this@MainActivity,
+                                        "Descarga de mapas offline — próximamente",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        }
+                        composable("chat") {
+                            ChatScreen(
+                                messages = chatMessages,
+                                onSend   = ::sendChatMessage
                             )
                         }
                     }
@@ -434,6 +457,29 @@ class MainActivity : ComponentActivity() {
             RadioServiceAccessor.getAppDb(viewModel)
                 .saveAppSetting(AppSetting.SETTING_LISTEN_ONLY, listenOnly.toString())
         }
+    }
+
+    // ── Chat VHF ──────────────────────────────────────────────────────
+    private fun addChatMessage(fromAlias: String, text: String, outgoing: Boolean) {
+        val msg = ChatMessage(
+            id          = chatMessageIdCounter++,
+            fromAlias   = fromAlias,
+            text        = text,
+            timestampMs = System.currentTimeMillis(),
+            isOutgoing  = outgoing
+        )
+        _chatMessages.update { it + msg }
+    }
+
+    private fun sendChatMessage(text: String) {
+        // En modo escucha no se transmite texto
+        if (listenOnly) { ToneHelper.playAlertBeep(alertVolume / 100f); return }
+        addChatMessage(userAlias, text, outgoing = true)
+        val svc = radioService
+        if (svc != null && uiState.value.isConnected) {
+            svc.sendChatMessage("CQ", text)
+        }
+        // Sin radio: el mensaje queda local (modo simulación)
     }
 
     private fun tuneToChannel(freq: String) {

@@ -27,6 +27,7 @@ import ar.motorfar.app.ui.compose.components.AlertButtonsPanel
 import ar.motorfar.app.ui.compose.components.AppStatusBar
 import ar.motorfar.app.ui.compose.components.ChannelRow
 import ar.motorfar.app.ui.compose.components.FrequencyDisplayCard
+import ar.motorfar.app.ui.compose.components.ModulationVisualizer
 import ar.motorfar.app.ui.compose.components.PttButton
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
@@ -113,6 +114,13 @@ fun MainScreen(
             activeFreq     = state.activeFrequency,
             onChannelClick = { freq -> onAction(MainUiAction.ChannelSelected(freq)) }
         )
+
+        // Visualizador de modulación — activo al transmitir o recibir
+        ModulationVisualizer(
+            isActive = state.isTxActive || state.isRxActive,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
         Spacer(Modifier.weight(1f))
         AlertButtonsPanel(
             onEmergency = { onAction(MainUiAction.EmergencyAlert) },
