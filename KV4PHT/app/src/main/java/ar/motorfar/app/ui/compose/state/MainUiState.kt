@@ -12,7 +12,8 @@ data class MainUiState(
     val isRxActive: Boolean             = false,
     val isConnected: Boolean            = false,
     val theme: AppTheme                 = AppTheme.GREEN,
-    val activeAlert: ReceivedAlert?     = null
+    val activeAlert: ReceivedAlert?     = null,
+    val isListenOnly: Boolean           = false
 ) {
     companion object {
         fun preview() = MainUiState(

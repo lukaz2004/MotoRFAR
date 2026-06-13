@@ -7,4 +7,5 @@ sealed class MainUiAction {
     object EmergencyAlert                         : MainUiAction()
     object StopAlert                              : MainUiAction()
     object RegroupAlert                           : MainUiAction()
+    object ToggleListenOnly                       : MainUiAction()
 }

@@ -42,6 +42,7 @@ public class AppSetting {
     public static final String SETTING_BEACON_INTERVAL_SEC = "beacon_interval_sec";
     public static final String SETTING_ALERT_VOLUME = "alert_volume";
     public static final String SETTING_ONBOARDING_COMPLETE = "onboarding_complete";
+    public static final String SETTING_LISTEN_ONLY = "listen_only";
 
     public AppSetting(@NonNull String name, String value) {
         this.name = name;
