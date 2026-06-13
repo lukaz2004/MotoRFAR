@@ -1,6 +1,7 @@
 package ar.motorfar.app.ui.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -135,16 +136,25 @@ fun MainScreen(
             onStop      = { onAction(MainUiAction.StopAlert) },
             onRegroup   = { onAction(MainUiAction.RegroupAlert) }
         )
-        Spacer(Modifier.height(14.dp))
-        PttButton(
-            isTransmitting = state.isTxActive,
-            // PTT habilitado salvo en modo escucha. Sin radio conectada funciona
-            // en modo simulación (sonido + animación, sin TX real).
-            enabled        = !state.isListenOnly,
-            onPttDown      = { onAction(MainUiAction.PttPressed) },
-            onPttUp        = { onAction(MainUiAction.PttReleased) }
-        )
-        Spacer(Modifier.height(18.dp))
+
+        // Zona del PTT — centrado verticalmente en su propio espacio,
+        // con margen para que los anillos de TX no toquen los botones de arriba
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(170.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            PttButton(
+                isTransmitting = state.isTxActive,
+                // PTT habilitado salvo en modo escucha. Sin radio conectada funciona
+                // en modo simulación (sonido + animación, sin TX real).
+                enabled        = !state.isListenOnly,
+                onPttDown      = { onAction(MainUiAction.PttPressed) },
+                onPttUp        = { onAction(MainUiAction.PttReleased) }
+            )
+        }
+        Spacer(Modifier.height(8.dp))
     }
 }
 

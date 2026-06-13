@@ -1,12 +1,15 @@
 package ar.motorfar.app.ui.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
@@ -37,8 +40,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.R
 import ar.motorfar.app.ui.compose.state.ChatMessage
+import ar.motorfar.app.ui.compose.theme.EmergencyBackground
+import ar.motorfar.app.ui.compose.theme.EmergencyBorder
+import ar.motorfar.app.ui.compose.theme.EmergencyText
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
+import ar.motorfar.app.ui.compose.theme.RegroupBackground
+import ar.motorfar.app.ui.compose.theme.RegroupBorder
+import ar.motorfar.app.ui.compose.theme.RegroupText
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
+import ar.motorfar.app.ui.compose.theme.StopBackground
+import ar.motorfar.app.ui.compose.theme.StopBorder
+import ar.motorfar.app.ui.compose.theme.StopText
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -155,38 +167,97 @@ private fun ChatBubble(msg: ChatMessage) {
     val colors = LocalMotoRFARColors.current
     val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
+    // Colores según tipo de alerta (o burbuja normal)
+    val isAlert = msg.alertType != null
+    val bg = when (msg.alertType) {
+        ChatMessage.AlertKind.EMERGENCY -> EmergencyBackground
+        ChatMessage.AlertKind.STOP      -> StopBackground
+        ChatMessage.AlertKind.REGROUP   -> RegroupBackground
+        null -> if (msg.isOutgoing) colors.accent.copy(alpha = 0.18f) else colors.surface
+    }
+    val borderColor = when (msg.alertType) {
+        ChatMessage.AlertKind.EMERGENCY -> EmergencyBorder
+        ChatMessage.AlertKind.STOP      -> StopBorder
+        ChatMessage.AlertKind.REGROUP   -> RegroupBorder
+        null -> null
+    }
+    val txtColor = when (msg.alertType) {
+        ChatMessage.AlertKind.EMERGENCY -> EmergencyText
+        ChatMessage.AlertKind.STOP      -> StopText
+        ChatMessage.AlertKind.REGROUP   -> RegroupText
+        null -> colors.textPrimary
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (msg.isOutgoing) Arrangement.End else Arrangement.Start
+        horizontalArrangement = when {
+            isAlert         -> Arrangement.Center      // alertas centradas, ocupan ancho
+            msg.isOutgoing  -> Arrangement.End
+            else            -> Arrangement.Start
+        }
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 320.dp)
-                .background(
-                    color = if (msg.isOutgoing) colors.accent.copy(alpha = 0.18f) else colors.surface,
-                    shape = RoundedCornerShape(8.dp)
+                .then(if (isAlert) Modifier.fillMaxWidth() else Modifier.widthIn(max = 320.dp))
+                .background(color = bg, shape = RoundedCornerShape(8.dp))
+                .then(
+                    if (borderColor != null)
+                        Modifier.border(2.dp, borderColor, RoundedCornerShape(8.dp))
+                    else Modifier
                 )
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
-            // Alias remitente (solo en mensajes entrantes)
-            if (!msg.isOutgoing) {
+            // Encabezado de alerta con ícono
+            if (isAlert) {
+                val header = when (msg.alertType) {
+                    ChatMessage.AlertKind.EMERGENCY -> "⚠ EMERGENCIA"
+                    ChatMessage.AlertKind.STOP      -> "■ DETENCIÓN"
+                    ChatMessage.AlertKind.REGROUP   -> "● REAGRUPAMIENTO"
+                    null -> ""
+                }
+                Text(
+                    text          = "$header · ${msg.fromAlias}",
+                    color         = txtColor,
+                    fontFamily    = ShareTechMono,
+                    fontSize      = 15.sp,
+                    fontWeight    = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(Modifier.height(4.dp))
+            } else if (!msg.isOutgoing) {
+                // Alias remitente (mensajes normales entrantes)
                 Text(
                     text       = msg.fromAlias,
                     color      = colors.accent,
                     fontFamily = ShareTechMono,
-                    fontSize   = 13.sp,
+                    fontSize   = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
+
+            // Cuerpo del mensaje — 22sp para lectura desde lejos
             Text(
                 text       = msg.text,
-                color      = colors.textPrimary,
+                color      = txtColor,
                 fontFamily = ShareTechMono,
-                fontSize   = 18.sp
+                fontSize   = 22.sp,
+                fontWeight = if (isAlert) FontWeight.Bold else FontWeight.Normal
             )
+
+            // Posición GPS (solo alertas con coordenadas)
+            if (isAlert && msg.lat != null && msg.lon != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text       = "POS: %.5f, %.5f".format(msg.lat, msg.lon),
+                    color      = txtColor.copy(alpha = 0.85f),
+                    fontFamily = ShareTechMono,
+                    fontSize   = 13.sp
+                )
+            }
+
             Text(
                 text       = timeFmt.format(Date(msg.timestampMs)),
-                color      = colors.textSecondary.copy(alpha = 0.6f),
+                color      = (if (isAlert) txtColor else colors.textSecondary).copy(alpha = 0.6f),
                 fontFamily = ShareTechMono,
                 fontSize   = 11.sp,
                 modifier   = Modifier.align(Alignment.End)

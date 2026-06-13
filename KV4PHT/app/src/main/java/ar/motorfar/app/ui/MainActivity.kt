@@ -194,6 +194,13 @@ class MainActivity : ComponentActivity() {
                         receivedAtMs  = System.currentTimeMillis()
                     )
                     _uiState.update { it.copy(activeAlert = alert) }
+                    // También al chat con formato de alerta (posición si vino en el mismo beacon)
+                    val pos = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField
+                    addAlertToChat(
+                        alertType, alias, outgoing = false,
+                        lat = pos?.position?.latitude,
+                        lon = pos?.position?.longitude
+                    )
                     ToneHelper.playAlertBeep(alertVolume / 100f)
                     Handler(Looper.getMainLooper()).postDelayed({
                         _uiState.update { if (it.activeAlert?.fromAlias == alias) it.copy(activeAlert = null) else it }
@@ -231,6 +238,12 @@ class MainActivity : ComponentActivity() {
         viewModel.loadDataAsync { loadSettings() }
 
         observeChannelMemories()
+
+        // DEMO: miembros de grupo simulados para visualizar el mapa sin hardware.
+        // (solo en debug — quitar/condicionar para producción)
+        if (ar.motorfar.app.BuildConfig.DEBUG) {
+            seedDemoGroupMembers()
+        }
 
         setContent {
             val state by uiState.collectAsState()
@@ -459,6 +472,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // DEMO: simula 3 integrantes del grupo alrededor de Villa Martelli
+    private fun seedDemoGroupMembers() {
+        val now = System.currentTimeMillis()
+        val demo = listOf(
+            GroupMember("LUCAS",  -34.5455, -58.5310, 420,  45f, now),
+            GroupMember("ANA",    -34.5490, -58.5265, 780,  120f, now - 90_000L),
+            GroupMember("DIEGO",  -34.5430, -58.5295, 1250, 300f, now - 4 * 60_000L)
+        )
+        _groupMembers.value = demo
+    }
+
     // ── Chat VHF ──────────────────────────────────────────────────────
     private fun addChatMessage(fromAlias: String, text: String, outgoing: Boolean) {
         val msg = ChatMessage(
@@ -469,6 +493,51 @@ class MainActivity : ComponentActivity() {
             isOutgoing  = outgoing
         )
         _chatMessages.update { it + msg }
+    }
+
+    private fun addAlertToChat(
+        type: AlertHelper.AlertType,
+        fromAlias: String,
+        outgoing: Boolean,
+        lat: Double?,
+        lon: Double?
+    ) {
+        val kind = when (type) {
+            AlertHelper.AlertType.EMERGENCY -> ChatMessage.AlertKind.EMERGENCY
+            AlertHelper.AlertType.STOP      -> ChatMessage.AlertKind.STOP
+            AlertHelper.AlertType.REGROUP   -> ChatMessage.AlertKind.REGROUP
+        }
+        val body = when (type) {
+            AlertHelper.AlertType.EMERGENCY -> "SOLICITO ASISTENCIA INMEDIATA"
+            AlertHelper.AlertType.STOP      -> "DETENIDO - INCONVENIENTE EN RUTA"
+            AlertHelper.AlertType.REGROUP   -> "REAGRUPAR - ESPERAR EN POSICIÓN"
+        }
+        val msg = ChatMessage(
+            id          = chatMessageIdCounter++,
+            fromAlias   = fromAlias,
+            text        = body,
+            timestampMs = System.currentTimeMillis(),
+            isOutgoing  = outgoing,
+            alertType   = kind,
+            lat         = lat,
+            lon         = lon
+        )
+        _chatMessages.update { it + msg }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getLastKnownLocation(): android.location.Location? {
+        val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!hasPerm) return null
+        return try {
+            val lm = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+            lm.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: lm.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private fun sendChatMessage(text: String) {
@@ -502,18 +571,55 @@ class MainActivity : ComponentActivity() {
 
     private fun requestLocationAndTransmit(type: AlertHelper.AlertType) {
         pendingAlertType = type
-        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (hasPerm) {
+            // Ya hay permiso: dispara directo
+            transmitGroupAlert(type)
+            pendingAlertType = null
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
     @SuppressLint("MissingPermission")
     private fun transmitGroupAlert(type: AlertHelper.AlertType) {
-        val service = radioService ?: return
-        val targetFreq = AlertHelper.getTargetFrequency(type, activeFrequencyStr)
-        service.tuneToFreq(targetFreq)
-        service.sendPositionBeacon()
-        Handler(Looper.getMainLooper()).postDelayed({
-            val alertText = AlertHelper.buildMessage(type, callsign)
-            service.sendChatMessage("CQ", alertText)
-        }, 2000)
+        // 1. Posición actual (puede ser null si aún no hay fix GPS)
+        val loc = getLastKnownLocation()
+        val lat = loc?.latitude
+        val lon = loc?.longitude
+
+        // 2. Siempre registrar la alerta en el chat (con o sin radio)
+        addAlertToChat(type, userAlias, outgoing = true, lat = lat, lon = lon)
+        ToneHelper.playEmergencyBeep(alertVolume / 100f)
+
+        // 3. Transmitir por radio si está conectada
+        val service = radioService
+        if (service != null && uiState.value.isConnected) {
+            val homeFreq   = activeFrequencyStr  // canal de grupo donde estaba
+            val targetFreq = AlertHelper.getTargetFrequency(type, activeFrequencyStr)
+
+            // Solo EMERGENCY cambia de frecuencia (a 140.970). STOP/REGROUP
+            // se transmiten en el canal de grupo/alternativo actual.
+            val needsFreqChange = targetFreq != homeFreq
+            if (needsFreqChange) service.tuneToFreq(targetFreq)
+
+            service.sendPositionBeacon()  // baliza en la frecuencia destino
+            Handler(Looper.getMainLooper()).postDelayed({
+                val alertText = AlertHelper.buildMessage(type, callsign)
+                service.sendChatMessage("CQ", alertText)
+
+                // Tras emitir la emergencia en 140.970, volver al canal de grupo
+                // para seguir escuchando al resto del grupo.
+                if (needsFreqChange) {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        service.tuneToFreq(homeFreq)
+                        activeFrequencyStr = homeFreq
+                        _uiState.update { it.copy(activeFrequency = homeFreq) }
+                    }, 1500)
+                }
+            }, 2000)
+        }
     }
 }

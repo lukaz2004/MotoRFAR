@@ -29,3 +29,12 @@ val GreenAccent        = Color(0xFF4FBD3B)
 val EmergencyBackground = Color(0xFF501313)
 val EmergencyBorder     = Color(0xFFE24B4A)
 val EmergencyText       = Color(0xFFF09595)
+
+// Alertas STOP (amarillo) y REGROUP (verde) — para burbujas de chat
+val StopBackground   = Color(0xFF4A3D0A)
+val StopBorder       = Color(0xFFE0B83A)
+val StopText         = Color(0xFFF0D88A)
+
+val RegroupBackground = Color(0xFF13400F)
+val RegroupBorder     = Color(0xFF4FBD3B)
+val RegroupText       = Color(0xFF9BE88A)

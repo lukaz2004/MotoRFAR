@@ -55,7 +55,7 @@ fun PttButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(112.dp)
+            .size(150.dp)
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectTapGestures(
@@ -67,15 +67,16 @@ fun PttButton(
                 )
             }
     ) {
-        Canvas(modifier = Modifier.size(112.dp)) {
+        Canvas(modifier = Modifier.size(150.dp)) {
             val center   = Offset(size.width / 2f, size.height / 2f)
-            val baseRadius = size.minDimension / 2f
+            // El botón ocupa ~70% del canvas; el 30% restante deja lugar a los anillos
+            val baseRadius = size.minDimension / 2f * 0.7f
 
-            // Anillos expansivos durante TX (3 anillos con fases escalonadas)
+            // Anillos expansivos durante TX (contenidos dentro del canvas)
             if (isTransmitting) {
                 for (i in 0 until RING_COUNT) {
                     val phase  = (ringPhase + i.toFloat() / RING_COUNT) % 1f
-                    val radius = baseRadius * (1f + phase * 0.55f)
+                    val radius = baseRadius * (1f + phase * 0.42f)
                     val alpha  = (1f - phase) * 0.55f
                     drawCircle(
                         color  = accentColor.copy(alpha = alpha),
