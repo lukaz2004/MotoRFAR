@@ -40,25 +40,11 @@ fun AlertButtonsPanel(
             .padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // EMERGENCIA — full width, rojo
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(EmergencyBackground, btnShape)
-                .border(2.dp, EmergencyBorder, btnShape)
-                .clickable(onClick = onEmergency)
-                .padding(vertical = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text       = "EMERGENCIA",
-                color      = Color.White,
-                fontFamily = ShareTechMono,
-                fontSize   = 14.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-        }
+        // EMERGENCIA — hold 2s para confirmar (no dispara con tap corto)
+        EmergencyConfirmButton(
+            onConfirmed = onEmergency,
+            modifier    = Modifier.fillMaxWidth()
+        )
 
         // DETENCIÓN + REAGRUPAR en Row
         Row(

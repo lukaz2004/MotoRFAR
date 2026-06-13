@@ -41,7 +41,6 @@ import ar.motorfar.app.R
 import ar.motorfar.app.ui.compose.AliasSettingScreen
 import ar.motorfar.app.ui.compose.MainScreen
 import ar.motorfar.app.ui.compose.MapScreen
-import ar.motorfar.app.ui.compose.components.EmergencyConfirmDialog
 import ar.motorfar.app.ui.compose.state.GroupMember
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
@@ -81,10 +80,10 @@ class MainActivity : ComponentActivity() {
     private var userAlias: String by mutableStateOf("MOTO")
     private var beaconIntervalSec: Int = 60
     private var alertVolume: Int = 70
+    private var listenOnly: Boolean = false
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
 
-    private var showEmergencyDialog by mutableStateOf(false)
     private var pendingAlertType: AlertHelper.AlertType? = null
 
     private val _beaconIntervalFlow = MutableStateFlow(60_000L)
@@ -92,7 +91,8 @@ class MainActivity : ComponentActivity() {
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private val beaconManager by lazy {
         GpsBeaconManager(
-            onSendBeacon = { radioService?.sendPositionBeacon() },
+            // En modo escucha NO se emiten beacons de posición (RX-only real)
+            onSendBeacon = { if (!listenOnly) radioService?.sendPositionBeacon() },
             intervalFlow = _beaconIntervalFlow
         )
     }
@@ -275,15 +275,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                if (showEmergencyDialog) {
-                    EmergencyConfirmDialog(
-                        onConfirm = {
-                            showEmergencyDialog = false
-                            requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY)
-                        },
-                        onDismiss = { showEmergencyDialog = false }
-                    )
-                }
             }
         }
     }
@@ -328,9 +319,10 @@ class MainActivity : ComponentActivity() {
         userAlias          = settings.getOrDefault(AppSetting.SETTING_USER_ALIAS, "MOTO")
         beaconIntervalSec  = settings.getOrDefault(AppSetting.SETTING_BEACON_INTERVAL_SEC, "60").toIntOrNull() ?: 60
         alertVolume        = settings.getOrDefault(AppSetting.SETTING_ALERT_VOLUME, "70").toIntOrNull() ?: 70
+        listenOnly         = settings.getOrDefault(AppSetting.SETTING_LISTEN_ONLY, "false").toBoolean()
         _beaconIntervalFlow.value = beaconIntervalSec * 1000L
         runOnUiThread {
-            _uiState.update { it.copy(activeFrequency = activeFrequencyStr) }
+            _uiState.update { it.copy(activeFrequency = activeFrequencyStr, isListenOnly = listenOnly) }
         }
     }
 
@@ -365,12 +357,37 @@ class MainActivity : ComponentActivity() {
     private fun handleAction(action: MainUiAction) {
         val vol = alertVolume / 100f
         when (action) {
-            MainUiAction.PttPressed    -> { ToneHelper.playPttDown(vol); radioService?.startPtt() }
-            MainUiAction.PttReleased   -> { ToneHelper.playPttUp(vol);   radioService?.endPtt() }
+            MainUiAction.PttPressed    -> {
+                // En modo escucha el PTT no transmite (guard de seguridad)
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                ToneHelper.playPttDown(vol); radioService?.startPtt()
+            }
+            MainUiAction.PttReleased   -> {
+                if (listenOnly) return
+                ToneHelper.playPttUp(vol);   radioService?.endPtt()
+            }
             is MainUiAction.ChannelSelected -> tuneToChannel(action.freq)
-            MainUiAction.EmergencyAlert -> { ToneHelper.playEmergencyBeep(vol); showEmergencyDialog = true }
-            MainUiAction.StopAlert     -> { ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.STOP) }
-            MainUiAction.RegroupAlert  -> { ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP) }
+            // EMERGENCIA siempre disponible, incluso en modo escucha (seguridad)
+            MainUiAction.EmergencyAlert -> { ToneHelper.playEmergencyBeep(vol); requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY) }
+            MainUiAction.StopAlert     -> {
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.STOP)
+            }
+            MainUiAction.RegroupAlert  -> {
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP)
+            }
+            MainUiAction.ToggleListenOnly -> toggleListenOnly()
+        }
+    }
+
+    private fun toggleListenOnly() {
+        listenOnly = !listenOnly
+        _uiState.update { it.copy(isListenOnly = listenOnly) }
+        ToneHelper.playPttUp(alertVolume / 100f)
+        executor.execute {
+            RadioServiceAccessor.getAppDb(viewModel)
+                .saveAppSetting(AppSetting.SETTING_LISTEN_ONLY, listenOnly.toString())
         }
     }
 

@@ -200,3 +200,34 @@ La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan a
 - `TermsActivity.java` — evaluar si extraer sus constantes a `AppSetting` (Finding 5 MEDIUM pendiente)
 
 ---
+
+## 2026-06-13 · Sesión 8 — Sprint 8 ejecutado (Confirmación EMERGENCIA + Animación PTT + Modo Escucha)
+
+**Lo que se hizo:**
+
+- **PRE-SPRINT:** `gh` CLI 2.94.0 instalado vía winget + autenticado (token, scopes repo/workflow/admin:org). PR #4 (sprint/7 → main) creado y mergeado. Cierre de artefactos S7 commiteado primero: docs sprints 4-7, schema Room `ar.motorfar.app.data.AppDatabase/6.json`, eliminación de schemas viejos `com.vagell.*` del tracking, `.gitignore` ampliado (.claude/, docs/superpowers/). Branch `sprint/8-ux-tactical-polish` creado desde main actualizado.
+- **A — Confirmación EMERGENCIA:** `EmergencyConfirmButton.kt` nuevo. Hold 2s con fill de progreso Canvas (izq→der), borde que brilla al sostener. Tap corto NO dispara. Reemplaza el Box clickable en `AlertButtonsPanel.kt`. `EmergencyConfirmDialog` (S6) removido del flujo de MainActivity — `EmergencyAlert` ahora va directo a `requestLocationAndTransmit`. 8 tests del hold.
+- **B — Animación PTT:** `PttButton.kt` con 3 anillos radiales expansivos vía `InfiniteTransition`. Fases escalonadas (1/3 desfase), alpha 0.55→0, ciclo 1200ms. Solo durante `isTransmitting`.
+- **C — Modo Solo Escucha:** `SETTING_LISTEN_ONLY` en AppSetting. `MainUiState.isListenOnly` + `MainUiAction.ToggleListenOnly`. Toggle en TopBar (`ic_headphones.xml` nuevo) + indicador `[ SOLO ESCUCHA ]`. Guards en `handleAction`: PTT bloqueado, STOP/REGROUP bloqueadas, **EMERGENCIA siempre disponible**, beacon GPS suprimido (RX-only real vía lambda condicionada). Persistencia Room, default OFF. 10 tests.
+- **D — Cierre:** compileDebugKotlin + testDebugUnitTest → BUILD SUCCESSFUL. **151 tests, 0 fallos, 24 suites.**
+
+**Decisiones nuevas:**
+- Modo escucha como RX-only **real**: no solo deshabilita UI, también suprime el beacon GPS automático (que es un TX). EMERGENCIA es la única excepción que transmite en modo escucha — decisión de seguridad explícita.
+- `EmergencyConfirmDialog` (S6) deprecado en favor del botón inline con hold. El archivo queda en el repo pero ya no se referencia (limpieza opcional para S9).
+- JDK 21 de Android Studio (`C:\Program Files\Android\Android Studio\jbr`) usado para builds CLI — el Java del sistema es 8, incompatible con AGP.
+
+**Trampas:**
+- Flujo de auth gh: varios tokens se expusieron en el chat durante el setup (en línea de comando, como nombre de archivo). Resuelto con `Read-Host -AsSecureString` en una sola línea. **Todos los tokens previos deben considerarse comprometidos.**
+- El trabajo de S8 (8 archivos) ya estaba escrito sin commitear cuando se decidió mergear S7 primero — se preservó en stash, se mergeó S7, y se recuperó con stash pop sobre el branch S8.
+
+**Pendiente para Sprint 9 (v1.1):**
+- Revocar definitivamente los tokens gh expuestos en sesión + regenerar uno limpio si se sigue usando gh
+- Mergear PR de Sprint 8 (queda abierto para review)
+- Verificar las 3 features en emulador/dispositivo físico
+- PTT externo vía jack 3.5mm (audio focus + hardware)
+- OSMDroid tiles offline
+- Eliminar `EmergencyConfirmDialog.kt` (deprecado, sin referencias)
+- `TermsActivity.java` — extraer constantes a AppSetting (Finding 5 MEDIUM, arrastrado de S7)
+- Verificación con SA818-V hardware real
+
+---
