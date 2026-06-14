@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -36,6 +37,8 @@ import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARTheme
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
 
+// Intervalo de baliza en modo manual (fallback). Con SmartBeaconing activo,
+// el intervalo se calcula dinámicamente según la velocidad.
 private val BEACON_INTERVAL_OPTIONS = listOf(30, 60, 120, 300)
 private val BEACON_INTERVAL_LABELS  = listOf("30s", "1min", "2min", "5min")
 
@@ -44,11 +47,15 @@ fun AliasSettingScreen(
     currentAlias: String = "",
     currentBeaconIntervalSec: Int = 60,
     currentVolume: Int = 70,
-    onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> }
+    currentSmartBeacon: Boolean = true,
+    onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> },
+    onToggleSmartBeacon: (Boolean) -> Unit = {},
+    onDownloadMaps: () -> Unit = {}
 ) {
     val colors = LocalMotoRFARColors.current
 
     var aliasInput   by remember { mutableStateOf(currentAlias) }
+    var smartBeacon  by remember { mutableStateOf(currentSmartBeacon) }
     var intervalIndex by remember {
         mutableFloatStateOf(
             BEACON_INTERVAL_OPTIONS.indexOf(currentBeaconIntervalSec).coerceAtLeast(0).toFloat()
@@ -117,31 +124,70 @@ fun AliasSettingScreen(
             }
         )
 
-        Text(
-            text     = "INTERVALO DE BALIZA",
-            color    = colors.textPrimary,
-            fontFamily = ShareTechMono,
-            fontSize = 13.sp,
-            letterSpacing = 2.sp
-        )
+        // ── Balizado ──────────────────────────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
-            BEACON_INTERVAL_LABELS.forEach { label ->
-                Text(label, color = colors.textSecondary, fontFamily = ShareTechMono, fontSize = 12.sp)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text     = "BALIZA INTELIGENTE",
+                    color    = colors.textPrimary,
+                    fontFamily = ShareTechMono,
+                    fontSize = 13.sp,
+                    letterSpacing = 2.sp
+                )
+                Text(
+                    text     = "Ajusta el envío de posición según tu velocidad. Ahorra batería parado y es preciso en ruta.",
+                    color    = colors.textSecondary,
+                    fontFamily = ShareTechMono,
+                    fontSize = 11.sp
+                )
             }
-        }
-        Slider(
-            value         = intervalIndex,
-            onValueChange = { intervalIndex = it },
-            valueRange    = 0f..3f,
-            steps         = 2,
-            colors        = SliderDefaults.colors(
-                thumbColor       = colors.borderActive,
-                activeTrackColor = colors.borderActive
+            androidx.compose.material3.Switch(
+                checked = smartBeacon,
+                onCheckedChange = {
+                    smartBeacon = it
+                    onToggleSmartBeacon(it)
+                },
+                colors = androidx.compose.material3.SwitchDefaults.colors(
+                    checkedThumbColor   = colors.accent,
+                    checkedTrackColor   = colors.accent.copy(alpha = 0.4f),
+                    uncheckedThumbColor = colors.textSecondary,
+                    uncheckedTrackColor = colors.surface
+                )
             )
-        )
+        }
+
+        // Slider de intervalo manual — solo visible si la baliza inteligente está OFF
+        if (!smartBeacon) {
+            Text(
+                text     = "INTERVALO FIJO",
+                color    = colors.textSecondary,
+                fontFamily = ShareTechMono,
+                fontSize = 12.sp,
+                letterSpacing = 1.sp
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BEACON_INTERVAL_LABELS.forEach { label ->
+                    Text(label, color = colors.textSecondary, fontFamily = ShareTechMono, fontSize = 12.sp)
+                }
+            }
+            Slider(
+                value         = intervalIndex,
+                onValueChange = { intervalIndex = it },
+                valueRange    = 0f..3f,
+                steps         = 2,
+                colors        = SliderDefaults.colors(
+                    thumbColor       = colors.borderActive,
+                    activeTrackColor = colors.borderActive
+                )
+            )
+        }
 
         Spacer(Modifier.height(4.dp))
 
@@ -161,6 +207,34 @@ fun AliasSettingScreen(
                 activeTrackColor = colors.borderActive
             )
         )
+
+        Spacer(Modifier.height(4.dp))
+
+        // ── Mapas offline ─────────────────────────────────────────────
+        Text(
+            text     = "MAPAS OFFLINE",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 13.sp,
+            letterSpacing = 2.sp
+        )
+        Text(
+            text     = "Descargá el mapa de Argentina para usar sin señal en ruta. Próximamente.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 11.sp
+        )
+        OutlinedButton(
+            onClick  = onDownloadMaps,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive),
+            colors   = ButtonDefaults.outlinedButtonColors(
+                contentColor = colors.accent
+            )
+        ) {
+            Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 12.sp, letterSpacing = 1.sp)
+        }
 
         Spacer(Modifier.weight(1f))
 

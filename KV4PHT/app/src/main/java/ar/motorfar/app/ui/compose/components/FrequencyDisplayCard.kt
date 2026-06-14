@@ -19,7 +19,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ar.motorfar.app.ui.compose.theme.BorderHairline
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
+import ar.motorfar.app.ui.compose.theme.PanelShape
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
 
 @Composable
@@ -33,8 +35,8 @@ fun FrequencyDisplayCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.display)
-            .border(1.dp, colors.borderSubtle)
+            .background(colors.display, PanelShape)
+            .border(BorderHairline, colors.borderSubtle, PanelShape)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

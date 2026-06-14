@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,13 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.ui.AlertHelper
 import ar.motorfar.app.ui.compose.state.ReceivedAlert
+import ar.motorfar.app.ui.compose.theme.BorderHairline
+import ar.motorfar.app.ui.compose.theme.ControlShape
 import ar.motorfar.app.ui.compose.theme.EmergencyBackground
 import ar.motorfar.app.ui.compose.theme.EmergencyBorder
 import ar.motorfar.app.ui.compose.theme.EmergencyText
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
-
-private val bannerShape = RoundedCornerShape(4.dp)
 
 @Composable
 fun AlertBanner(
@@ -59,8 +58,8 @@ fun AlertBanner(
             modifier = Modifier
                 .testTag("alert_banner")
                 .fillMaxWidth()
-                .background(bgColor, bannerShape)
-                .border(1.dp, borderColor, bannerShape)
+                .background(bgColor, ControlShape)
+                .border(BorderHairline, borderColor, ControlShape)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically

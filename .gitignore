@@ -45,3 +45,8 @@ venv/
 # Claude Code / herramientas locales
 .claude/
 docs/superpowers/
+
+# Screenshots de debug
+*.png
+!app/src/**/*.png
+!**/res/**/*.png

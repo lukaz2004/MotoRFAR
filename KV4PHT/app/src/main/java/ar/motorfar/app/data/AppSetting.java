@@ -43,6 +43,9 @@ public class AppSetting {
     public static final String SETTING_ALERT_VOLUME = "alert_volume";
     public static final String SETTING_ONBOARDING_COMPLETE = "onboarding_complete";
     public static final String SETTING_LISTEN_ONLY = "listen_only";
+    public static final String SETTING_SMART_BEACON = "smart_beacon";
+    public static final String SETTING_MAP_ZOOM = "map_zoom";
+    public static final String SETTING_MAP_ROTATE = "map_rotate";
 
     public AppSetting(@NonNull String name, String value) {
         this.name = name;

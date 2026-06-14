@@ -2,7 +2,7 @@ package ar.motorfar.app.ui.compose.theme
 
 import androidx.compose.ui.graphics.Color
 
-enum class AppTheme { AMBER, GREEN }
+enum class AppTheme { AMBER, GREEN, DAY }
 
 data class MotoRFARColors(
     val background: Color,
@@ -41,5 +41,17 @@ fun appColors(theme: AppTheme): MotoRFARColors = when (theme) {
         textDisabled  = GreenTextDisabled,
         textGhost     = GreenTextDisabled,
         accent        = GreenAccent
+    )
+    AppTheme.DAY -> MotoRFARColors(
+        background    = DayBackground,
+        display       = DayDisplay,
+        surface       = DaySurface,
+        borderSubtle  = DayBorderSubtle,
+        borderActive  = DayBorderActive,
+        textPrimary   = DayTextPrimary,
+        textSecondary = DayTextSecondary,
+        textDisabled  = DayTextDisabled,
+        textGhost     = DayTextGhost,
+        accent        = DayAccent
     )
 }
