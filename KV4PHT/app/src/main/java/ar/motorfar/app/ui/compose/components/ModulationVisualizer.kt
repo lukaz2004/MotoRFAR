@@ -19,7 +19,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
+import ar.motorfar.app.ui.compose.theme.BorderHairline
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
+import ar.motorfar.app.ui.compose.theme.PanelShape
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -69,12 +71,12 @@ fun ModulationVisualizer(
             .padding(horizontal = 8.dp)
             .background(
                 color = LocalMotoRFARColors.current.surface.copy(alpha = 0.4f),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                shape = PanelShape
             )
             .border(
-                width = 1.dp,
+                width = BorderHairline,
                 color = LocalMotoRFARColors.current.borderSubtle,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                shape = PanelShape
             )
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {

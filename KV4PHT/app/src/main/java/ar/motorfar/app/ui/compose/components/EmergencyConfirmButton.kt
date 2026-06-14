@@ -89,7 +89,7 @@ fun EmergencyConfirmButton(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
-            val r = CornerRadius(8.dp.toPx())
+            val r = CornerRadius(4.dp.toPx())  // = ControlShape, coincide con STOP/REAGRUPAR
 
             // Fondo base
             drawRoundRect(color = EmergencyBackground, cornerRadius = r)

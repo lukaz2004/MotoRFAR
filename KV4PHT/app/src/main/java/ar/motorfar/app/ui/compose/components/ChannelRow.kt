@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,12 +17,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.data.ChannelMemory
+import ar.motorfar.app.ui.compose.theme.BorderHairline
+import ar.motorfar.app.ui.compose.theme.BorderStrong
+import ar.motorfar.app.ui.compose.theme.ControlShape
 import ar.motorfar.app.ui.compose.theme.EmergencyBorder
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
 
 private const val EMERGENCY_FREQ = "140.970"
-private val chipShape = RoundedCornerShape(4.dp)
 
 // Canales oficiales Res. M.T.T.T. 5/2015 — fallback si la DB aún no seedeó
 private data class FixedChannel(val name: String, val freq: String)
@@ -66,8 +67,8 @@ fun ChannelRow(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(colors.surface, chipShape)
-                    .border(if (isActive || isEmergency) 2.dp else 1.dp, borderColor, chipShape)
+                    .background(colors.surface, ControlShape)
+                    .border(if (isActive || isEmergency) BorderStrong else BorderHairline, borderColor, ControlShape)
                     .clickable { onChannelClick(freq) }
                     .padding(vertical = 10.dp, horizontal = 4.dp),
                 contentAlignment = Alignment.Center

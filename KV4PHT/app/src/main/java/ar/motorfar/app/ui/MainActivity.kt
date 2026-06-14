@@ -237,6 +237,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Aplica el tema guardado ANTES de componer (evita el flash del default)
+        _uiState.update { it.copy(theme = ar.motorfar.app.ui.compose.theme.ThemePreference.get(this)) }
+
         val onboardingExecutor = Executors.newSingleThreadExecutor()
         onboardingExecutor.execute {
             val settings = RadioServiceAccessor.getAppDb(viewModel).appSettingDao().getAll()
@@ -267,7 +270,7 @@ class MainActivity : ComponentActivity() {
             val state by uiState.collectAsState()
             val groupMembers by _groupMembers.collectAsState()
             val chatMessages by _chatMessages.collectAsState()
-            MotoRFARTheme(AppTheme.GREEN) {
+            MotoRFARTheme(state.theme) {
                 val colors = LocalMotoRFARColors.current
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -514,6 +517,11 @@ class MainActivity : ComponentActivity() {
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP)
             }
             MainUiAction.ToggleListenOnly -> toggleListenOnly()
+            is MainUiAction.SetTheme -> {
+                ar.motorfar.app.ui.compose.theme.ThemePreference.set(this, action.theme)
+                _uiState.update { it.copy(theme = action.theme) }
+                ToneHelper.playPttUp(vol)
+            }
         }
     }
 

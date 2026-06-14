@@ -9,22 +9,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ar.motorfar.app.ui.compose.theme.EmergencyBackground
-import ar.motorfar.app.ui.compose.theme.EmergencyBorder
-import ar.motorfar.app.ui.compose.theme.EmergencyText
+import ar.motorfar.app.ui.compose.theme.BorderHairline
+import ar.motorfar.app.ui.compose.theme.ControlShape
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
-
-private val btnShape = RoundedCornerShape(4.dp)
 
 @Composable
 fun AlertButtonsPanel(
@@ -55,8 +50,8 @@ fun AlertButtonsPanel(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .background(colors.surface, btnShape)
-                        .border(1.dp, colors.borderActive, btnShape)
+                        .background(colors.surface, ControlShape)
+                        .border(BorderHairline, colors.borderActive, ControlShape)
                         .clickable(onClick = action)
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center

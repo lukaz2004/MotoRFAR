@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
@@ -35,6 +36,7 @@ fun PttButton(
     enabled: Boolean,
     onPttDown: () -> Unit,
     onPttUp: () -> Unit,
+    diameter: Dp = 150.dp,
     modifier: Modifier = Modifier
 ) {
     val colors      = LocalMotoRFARColors.current
@@ -55,7 +57,7 @@ fun PttButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(150.dp)
+            .size(diameter)
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
                 detectTapGestures(
@@ -67,7 +69,7 @@ fun PttButton(
                 )
             }
     ) {
-        Canvas(modifier = Modifier.size(150.dp)) {
+        Canvas(modifier = Modifier.size(diameter)) {
             val center   = Offset(size.width / 2f, size.height / 2f)
             // El botón ocupa ~70% del canvas; el 30% restante deja lugar a los anillos
             val baseRadius = size.minDimension / 2f * 0.7f
@@ -111,7 +113,7 @@ fun PttButton(
         }
         Text(
             text       = if (isTransmitting) "TX" else "PTT",
-            color      = if (isTransmitting) Color.White else colors.background,
+            color      = if (isTransmitting) Color.White else Color(0xFF0E0904),
             fontFamily = ShareTechMono,
             fontSize   = 20.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
