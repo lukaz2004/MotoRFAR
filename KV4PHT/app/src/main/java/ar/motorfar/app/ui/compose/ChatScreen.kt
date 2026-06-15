@@ -1,6 +1,9 @@
 package ar.motorfar.app.ui.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,6 +62,7 @@ import java.util.Locale
 fun ChatScreen(
     messages: List<ChatMessage>,
     onSend: (String) -> Unit,
+    onGoToLocation: (Double, Double) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -118,7 +122,7 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(messages, key = { it.id }) { msg ->
-                    ChatBubble(msg)
+                    ChatBubble(msg, onGoToLocation)
                 }
             }
         }
@@ -174,7 +178,10 @@ fun ChatScreen(
 }
 
 @Composable
-private fun ChatBubble(msg: ChatMessage) {
+private fun ChatBubble(
+    msg: ChatMessage,
+    onGoToLocation: (Double, Double) -> Unit = { _, _ -> }
+) {
     val colors = LocalMotoRFARColors.current
     val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
@@ -255,15 +262,42 @@ private fun ChatBubble(msg: ChatMessage) {
                 fontWeight = if (isAlert) FontWeight.Bold else FontWeight.Normal
             )
 
-            // Posición GPS (solo alertas con coordenadas)
+            // Posición GPS + botón "ir a la ubicación" (solo alertas con coordenadas)
             if (isAlert && msg.lat != null && msg.lon != null) {
+                val lat = msg.lat
+                val lon = msg.lon
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text       = "POS: %.5f, %.5f".format(msg.lat, msg.lon),
+                    text       = "POS: %.5f, %.5f".format(lat, lon),
                     color      = txtColor.copy(alpha = 0.85f),
                     fontFamily = ShareTechMono,
                     fontSize   = 13.sp
                 )
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .border(1.dp, txtColor.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                        .clickable { onGoToLocation(lat, lon) }
+                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter            = painterResource(R.drawable.ic_pin),
+                        contentDescription = null,
+                        tint               = txtColor,
+                        modifier           = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text          = "IR A UBICACIÓN",
+                        color         = txtColor,
+                        fontFamily    = ShareTechMono,
+                        fontSize      = 12.sp,
+                        fontWeight    = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        modifier      = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
 
             Text(

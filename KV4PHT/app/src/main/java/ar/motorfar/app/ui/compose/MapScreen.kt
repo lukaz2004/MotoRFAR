@@ -52,6 +52,8 @@ fun MapScreen(
     groupMembers: List<GroupMember>,
     locationGranted: Boolean = false,
     headingDeg: Float? = null,
+    focusTarget: Pair<Double, Double>? = null,
+    onFocusConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -66,6 +68,9 @@ fun MapScreen(
     var hudLat  by remember { mutableStateOf(OBELISCO.latitude) }
     var hudLon  by remember { mutableStateOf(OBELISCO.longitude) }
     var hudZoom by remember { mutableStateOf(INITIAL_ZOOM) }
+
+    // Punto de foco: ubicación de una alerta a la que se "fue" desde el chat
+    var focusPoint by remember { mutableStateOf<GeoPoint?>(null) }
 
     val hasLocationPermission = locationGranted || remember {
         ContextCompat.checkSelfPermission(
@@ -152,6 +157,17 @@ fun MapScreen(
         onDispose { mapView.removeMapListener(listener) }
     }
 
+    // Ir a la ubicación de una alerta: centra, marca el punto y "consume" el target
+    androidx.compose.runtime.LaunchedEffect(focusTarget) {
+        val t = focusTarget ?: return@LaunchedEffect
+        val gp = GeoPoint(t.first, t.second)
+        focusPoint = gp
+        mapView.controller.animateTo(gp)
+        mapView.controller.setZoom(17.5)
+        mapView.invalidate()
+        onFocusConsumed()
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -175,6 +191,16 @@ fun MapScreen(
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                     }
                     mv.overlays.add(marker)
+                }
+                // Marcador de foco (ubicación de una alerta abierta desde el chat)
+                focusPoint?.let { fp ->
+                    val fm = Marker(mv).apply {
+                        position = fp
+                        title    = "Ubicación de alerta"
+                        icon     = buildFocusMarker(mv.context, accentArgb)
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                    }
+                    mv.overlays.add(fm)
                 }
                 mv.invalidate()
             }
@@ -411,4 +437,41 @@ private fun hudCoord(lat: Double, lon: Double): String {
     val ns = if (lat >= 0) "N" else "S"
     val eo = if (lon >= 0) "E" else "O"
     return "%s %.4f\u00b0   %s %.4f\u00b0".format(ns, kotlin.math.abs(lat), eo, kotlin.math.abs(lon))
+}
+
+/** Marcador de "foco": un blanco/crosshair para la ubicación de una alerta. */
+private fun buildFocusMarker(context: android.content.Context, accent: Int): android.graphics.drawable.Drawable {
+    val density = context.resources.displayMetrics.density
+    fun dp(v: Float) = v * density
+    val r = dp(18f)
+    val size = (r * 2 + dp(10f)).toInt()
+    val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    val cx = size / 2f
+    val cy = size / 2f
+    // Halo translúcido
+    val halo = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = (accent and 0x00FFFFFF) or (45 shl 24)
+    }
+    canvas.drawCircle(cx, cy, r, halo)
+    // Anillo
+    val ring = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = dp(2.5f)
+        color = accent
+    }
+    canvas.drawCircle(cx, cy, r, ring)
+    // Cruz (crosshair) que sobresale del anillo
+    val cross = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        strokeWidth = dp(2f)
+        color = accent
+    }
+    canvas.drawLine(cx, cy - r - dp(4f), cx, cy - r + dp(7f), cross)
+    canvas.drawLine(cx, cy + r - dp(7f), cx, cy + r + dp(4f), cross)
+    canvas.drawLine(cx - r - dp(4f), cy, cx - r + dp(7f), cy, cross)
+    canvas.drawLine(cx + r - dp(7f), cy, cx + r + dp(4f), cy, cross)
+    // Punto central
+    val dot = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = accent }
+    canvas.drawCircle(cx, cy, dp(3f), dot)
+    return android.graphics.drawable.BitmapDrawable(context.resources, bmp)
 }

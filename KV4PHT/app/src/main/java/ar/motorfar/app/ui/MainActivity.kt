@@ -95,6 +95,9 @@ class MainActivity : ComponentActivity() {
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
     private var chatMessageIdCounter = 0L
 
+    // Punto al que centrar el mapa al tocar "ir a ubicación" en una alerta del chat
+    private val _mapFocus = MutableStateFlow<Pair<Double, Double>?>(null)
+
     private var pendingAlertType: AlertHelper.AlertType? = null
 
     private val _beaconIntervalFlow = MutableStateFlow(60_000L)
@@ -270,6 +273,7 @@ class MainActivity : ComponentActivity() {
             val state by uiState.collectAsState()
             val groupMembers by _groupMembers.collectAsState()
             val chatMessages by _chatMessages.collectAsState()
+            val mapFocus by _mapFocus.collectAsState()
             MotoRFARTheme(state.theme) {
                 val colors = LocalMotoRFARColors.current
                 val navController = rememberNavController()
@@ -337,7 +341,9 @@ class MainActivity : ComponentActivity() {
                             MapScreen(
                                 groupMembers    = groupMembers,
                                 locationGranted = state.locationGranted,
-                                headingDeg      = state.headingDeg
+                                headingDeg      = state.headingDeg,
+                                focusTarget     = mapFocus,
+                                onFocusConsumed = { _mapFocus.value = null }
                             )
                         }
                         composable("settings") {
@@ -367,8 +373,12 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("chat") {
                             ChatScreen(
-                                messages = chatMessages,
-                                onSend   = ::sendChatMessage
+                                messages       = chatMessages,
+                                onSend         = ::sendChatMessage,
+                                onGoToLocation = { lat, lon ->
+                                    _mapFocus.value = lat to lon
+                                    navController.navigate("map") { launchSingleTop = true }
+                                }
                             )
                         }
                     }
