@@ -3,12 +3,11 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-  <group>
-    <clip-path
-        android:pathData="M0,0h512v512h-512z"/>
-    <path
-        android:pathData="M0,0h512v512h-512z"
-        android:fillColor="#FFFCEA"/>
+  <group
+      android:pivotX="256"
+      android:pivotY="256"
+      android:scaleX="0.6"
+      android:scaleY="0.6">
     <path
         android:pathData="M123,237C123,223.74 133.74,213 147,213H363C376.26,213 387,223.74 387,237V510C387,523.26 376.26,534 363,534H147C133.74,534 123,523.26 123,510V237Z"
         android:fillColor="#21201F"/>
