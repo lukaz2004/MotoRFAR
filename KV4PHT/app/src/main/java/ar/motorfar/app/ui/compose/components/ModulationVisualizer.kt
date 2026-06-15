@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import ar.motorfar.app.ui.compose.theme.BorderHairline
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.PanelShape
+import ar.motorfar.app.ui.compose.theme.crtScreen
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -30,10 +32,10 @@ private const val BAR_COUNT = 24
 /**
  * Visualizador de modulación estilo ecualizador de espectro.
  *
- * Dibuja barras verticales que suben y bajan de forma orgánica.
- * - Activo (isActive = true): barras animadas con amplitud completa — se usa
- *   tanto al transmitir (TX) como al recibir señal (RX).
- * - Inactivo: barras planas mínimas (línea de base), sutil.
+ * Dibuja barras verticales que suben y bajan de forma orgánica, sobre una
+ * grilla tenue de osciloscopio (línea base + cuartos).
+ * - Activo (isActive = true): barras animadas con amplitud completa — TX o RX.
+ * - Inactivo: barras de baja amplitud (respiración), sutil.
  *
  * El color sigue el acento del tema (verde/ámbar CRT).
  */
@@ -70,14 +72,16 @@ fun ModulationVisualizer(
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
             .background(
-                color = LocalMotoRFARColors.current.surface.copy(alpha = 0.4f),
+                color = colors.surface.copy(alpha = 0.4f),
                 shape = PanelShape
             )
             .border(
                 width = BorderHairline,
-                color = LocalMotoRFARColors.current.borderSubtle,
+                color = colors.borderSubtle,
                 shape = PanelShape
             )
+            .clip(PanelShape)
+            .crtScreen(colors)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -104,6 +108,12 @@ private fun DrawScope.drawSpectrum(
     val barW     = (totalW - gap * (BAR_COUNT - 1)) / BAR_COUNT
     val maxH     = size.height
     val centerY  = maxH / 2f
+
+    // Grilla de osciloscopio: línea base central + cuartos, muy tenue
+    val q = maxH / 4f
+    drawLine(barColor.copy(alpha = 0.06f), Offset(0f, centerY - q), Offset(totalW, centerY - q), strokeWidth = 1f)
+    drawLine(barColor.copy(alpha = 0.06f), Offset(0f, centerY + q), Offset(totalW, centerY + q), strokeWidth = 1f)
+    drawLine(barColor.copy(alpha = 0.14f), Offset(0f, centerY),     Offset(totalW, centerY),     strokeWidth = 1f)
 
     for (i in 0 until BAR_COUNT) {
         // Amplitud combinando dos ondas + variación por índice para forma de espectro

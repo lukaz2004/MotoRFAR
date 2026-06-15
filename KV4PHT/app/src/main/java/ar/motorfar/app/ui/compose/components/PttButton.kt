@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +43,7 @@ fun PttButton(
 ) {
     val colors      = LocalMotoRFARColors.current
     val accentColor = if (enabled) colors.accent else colors.textDisabled
+    val haptics     = LocalHapticFeedback.current
 
     // Anillos radiales — solo activos durante TX
     val infiniteTransition = rememberInfiniteTransition(label = "ptt_rings")
@@ -62,8 +65,10 @@ fun PttButton(
                 if (!enabled) return@pointerInput
                 detectTapGestures(
                     onPress = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         onPttDown()
                         tryAwaitRelease()
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         onPttUp()
                     }
                 )

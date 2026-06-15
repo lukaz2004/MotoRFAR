@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -56,9 +57,15 @@ fun MapScreen(
     val context = LocalContext.current
     val colors = LocalMotoRFARColors.current
     val accentArgb = colors.accent.toArgb()
+    val isDark = colors.background.luminance() < 0.5f
 
     // Estado de la UI del mapa
     var routeOriented by remember { mutableStateOf(false) }  // mapa rota según el rumbo
+
+    // HUD táctico: coordenadas y zoom del centro del mapa (en vivo)
+    var hudLat  by remember { mutableStateOf(OBELISCO.latitude) }
+    var hudLon  by remember { mutableStateOf(OBELISCO.longitude) }
+    var hudZoom by remember { mutableStateOf(INITIAL_ZOOM) }
 
     val hasLocationPermission = locationGranted || remember {
         ContextCompat.checkSelfPermission(
@@ -120,6 +127,31 @@ fun MapScreen(
         mapView.invalidate()
     }
 
+    // Mapa oscuro/táctico en temas oscuros (sin filtro en tema Día claro)
+    androidx.compose.runtime.LaunchedEffect(isDark) {
+        mapView.overlayManager.tilesOverlay.setColorFilter(
+            if (isDark) darkTacticalTileFilter() else null
+        )
+        mapView.invalidate()
+    }
+
+    // HUD: actualiza coordenadas/zoom al mover o hacer zoom en el mapa
+    DisposableEffect(Unit) {
+        fun refresh() {
+            val c = mapView.mapCenter
+            hudLat = c.latitude
+            hudLon = c.longitude
+            hudZoom = mapView.zoomLevelDouble
+        }
+        val listener = object : org.osmdroid.events.MapListener {
+            override fun onScroll(e: org.osmdroid.events.ScrollEvent?): Boolean { refresh(); return false }
+            override fun onZoom(e: org.osmdroid.events.ZoomEvent?): Boolean { refresh(); return false }
+        }
+        mapView.addMapListener(listener)
+        refresh()
+        onDispose { mapView.removeMapListener(listener) }
+    }
+
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -147,6 +179,31 @@ fun MapScreen(
                 mv.invalidate()
             }
         )
+
+        // HUD táctico: coordenadas + zoom + rumbo (arriba izquierda)
+        Surface(
+            color  = colors.background.copy(alpha = 0.78f),
+            shape  = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+            border = BorderStroke(1.dp, colors.borderSubtle),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                androidx.compose.material3.Text(
+                    text       = hudCoord(hudLat, hudLon),
+                    color      = colors.textPrimary,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize   = 11.sp
+                )
+                androidx.compose.material3.Text(
+                    text       = "ZM " + hudZoom.toInt() + (headingDeg?.let { "   ·   HDG " + (((it % 360) + 360) % 360).toInt() + "°" } ?: ""),
+                    color      = colors.textSecondary,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize   = 11.sp
+                )
+            }
+        }
 
         // Controles del mapa (columna derecha): zoom, orientación, mi ubicación
         Column(
@@ -334,4 +391,24 @@ private fun buildGroupMarker(
     canvas.drawText(label.uppercase(), cx, cy + pinR + dp(12f), labelPaint)
 
     return android.graphics.drawable.BitmapDrawable(context.resources, bmp)
+}
+
+/** Filtro de color que oscurece los tiles claros de OSM (invierte + desatura). */
+private fun darkTacticalTileFilter(): android.graphics.ColorMatrixColorFilter {
+    val invert = android.graphics.ColorMatrix(floatArrayOf(
+        -1f, 0f, 0f, 0f, 255f,
+        0f, -1f, 0f, 0f, 255f,
+        0f, 0f, -1f, 0f, 255f,
+        0f, 0f, 0f, 1f, 0f
+    ))
+    val desat = android.graphics.ColorMatrix().apply { setSaturation(0.35f) }
+    invert.postConcat(desat)
+    return android.graphics.ColorMatrixColorFilter(invert)
+}
+
+/** Formatea coordenadas para el HUD: "S 34.6037°   O 58.3816°". */
+private fun hudCoord(lat: Double, lon: Double): String {
+    val ns = if (lat >= 0) "N" else "S"
+    val eo = if (lon >= 0) "E" else "O"
+    return "%s %.4f\u00b0   %s %.4f\u00b0".format(ns, kotlin.math.abs(lat), eo, kotlin.math.abs(lon))
 }

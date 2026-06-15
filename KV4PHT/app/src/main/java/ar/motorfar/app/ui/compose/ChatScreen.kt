@@ -89,15 +89,26 @@ fun ChatScreen(
 
         // Lista de mensajes
         if (messages.isEmpty()) {
-            Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text       = "// SIN MENSAJES //",
-                    color      = colors.textSecondary.copy(alpha = 0.5f),
+                    text          = "// CANAL EN SILENCIO //",
+                    color         = colors.textSecondary.copy(alpha = 0.7f),
+                    fontFamily    = ShareTechMono,
+                    fontSize      = 13.sp,
+                    letterSpacing = 1.sp
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text       = "Mantené PTT para hablar, o escribí abajo para enviar texto al grupo.",
+                    color      = colors.textGhost,
                     fontFamily = ShareTechMono,
-                    fontSize   = 12.sp
+                    fontSize   = 11.sp,
+                    textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+                    lineHeight = 17.sp
                 )
             }
         } else {
