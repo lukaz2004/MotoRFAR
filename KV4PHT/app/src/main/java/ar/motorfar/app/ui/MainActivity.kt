@@ -29,6 +29,10 @@ import ar.motorfar.app.radio.RadioAudioService
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
@@ -279,12 +283,13 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route ?: "main"
+                val isLandscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
                 Scaffold(
                     containerColor = colors.background,
                     bottomBar = {
-                        // Barra inferior: solo muestra los destinos a los que SÍ podés ir
-                        // (el tab activo se oculta — navegación tipo "ir a otra parte")
+                        // En horizontal la navegación va en un NavigationRail lateral (libera alto)
+                        if (!isLandscape) {
                         NavigationBar(containerColor = colors.surface) {
                             if (currentRoute != "main") {
                                 NavigationBarItem(
@@ -311,12 +316,44 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        }
                     }
                 ) { innerPadding ->
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.padding(innerPadding).fillMaxSize()
+                    ) {
+                    if (isLandscape) {
+                        NavigationRail(containerColor = colors.surface) {
+                            if (currentRoute != "main") {
+                                NavigationRailItem(
+                                    selected = false,
+                                    onClick  = { navController.navigate("main") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT") },
+                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                )
+                            }
+                            if (currentRoute != "map") {
+                                NavigationRailItem(
+                                    selected = false,
+                                    onClick  = { navController.navigate("map") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
+                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                )
+                            }
+                            if (currentRoute != "chat") {
+                                NavigationRailItem(
+                                    selected = false,
+                                    onClick  = { navController.navigate("chat") { launchSingleTop = true } },
+                                    icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT") },
+                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                )
+                            }
+                        }
+                    }
                     NavHost(
                         navController  = navController,
                         startDestination = "main",
-                        modifier       = Modifier.padding(innerPadding)
+                        modifier       = Modifier.weight(1f).fillMaxSize()
                     ) {
                         composable("main") {
                             MainScreen(
@@ -381,6 +418,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+                    }
                     }
                 }
             }
