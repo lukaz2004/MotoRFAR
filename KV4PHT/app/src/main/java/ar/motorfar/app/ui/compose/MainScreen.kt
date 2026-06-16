@@ -2,6 +2,7 @@ package ar.motorfar.app.ui.compose
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -27,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -130,11 +134,26 @@ private fun TopBar(
             checked         = state.isListenOnly,
             onCheckedChange = { onAction(MainUiAction.ToggleListenOnly) }
         ) {
-            Icon(
-                painter            = painterResource(R.drawable.ic_headphones),
-                contentDescription = if (state.isListenOnly) "Solo escucha activo" else "Modo normal",
-                tint               = if (state.isListenOnly) colors.accent else colors.textSecondary
-            )
+            // Estado inequívoco: activo = círculo relleno de acento con ícono oscuro;
+            // inactivo = contorno sutil. Antes solo cambiaba el tint y no se notaba.
+            val active = state.isListenOnly
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .then(
+                        if (active) Modifier.background(colors.accent)
+                        else Modifier.border(1.dp, colors.borderSubtle, CircleShape)
+                    )
+            ) {
+                Icon(
+                    painter            = painterResource(R.drawable.ic_headphones),
+                    contentDescription = if (active) "Solo escucha ACTIVO" else "Modo normal (tocar para solo escucha)",
+                    tint               = if (active) colors.background else colors.textSecondary,
+                    modifier           = Modifier.size(18.dp)
+                )
+            }
         }
         IconButton(
             onClick  = onOpenSettings,

@@ -36,6 +36,19 @@ public class ToneHelper {
         playNoise(80, volume * 0.3f);
     }
 
+    /**
+     * Sonido de fin de transmisión estilo VHF real: tono de cortesía ("roger
+     * beep") agudo y limpio seguido de una breve cola de squelch (static tail).
+     * Corre en su propio hilo para no bloquear la UI al encadenar tono + ruido.
+     */
+    public static void playRogerBeep(float volume) {
+        new Thread(() -> {
+            playTone(1500, 80, volume, true);   // roger beep
+            sleep(15);
+            playNoise(110, volume * 0.22f);     // cola de squelch
+        }).start();
+    }
+
     private static void playTone(int freqHz, int durationMs, float volume, boolean fadeOut) {
         try {
             int numSamples = SAMPLE_RATE * durationMs / 1000;

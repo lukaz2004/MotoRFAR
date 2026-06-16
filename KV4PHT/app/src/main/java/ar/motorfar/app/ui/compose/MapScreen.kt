@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.preference.PreferenceManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +58,10 @@ fun MapScreen(
     headingDeg: Float? = null,
     focusTarget: Pair<Double, Double>? = null,
     onFocusConsumed: () -> Unit = {},
+    isTransmitting: Boolean = false,
+    listenOnly: Boolean = false,
+    onPttDown: () -> Unit = {},
+    onPttUp: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -239,6 +247,14 @@ fun MapScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // PTT directo desde el mapa: transmitir mirando la navegación sin volver atrás
+            MapPttButton(
+                colors         = colors,
+                isTransmitting = isTransmitting,
+                listenOnly     = listenOnly,
+                onPttDown      = onPttDown,
+                onPttUp        = onPttUp
+            )
             // Zoom +
             MapControlButton(
                 label   = "+",
@@ -343,6 +359,60 @@ private fun MapControlButton(
                     tint               = tint
                 )
             }
+        }
+    }
+}
+
+/**
+ * Botón de PTT compacto para la pantalla de mapa. Mantener presionado transmite
+ * (key-down → key-up al soltar), igual que el PTT principal. Muestra "TX" relleno
+ * de acento mientras transmite. En modo escucha igual reporta el bloqueo (Toast).
+ */
+@Composable
+private fun MapPttButton(
+    colors: MotoRFARColors,
+    isTransmitting: Boolean,
+    listenOnly: Boolean,
+    onPttDown: () -> Unit,
+    onPttUp: () -> Unit
+) {
+    val haptics = LocalHapticFeedback.current
+    val ringColor = when {
+        isTransmitting -> colors.accent
+        listenOnly     -> colors.textDisabled
+        else           -> colors.accent
+    }
+    val labelColor = when {
+        isTransmitting -> colors.background
+        listenOnly     -> colors.textDisabled
+        else           -> colors.accent
+    }
+    Surface(
+        shape  = CircleShape,
+        color  = if (isTransmitting) colors.accent else colors.surface,
+        border = BorderStroke(if (isTransmitting) 2.dp else 1.5.dp, ringColor),
+        modifier = Modifier
+            .size(58.dp)
+            .pointerInput(listenOnly) {
+                detectTapGestures(
+                    onPress = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onPttDown()
+                        tryAwaitRelease()
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onPttUp()
+                    }
+                )
+            }
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            androidx.compose.material3.Text(
+                text       = if (isTransmitting) "TX" else "PTT",
+                color      = labelColor,
+                fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                fontSize   = 15.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            )
         }
     }
 }

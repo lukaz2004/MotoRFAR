@@ -32,6 +32,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.padding
@@ -178,7 +179,8 @@ class MainActivity : ComponentActivity() {
         }
         override fun moduleTxStateChanged(txActive: Boolean) {
             if (!txActive) {
-                ToneHelper.playStaticBurst(alertVolume / 100f)
+                // Fin de TX confirmado por el módulo → roger beep estilo VHF real
+                ToneHelper.playRogerBeep(alertVolume / 100f)
             }
             _uiState.update { it.copy(isTxActive = txActive) }
         }
@@ -320,7 +322,12 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.padding(innerPadding).fillMaxSize()
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            // Mantiene el rail y las pantallas fuera del recorte de
+                            // la cámara (isla) en horizontal — antes lo pisaba.
+                            .displayCutoutPadding()
+                            .fillMaxSize()
                     ) {
                     if (isLandscape) {
                         NavigationRail(containerColor = colors.surface) {
@@ -380,7 +387,11 @@ class MainActivity : ComponentActivity() {
                                 locationGranted = state.locationGranted,
                                 headingDeg      = state.headingDeg,
                                 focusTarget     = mapFocus,
-                                onFocusConsumed = { _mapFocus.value = null }
+                                onFocusConsumed = { _mapFocus.value = null },
+                                isTransmitting  = state.isTxActive,
+                                listenOnly      = state.isListenOnly,
+                                onPttDown       = { handleAction(MainUiAction.PttPressed) },
+                                onPttUp         = { handleAction(MainUiAction.PttReleased) }
                             )
                         }
                         composable("settings") {
@@ -531,7 +542,7 @@ class MainActivity : ComponentActivity() {
         when (action) {
             MainUiAction.PttPressed    -> {
                 // En modo escucha el PTT no transmite (guard de seguridad)
-                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 ToneHelper.playPttDown(vol)
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
@@ -543,25 +554,26 @@ class MainActivity : ComponentActivity() {
             }
             MainUiAction.PttReleased   -> {
                 if (listenOnly) return
-                ToneHelper.playPttUp(vol)
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
+                    // El roger beep lo dispara moduleTxStateChanged(false) cuando el
+                    // módulo confirma el fin de TX (evita el doble sonido al soltar).
                     svc.endPtt()
                 } else {
-                    // Fin de simulación
+                    // Fin de simulación: sin módulo, el roger beep va acá
                     _uiState.update { it.copy(isTxActive = false) }
-                    ToneHelper.playStaticBurst(vol)
+                    ToneHelper.playRogerBeep(vol)
                 }
             }
             is MainUiAction.ChannelSelected -> tuneToChannel(action.freq)
             // EMERGENCIA siempre disponible, incluso en modo escucha (seguridad)
             MainUiAction.EmergencyAlert -> { ToneHelper.playEmergencyBeep(vol); requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY) }
             MainUiAction.StopAlert     -> {
-                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.STOP)
             }
             MainUiAction.RegroupAlert  -> {
-                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP)
             }
             MainUiAction.ToggleListenOnly -> toggleListenOnly()
@@ -577,10 +589,28 @@ class MainActivity : ComponentActivity() {
         listenOnly = !listenOnly
         _uiState.update { it.copy(isListenOnly = listenOnly) }
         ToneHelper.playPttUp(alertVolume / 100f)
+        // Aviso del estado al que se pasa, para que el cambio sea inequívoco
+        android.widget.Toast.makeText(
+            this,
+            if (listenOnly) "MODO SOLO ESCUCHA · TX deshabilitada" else "MODO NORMAL · TX habilitada",
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
         executor.execute {
             RadioServiceAccessor.getAppDb(viewModel)
                 .saveAppSetting(AppSetting.SETTING_LISTEN_ONLY, listenOnly.toString())
         }
+    }
+
+    /**
+     * Cartel cuando el usuario intenta una función de TX estando en modo escucha.
+     * Evita que parezca que el botón (o la app) no responde.
+     */
+    private fun notifyListenOnlyBlocked() {
+        android.widget.Toast.makeText(
+            this,
+            "MODO SOLO ESCUCHA · soltá el modo escucha para transmitir",
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
     }
 
     // DEMO: simula 3 integrantes del grupo alrededor de Villa Martelli
@@ -653,7 +683,7 @@ class MainActivity : ComponentActivity() {
 
     private fun sendChatMessage(text: String) {
         // En modo escucha no se transmite texto
-        if (listenOnly) { ToneHelper.playAlertBeep(alertVolume / 100f); return }
+        if (listenOnly) { ToneHelper.playAlertBeep(alertVolume / 100f); notifyListenOnlyBlocked(); return }
         addChatMessage(userAlias, text, outgoing = true)
         val svc = radioService
         if (svc != null && uiState.value.isConnected) {
