@@ -231,3 +231,34 @@ La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan a
 - Verificación con SA818-V hardware real
 
 ---
+
+## 2026-06-15 · Sesión 9 — Testing de campo + handoff (sin código nuevo)
+
+**Lo que se hizo:**
+
+- Testing de campo en emulador (Pixel 10 Pro XL, landscape). 5 observaciones del usuario:
+  (1) el rail lateral pisa la isla de la cámara, (2) "RUTA ARRIBA" sin explicar,
+  (3) falta PTT / volver atrás en el mapa, (4) sin sonido de radio al emitir/terminar TX,
+  (5) modo solo-escucha sin feedback visual ni aviso al bloquear funciones.
+- **Hallazgo central:** los 5 ítems YA están implementados en el working tree, como
+  cambios **sin commitear** en 4 archivos: `MainActivity.kt`, `ToneHelper.java`,
+  `MainScreen.kt`, `MapScreen.kt`. El emulador corría un APK viejo → de ahí la discrepancia
+  entre las capturas y el código.
+  - #1 → `.displayCutoutPadding()` en el Row raíz. #2 → toggle heading-up + indicador.
+  - #3 → `MapPttButton` sobre el zoom + `NavigationRail` en landscape (todas las pantallas).
+  - #4 → `playPttDown` + `playRogerBeep` (fin TX, estilo VHF). #5 → toggle con estado relleno
+    + `notifyListenOnlyBlocked()` Toast + Toast de cambio de modo.
+- Verificado que el código es auto-consistente (`MainActivity` llama `ToneHelper.playRogerBeep`,
+  que existe en el archivo).
+- **No se commiteó ni compiló nada** (decisión: verificar build antes de commitear, y en branch,
+  no en `main`).
+- Creado `docs/SPRINT-9.md` con el handoff "CONTINUAR ACÁ" + checklist de re-test.
+
+**Estado git al cierre:** branch `main`; 4 archivos `M` sin commitear; sin stash.
+
+**Pendiente (mañana / Sprint 9):** compilar (`assembleDebug`, JAVA_HOME = jbr de Android Studio)
+→ commit en `sprint/9-field-polish` → `installDebug` → re-test de los 5 ítems → tests → PR.
+Arrastrado de S8: mergear el PR de Sprint 8, revocar los tokens gh expuestos, borrar
+`EmergencyConfirmDialog.kt`.
+
+---
