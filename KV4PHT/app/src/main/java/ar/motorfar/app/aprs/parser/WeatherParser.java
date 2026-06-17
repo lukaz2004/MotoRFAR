@@ -56,7 +56,7 @@ public class WeatherParser {
      */
     public static WeatherField parseWeatherData(byte[] msgBody, int cursor) throws Exception {
         WeatherField wf = new WeatherField();
-        String wxReport = new String(msgBody, cursor, msgBody.length - cursor);
+        String wxReport = new String(msgBody, cursor, Math.min(200, msgBody.length - cursor));
         wf.setLastCursorPosition(cursor += 36);
         wf.setType(APRSTypes.T_WX);
         Matcher matcher = dataPattern.matcher(wxReport);
@@ -71,10 +71,7 @@ public class WeatherParser {
                 wf.setRainSinceMidnight(Double.parseDouble(matcher.group(7)) / 100);
                 wf.setHumidity(Double.parseDouble(matcher.group(8)));
                 wf.setPressure(Double.parseDouble(matcher.group(9)));
-            } catch (NumberFormatException nfe) {
-                System.err.println("Got a weather packet with bogus data");
-            } catch (IllegalStateException ese) {
-                System.err.println("something failed in our matching expression");  
+            } catch (NumberFormatException | IllegalStateException ignored) {
             }
         } else {
             // we need to pick out the matches one by one

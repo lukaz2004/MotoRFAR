@@ -31,7 +31,7 @@ public class MessagePacket extends InformationField {
     public MessagePacket( byte[] bodyBytes, String destCall ) {
         super(bodyBytes);
         String message = new String(bodyBytes);
-        if ( message.length() < 2) {
+        if ( message.length() < 11) {
             this.hasFault = true;
             return;
         }

@@ -61,8 +61,7 @@ public class Parser {
 					System.out.println("    Extension:	" + data.getExtension());
 				}
 			} catch ( Exception ex ) {
-				System.err.println("Unable to parse:  "+ex);
-				ex.printStackTrace();
+				// Silencioso en producción — los paquetes RF malformados son normales
 			}
 		}
 	}
@@ -205,8 +204,7 @@ public class Parser {
 					byte[] slice = Arrays.copyOfRange(msgBody, cursor, msgBody.length-1);
 					packet.setComment(new String(slice, StandardCharsets.UTF_8));
     			} else {
-    				System.err.println("Object packet body too short for valid object");
-    				packet.setHasFault(true); // too short for an object
+    				packet.setHasFault(true);
     			}
     			break;
     		case '>':

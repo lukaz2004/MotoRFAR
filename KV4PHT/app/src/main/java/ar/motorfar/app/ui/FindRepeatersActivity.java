@@ -61,6 +61,7 @@ import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
+import ar.motorfar.app.BuildConfig;
 import ar.motorfar.app.R;
 import ar.motorfar.app.data.ChannelMemory;
 import ar.motorfar.app.radio.RadioAudioService;
@@ -78,6 +79,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class FindRepeatersActivity extends AppCompatActivity {
+    private static final String TAG = "FindRepeatersActivity";
     private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(2, 2, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
     private Snackbar errorSnackbar = null;
     private long downloadId = 0; // So we can tell when the download is done
@@ -116,7 +118,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
         LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getBaseContext()) != ConnectionResult.SUCCESS) {
-            Log.d("DEBUG", "Unable to get nearby repeaters because Android device is missing Google Play Services, needed to get GPS location.");
+            if (BuildConfig.DEBUG) Log.d(TAG, "Unable to get nearby repeaters because Android device is missing Google Play Services, needed to get GPS location.");
             showErrorSnackbar("Google Play Services is missing, it's needed for GPS location.");
             return;
         }
@@ -224,7 +226,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
                     getGpsLocation();
                 } else {
                     // Permission denied
-                    Log.d("DEBUG", "Warning: Need fine location permission to find nearby repeaters, but user denied it.");
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Warning: Need fine location permission to find nearby repeaters, but user denied it.");
                     showErrorSnackbar("Can't get your GPS location because the permission was denied.");
                 }
                 return;
@@ -235,7 +237,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
                     // Permission granted.
                 } else {
                     // Permission denied
-                    Log.d("DEBUG", "Warning: Need to write to external storage to find nearby repeaters, but user denied it.");
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Warning: Need to write to external storage to find nearby repeaters, but user denied it.");
                     showErrorSnackbar("Can't find nearby repeaters because storage permission was denied.");
                     finishActivity(Activity.RESULT_CANCELED);
                 }
@@ -245,19 +247,22 @@ public class FindRepeatersActivity extends AppCompatActivity {
     }
 
     private String[] getDownloadRepeatersUrls() {
+        // Truncate to 2 decimal places (~1.1 km precision) — sufficient for 25-mile search radius
+        double safeLat = Math.round(latitude * 100.0) / 100.0;
+        double safeLng = Math.round(longitude * 100.0) / 100.0;
         if (radioAudioService.getRadioType() == RadioAudioService.RadioModuleType.VHF) {
             String usVhfURL = "https://www.repeaterbook.com/repeaters/downloads/csv/index.php?func=prox&features%5B0%5D=FM&lat=" +
-                    latitude + "&long=" + longitude + "&distance=25&Dunit=m&band=4&call=&use=OPEN&status_id=1";
+                    safeLat + "&long=" + safeLng + "&distance=25&Dunit=m&band=4&call=&use=OPEN&status_id=1";
             String internationalVhfURL = "https://www.repeaterbook.com/row_repeaters/downloads/csv/index.php?func=prox2&city=&lat=" +
-                    latitude + "&long=" + longitude + "&distance=40&Dunit=k&band=4&freq=0&feature=0&call=&mode=1&net=0&status_id=%&use=&lat=" +
-                    latitude + "&long=" + longitude; // Unknown why RepeaterBook requires lat/long twice for int'l, but it fails without this second one (empty list returned).
+                    safeLat + "&long=" + safeLng + "&distance=40&Dunit=k&band=4&freq=0&feature=0&call=&mode=1&net=0&status_id=%&use=&lat=" +
+                    safeLat + "&long=" + safeLng;
             return new String[]{usVhfURL, internationalVhfURL};
         } else { // UHF
             String usUhfURL = "https://www.repeaterbook.com/repeaters/downloads/csv/index.php?func=prox&features%5B0%5D=FM&lat=" +
-                    latitude + "&long=" + longitude + "&distance=25&Dunit=m&band=16&band2=&call=&use=OPEN&status_id=1";
+                    safeLat + "&long=" + safeLng + "&distance=25&Dunit=m&band=16&band2=&call=&use=OPEN&status_id=1";
             String internationalUhfURL = "https://www.repeaterbook.com/row_repeaters/downloads/csv/index.php?func=prox2&city=&lat=" +
-                    latitude + "&long=" + longitude + "&distance=40&Dunit=k&band=16&freq=0&feature=0&call=&mode=1&net=0&status_id=%&use=&lat=" +
-                    latitude + "&long=" + longitude; // Unknown why RepeaterBook requires lat/long twice for int'l, but it fails without this second one (empty list returned).
+                    safeLat + "&long=" + safeLng + "&distance=40&Dunit=k&band=16&freq=0&feature=0&call=&mode=1&net=0&status_id=%&use=&lat=" +
+                    safeLat + "&long=" + safeLng;
             return new String[]{usUhfURL, internationalUhfURL};
         }
     }
@@ -268,13 +273,13 @@ public class FindRepeatersActivity extends AppCompatActivity {
         }
         if (downloadUrlIndex < downloadUrls.length) {
             String url = downloadUrls[downloadUrlIndex];
-            Log.d("DEBUG", "Attempting download from URL #" + downloadUrlIndex + ": " + url);
+            if (BuildConfig.DEBUG) Log.d(TAG, "Attempting download #" + downloadUrlIndex);
             webViewForDownloads.loadUrl(url);
         } else {
             if (isManualDownloadAttempt) {
                 showErrorSnackbar("No nearby repeaters found.");
             } else {
-                Log.d("DEBUG", "Silent download attempt failed, user may not be logged in yet.");
+                if (BuildConfig.DEBUG) Log.d(TAG, "Silent download attempt failed, user may not be logged in yet.");
             }
         }
     }
@@ -285,7 +290,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
             public void onDownloadStart(String url, String userAgent,
                                         String contentDisposition, String mimeType,
                                         long contentLength) {
-                Log.d("DEBUG", "RepeaterBook CSV download started.");
+                if (BuildConfig.DEBUG) Log.d(TAG, "RepeaterBook CSV download started.");
 
                 // Fetch cookies to maintain session
                 String cookies = CookieManager.getInstance().getCookie(url);
@@ -325,7 +330,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                Log.d("DEBUG", "Navigating to: " + url);
+                if (BuildConfig.DEBUG) Log.d(TAG, "Navigating to RepeaterBook");
                 view.loadUrl(url); // Continue loading inside the WebView
                 return true;
             }
@@ -333,7 +338,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (nearbyRepeaters == null) {
-                    Log.d("DEBUG", "Page finished loading: " + url + ". Attempting silent download.");
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Page finished loading. Attempting silent download.");
                     isManualDownloadAttempt = false;
                     webViewForDownloads = downloadWebView;
                     downloadUrlIndex = 0;
@@ -415,12 +420,12 @@ public class FindRepeatersActivity extends AppCompatActivity {
             if (id == downloadId) {
                 DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
                 Uri uri = dm.getUriForDownloadedFile(downloadId);
-                Log.d("DEBUG", "Download complete for URL #" + downloadUrlIndex);
+                if (BuildConfig.DEBUG) Log.d(TAG, "Download complete for URL #" + downloadUrlIndex);
                 try {
                     String csvData = readDownloadedCsvFile(uri);
-                    Log.d("DEBUG", "CSV Contents:\n" + csvData);
+                    if (BuildConfig.DEBUG) Log.d(TAG, "CSV downloaded, length=" + csvData.length());
                     nearbyRepeaters = parseRepeaterList(csvData);
-                    Log.d("DEBUG", "Num repeaters found: " + nearbyRepeaters.size());
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Num repeaters found: " + nearbyRepeaters.size());
                     if (null == nearbyRepeaters || nearbyRepeaters.size() == 0) {
                         downloadUrlIndex++;
                         attemptNextDownload();
@@ -429,7 +434,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
                         promptUserForMemoryGroup();
                     }
                 } catch (Exception e) {
-                    Log.d("DEBUG", "Error while trying to parse repeater CSV file.", e);
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Error while trying to parse repeater CSV file.", e);
                     downloadUrlIndex++;
                     attemptNextDownload();
                 }
@@ -611,8 +616,7 @@ public class FindRepeatersActivity extends AppCompatActivity {
                         locality     = addr.getLocality(); // e.g. city name
                     }
                 } catch (IOException e) {
-                    Log.d("DEBUG", "Exception while trying to get name of user's locality (city).");
-                    e.printStackTrace();
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Exception while trying to get name of user's locality (city).", e);
                 }
             }
         }).start();

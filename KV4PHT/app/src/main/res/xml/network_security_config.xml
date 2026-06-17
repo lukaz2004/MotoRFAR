@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Restricción de red: solo HTTPS, solo al dominio de RepeaterBook.
+    La app no tiene backend propio — toda comunicación es por RF.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">repeaterbook.com</domain>
+    </domain-config>
+</network-security-config>
