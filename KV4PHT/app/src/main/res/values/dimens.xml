@@ -1,3 +1,37 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+
+    <!-- Touch targets -->
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="touch_target_glove">60dp</dimen>
+
+    <!-- PTT -->
+    <dimen name="ptt_size">140dp</dimen>
+    <dimen name="ptt_size_landscape">120dp</dimen>
+
+    <!-- Alert buttons -->
+    <dimen name="alert_button_height">64dp</dimen>
+    <dimen name="emergency_button_height">64dp</dimen>
+
+    <!-- Channel list -->
+    <dimen name="memory_row_min_height">60dp</dimen>
+    <dimen name="memory_row_padding">10dp</dimen>
+    <dimen name="memory_row_outer_padding">4dp</dimen>
+
+    <!-- Status bar / header -->
+    <dimen name="status_bar_height">44dp</dimen>
+    <dimen name="header_button_size">48dp</dimen>
+
+    <!-- Typography -->
+    <dimen name="text_freq_large">36sp</dimen>
+    <dimen name="text_body">18sp</dimen>
+    <dimen name="text_label">14sp</dimen>
+    <dimen name="text_section_header">16sp</dimen>
+    <dimen name="text_channel_name">12sp</dimen>
+    <dimen name="text_channel_freq">17sp</dimen>
+
+    <!-- Spacing -->
+    <dimen name="screen_padding_horizontal">16dp</dimen>
+    <dimen name="section_margin_top">24dp</dimen>
+    <dimen name="control_margin_top">8dp</dimen>
 </resources>

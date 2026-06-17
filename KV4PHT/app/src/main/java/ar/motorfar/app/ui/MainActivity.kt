@@ -71,6 +71,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import ar.motorfar.app.ui.OnboardingHelper
 import ar.motorfar.app.ui.onboarding.OnboardingActivity
+import android.view.WindowManager
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
@@ -91,9 +92,21 @@ class MainActivity : ComponentActivity() {
     private var listenOnly: Boolean = false
     private var smartBeaconEnabled: Boolean = true
 
-    // Estado de movimiento del GPS (alimenta SmartBeaconing)
+    // Estado de movimiento del GPS (alimenta SmartBeaconing y Modo Ruta)
     @Volatile private var currentSpeedKmh: Double = 0.0
     @Volatile private var currentHeadingDeg: Double? = null
+    private var stationaryStartMs: Long = 0L
+    private val routeAutoOffHandler = Handler(Looper.getMainLooper())
+    private val routeAutoOffRunnable = Runnable {
+        // Auto-desactiva Modo Ruta si lleva >60 s detenido (<3 km/h)
+        if (uiState.value.isRouteActive && currentSpeedKmh < 3.0) {
+            _uiState.update { it.copy(isRouteActive = false) }
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            android.widget.Toast.makeText(
+                this, "MODO RUTA · desactivado (vehículo detenido)", android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
 
@@ -125,6 +138,18 @@ class MainActivity : ComponentActivity() {
         if (loc.hasBearing() && loc.speed > 0.5f) {
             currentHeadingDeg = loc.bearing.toDouble()
             _uiState.update { it.copy(headingDeg = loc.bearing) }
+        }
+        // Modo Ruta: si la velocidad baja de 3 km/h, programa la auto-desactivación
+        if (uiState.value.isRouteActive) {
+            if (currentSpeedKmh < 3.0) {
+                if (stationaryStartMs == 0L) {
+                    stationaryStartMs = System.currentTimeMillis()
+                    routeAutoOffHandler.postDelayed(routeAutoOffRunnable, 60_000L)
+                }
+            } else {
+                stationaryStartMs = 0L
+                routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
+            }
         }
     }
 
@@ -220,7 +245,12 @@ class MainActivity : ComponentActivity() {
                         fromAlias     = alias,
                         receivedAtMs  = System.currentTimeMillis()
                     )
-                    _uiState.update { it.copy(activeAlert = alert) }
+                    _uiState.update { s ->
+                        s.copy(
+                            activeAlert  = alert,
+                            alertHistory = (listOf(alert) + s.alertHistory).take(5)
+                        )
+                    }
                     // También al chat con formato de alerta (posición si vino en el mismo beacon)
                     val pos = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField
                     addAlertToChat(
@@ -422,6 +452,7 @@ class MainActivity : ComponentActivity() {
                         composable("chat") {
                             ChatScreen(
                                 messages       = chatMessages,
+                                alertHistory   = state.alertHistory,
                                 onSend         = ::sendChatMessage,
                                 onGoToLocation = { lat, lon ->
                                     _mapFocus.value = lat to lon
@@ -480,6 +511,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         serviceScope.cancel()
         executor.shutdownNow()
+        routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
     }
 
     // ── Service binding ───────────────────────────────────────────────
@@ -581,6 +613,37 @@ class MainActivity : ComponentActivity() {
                 ar.motorfar.app.ui.compose.theme.ThemePreference.set(this, action.theme)
                 _uiState.update { it.copy(theme = action.theme) }
                 ToneHelper.playPttUp(vol)
+            }
+            MainUiAction.ToggleRouteActive -> {
+                val nowActive = !uiState.value.isRouteActive
+                _uiState.update { it.copy(isRouteActive = nowActive) }
+                if (nowActive) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    stationaryStartMs = 0L
+                    android.widget.Toast.makeText(
+                        this, "MODO RUTA ACTIVO · pantalla siempre encendida", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    stationaryStartMs = 0L
+                    routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
+                }
+                ToneHelper.playPttUp(vol)
+            }
+            MainUiAction.SendWaypoint -> {
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
+                val svc = radioService
+                if (svc != null && uiState.value.isConnected) {
+                    svc.sendPositionBeacon()
+                    ToneHelper.playPttUp(vol)
+                    android.widget.Toast.makeText(
+                        this, "WAYPOINT · posición enviada al grupo", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    android.widget.Toast.makeText(
+                        this, "Sin radio · waypoint no transmitido", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }

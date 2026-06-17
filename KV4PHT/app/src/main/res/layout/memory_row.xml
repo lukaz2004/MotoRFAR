@@ -9,9 +9,11 @@
         android:id="@+id/memoryContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="@dimen/memory_row_min_height"
         android:orientation="vertical"
         android:background="@drawable/memory_channel_bg"
-        android:padding="10dp">
+        android:gravity="center_vertical"
+        android:padding="@dimen/memory_row_padding">
 
         <View
             android:id="@+id/memoryMenu"
@@ -24,7 +26,7 @@
             android:id="@+id/memoryName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="9sp"
+            android:textSize="@dimen/text_channel_name"
             android:textColor="@color/text_dim"
             android:fontFamily="@font/share_tech_mono"
             android:textAllCaps="true"

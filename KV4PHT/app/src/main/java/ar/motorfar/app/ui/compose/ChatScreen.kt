@@ -42,7 +42,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.R
+import ar.motorfar.app.ui.AlertHelper
 import ar.motorfar.app.ui.compose.state.ChatMessage
+import ar.motorfar.app.ui.compose.state.ReceivedAlert
 import ar.motorfar.app.ui.compose.theme.EmergencyBackground
 import ar.motorfar.app.ui.compose.theme.EmergencyBorder
 import ar.motorfar.app.ui.compose.theme.EmergencyText
@@ -61,6 +63,7 @@ import java.util.Locale
 @Composable
 fun ChatScreen(
     messages: List<ChatMessage>,
+    alertHistory: List<ReceivedAlert> = emptyList(),
     onSend: (String) -> Unit,
     onGoToLocation: (Double, Double) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
@@ -90,6 +93,11 @@ fun ChatScreen(
             letterSpacing = 2.sp,
             modifier      = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
         )
+
+        // Historial de alertas recibidas (últimas 5)
+        if (alertHistory.isNotEmpty()) {
+            AlertHistoryPanel(alertHistory)
+        }
 
         // Lista de mensajes
         if (messages.isEmpty()) {
@@ -307,6 +315,55 @@ private fun ChatBubble(
                 fontSize   = 11.sp,
                 modifier   = Modifier.align(Alignment.End)
             )
+        }
+    }
+}
+
+// ── Historial de alertas recibidas (últimas 5) ────────────────────────────
+@Composable
+private fun AlertHistoryPanel(alerts: List<ReceivedAlert>) {
+    val colors = LocalMotoRFARColors.current
+    val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.surface)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text          = "ALERTAS RECIENTES",
+            color         = colors.textSecondary,
+            fontFamily    = ShareTechMono,
+            fontSize      = 10.sp,
+            letterSpacing = 2.sp
+        )
+        alerts.forEach { alert ->
+            val (label, tint) = when (alert.type) {
+                AlertHelper.AlertType.EMERGENCY -> "⚠ EMERGENCIA" to EmergencyText
+                AlertHelper.AlertType.STOP      -> "■ DETENCIÓN"  to StopText
+                AlertHelper.AlertType.REGROUP   -> "● REAGRUPAR"  to RegroupText
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text       = "$label · ${alert.fromAlias}",
+                    color      = tint,
+                    fontFamily = ShareTechMono,
+                    fontSize   = 12.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+                Text(
+                    text       = timeFmt.format(Date(alert.receivedAtMs)),
+                    color      = colors.textSecondary,
+                    fontFamily = ShareTechMono,
+                    fontSize   = 11.sp
+                )
+            }
         }
     }
 }

@@ -4,23 +4,23 @@
     <!-- Sombra exterior -->
     <item android:top="5dp" android:left="5dp">
         <shape android:shape="oval">
-            <solid android:color="#0c1a04"/>
+            <solid android:color="@color/ptt_shadow"/>
         </shape>
     </item>
     <!-- Borde exterior luminoso -->
     <item android:bottom="4dp" android:right="4dp">
         <shape android:shape="oval">
-            <solid android:color="#8FE875"/>
+            <solid android:color="@color/primary"/>
         </shape>
     </item>
     <!-- Cuerpo con gradiente radial (simula convexo) -->
     <item android:bottom="6dp" android:right="6dp" android:top="2dp" android:left="2dp">
         <shape android:shape="oval">
             <gradient android:type="radial"
-                android:gradientRadius="100%"
-                android:startColor="#8FE875"
-                android:centerColor="#4FBD3B"
-                android:endColor="#173404"/>
+                android:gradientRadius="50%p"
+                android:startColor="@color/primary"
+                android:centerColor="@color/accent"
+                android:endColor="@color/text_faint"/>
         </shape>
     </item>
 </layer-list>

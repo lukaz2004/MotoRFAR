@@ -1,6 +1,74 @@
 <resources>
 
-    <style name="Widget.Theme.KV4PHT.MyView" parent="">
-        <item name="android:background">@color/gray_400</item>
+    <!-- Base button de alerta: touch target >= 64dp, Share Tech Mono -->
+    <style name="Widget.MotoRFAR.Button.Alert" parent="Widget.AppCompat.Button">
+        <item name="android:layout_height">@dimen/alert_button_height</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:fontFamily">@font/share_tech_mono</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
     </style>
+
+    <!-- Botón EMERGENCIA -->
+    <style name="Widget.MotoRFAR.Button.Emergency" parent="Widget.MotoRFAR.Button.Alert">
+        <item name="android:layout_height">@dimen/emergency_button_height</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_weight">0</item>
+        <item name="android:background">@drawable/btn_emergency</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <!-- Base TextView — padre implícito de .Frequency / .SectionLabel / .SettingsControl -->
+    <style name="Widget.MotoRFAR.TextView" parent="Widget.AppCompat.TextView" />
+
+    <!-- TextView de frecuencia principal -->
+    <style name="Widget.MotoRFAR.TextView.Frequency">
+        <item name="android:fontFamily">@font/share_tech_mono</item>
+        <item name="android:textSize">@dimen/text_freq_large</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- Label de sección (RADIO, APRS, AVANZADO…) -->
+    <style name="Widget.MotoRFAR.TextView.SectionLabel">
+        <item name="android:fontFamily">@font/jost</item>
+        <item name="android:textSize">@dimen/text_section_header</item>
+        <item name="android:textColor">@color/primary_deselected</item>
+        <item name="android:layout_marginTop">@dimen/section_margin_top</item>
+    </style>
+
+    <!-- Control de Settings (labels de campo) -->
+    <style name="Widget.MotoRFAR.TextView.SettingsControl">
+        <item name="android:fontFamily">@font/jost</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <!-- Switch con touch target adecuado -->
+    <style name="Widget.MotoRFAR.Switch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+        <item name="android:minHeight">@dimen/touch_target_min</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:layout_marginTop">@dimen/control_margin_top</item>
+        <item name="thumbTint">@color/primary</item>
+        <item name="trackTint">@color/accent_veryfaint</item>
+    </style>
+
+    <!-- Dropdown de Settings -->
+    <style name="Widget.MotoRFAR.Dropdown" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+        <item name="android:layout_height">@dimen/touch_target_min</item>
+        <item name="hintTextColor">@color/primary_deselected</item>
+        <item name="boxStrokeColor">@color/primary</item>
+    </style>
+
+    <!-- Legacy — no remover, referenciado desde código viejo -->
+    <style name="Widget.Theme.KV4PHT.MyView" parent="">
+        <item name="android:background">@color/surface_variant</item>
+    </style>
+
 </resources>

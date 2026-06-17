@@ -1,49 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- values-night/colors.xml
+     MotoRFAR usa SIEMPRE un theme oscuro (CRT táctico).
+     Este archivo es idéntico a values/colors.xml para evitar que Android
+     active una paleta distinta en dispositivos con modo oscuro del sistema.
+     NO modificar independientemente — sincronizar siempre con values/colors.xml -->
 <resources>
-    <!-- Paleta base -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="medium_gray">#FF353533</color>
+    <color name="crt_black">#FF030804</color>
 
-    <!-- Modo oscuro: texto claro sobre fondo muy oscuro -->
-    <color name="primary">#FFECECE4</color>
-    <color name="primary_deselected">#FF8A9BB0</color>
-    <color name="primary_veryfaint">#1AECECE4</color>
+    <!-- Fondos -->
+    <color name="background">#FF030804</color>
+    <color name="surface">#FF060e06</color>
+    <color name="surface_variant">#FF0a1a0a</color>
+    <color name="surface_elevated">#FF0c1a0c</color>
 
-    <!-- Acento: ámbar más brillante en oscuro -->
-    <color name="accent">#FFFF8C42</color>
-    <color name="accent_veryfaint">#33FF8C42</color>
+    <!-- Texto verde — escala de luminancia -->
+    <color name="primary">#FF8FE875</color>
+    <color name="primary_deselected">#FF4FBD3B</color>
+    <color name="primary_veryfaint">#228FE875</color>
+    <color name="text_dim">#FF27500A</color>
+    <color name="text_ghost">#FF1f5511</color>
+    <color name="text_faint">#FF173404</color>
 
-    <!-- Fondo general -->
-    <color name="background">#FF0D1117</color>
-    <color name="surface">#FF161B22</color>
-    <color name="surface_variant">#FF1F2937</color>
+    <!-- Acento / LED / borde activo -->
+    <color name="accent">#FF4FBD3B</color>
+    <color name="accent_veryfaint">#334FBD3B</color>
+    <color name="accent_glow">#664FBD3B</color>
 
-    <!-- Botones de canal (grilla) -->
-    <color name="channel_bg">#FF1A1A2E</color>
-    <color name="channel_border">#FF333333</color>
+    <!-- Bordes -->
+    <color name="border_active">#FF4FBD3B</color>
+    <color name="border_subtle">#FF1f3a1f</color>
+    <color name="border_faint">#FF0f1f0f</color>
+
+    <!-- Canal -->
+    <color name="channel_bg">#FF060e06</color>
+    <color name="channel_border">#FF1f3a1f</color>
+    <color name="channel_bg_active">#FF0c1a0c</color>
+    <color name="channel_border_active">#FF4FBD3B</color>
 
     <!-- Botones de frecuencia -->
-    <color name="freq_button_selected_bg">#FFFF8C42</color>
-    <color name="freq_button_selected_text">#FF000000</color>
-    <color name="freq_button_unselected_bg">#FF1F2937</color>
-    <color name="freq_button_unselected_text">#FFECECE4</color>
+    <color name="freq_button_selected_bg">#FF4FBD3B</color>
+    <color name="freq_button_selected_text">#FF030804</color>
+    <color name="freq_button_unselected_bg">#FF060e06</color>
+    <color name="freq_button_unselected_text">#FF4FBD3B</color>
 
     <!-- PTT -->
-    <color name="ptt_active">#FFFF4444</color>
-    <color name="ptt_inactive">#FF4CAF50</color>
+    <color name="ptt_active">#FF4FBD3B</color>
+    <color name="ptt_inactive">#FF27500A</color>
+    <color name="ptt_bg">#FF0c1a0c</color>
+
+    <!-- EMERGENCIA — rojo (no cambia con el tema) -->
+    <color name="emergency_bg">#FF501313</color>
+    <color name="emergency_border">#FFE24B4A</color>
+    <color name="emergency_text">#FFF09595</color>
 
     <!-- Estado radio -->
-    <color name="status_ok">#FF4CAF50</color>
-    <color name="status_error">#FFFF4444</color>
-    <color name="status_warning">#FFFF8C42</color>
+    <color name="status_ok">#FF4FBD3B</color>
+    <color name="status_error">#FFE24B4A</color>
+    <color name="status_warning">#FFEF9F27</color>
+    <color name="status_gps">#FF8FE875</color>
 
-    <!-- Material overrides -->
-    <color name="band">#FFECECE4</color>
-    <color name="clear">#00FFFFFF</color>
-    <color name="mtrl_textinput_default_box_stroke_color">#FF8A9BB0</color>
-    <color name="light_blue_400">#FF29B6F6</color>
-    <color name="light_blue_600">#FF039BE5</color>
-    <color name="gray_400">#FFBDBDBD</color>
-    <color name="gray_600">#FF757575</color>
+    <!-- PTT button layers -->
+    <color name="ptt_shadow">#FF0c1a04</color>
+
+    <!-- Alert — DETENCIÓN -->
+    <color name="stop_shadow">#FF2a0c04</color>
+    <color name="stop_highlight">#FFF5C4B3</color>
+    <color name="stop_center">#FFD85A30</color>
+    <color name="stop_dark">#FF993C1D</color>
+
+    <!-- Alert — REAGRUPAR -->
+    <color name="regroup_shadow">#FF0c1a04</color>
+    <color name="regroup_highlight">#FFC0DD97</color>
+    <color name="regroup_center">#FF639922</color>
+    <color name="regroup_dark">#FF3B6D11</color>
+
+    <!-- Alert — EMERGENCIA layers -->
+    <color name="emergency_shadow">#FF1a0404</color>
+    <color name="emergency_highlight">#FFF7C1C1</color>
+    <color name="emergency_dark">#FFA32D2D</color>
+
+    <!-- Legado -->
+    <color name="medium_gray">#FF1a2a1a</color>
+    <color name="band">#FF8FE875</color>
+    <color name="clear">#00000000</color>
+    <color name="mtrl_textinput_default_box_stroke_color">#FF4FBD3B</color>
+    <color name="light_blue_400">#FF4FBD3B</color>
+    <color name="light_blue_600">#FF27500A</color>
+    <color name="gray_400">#FF27500A</color>
+    <color name="gray_600">#FF1f5511</color>
 </resources>
