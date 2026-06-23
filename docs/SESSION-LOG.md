@@ -291,3 +291,24 @@ Arrastrado de S8: mergear el PR de Sprint 8, revocar los tokens gh expuestos, bo
 - Actualizar `docs/06-HARDWARE.md` para reflejar el conector J2 PTT externo.
 
 ---
+
+## 2026-06-23 · Sesión 11 — Hardware: archivos de producción PCB listos para JLCPCB
+
+**Lo que se hizo:**
+
+- Confirmado: SW1/SW2 no están en el layout del PCB (solo en el esquemático) — no hay nada que sincronizar.
+- Logo BAQUEANO V2.0 convertido a footprint KiCad (`kv4p-ht.pretty/Logo_Baqueano.kicad_mod`, 98 polígonos en B.SilkS, 28×19.4mm). Instancia agregada al PCB en posición (146.05, 158.0) cara trasera.
+- Gerbers generados con `kicad-cli pcb export gerbers` (22 archivos, 4 capas de cobre, silkscreen, mask, Edge.Cuts, drill).
+- CPL convertido a formato JLCPCB (`CPL_JLCPCB.csv`, 89 componentes con columnas Designator / Mid X / Mid Y / Layer / Rotation).
+- BOM limpiado a formato JLCPCB (`BOM_JLCPCB.csv`, 38 componentes con LCSC#). Excluidos de PCBA: SA818-V (no en LCSC) y J2 jack 3.5mm PJ302M (through-hole, no Economic PCBA) — se compran por separado y se sueldan a mano.
+- ZIP final `production-vhf/MotoRFAR_JLCPCB_READY.zip` (536 KB) listo para subir a jlcpcb.com/quote.
+- Color PCB: negro o azul ($0 extra). Estimado total: ~USD 100–130 para 5 placas ensambladas + envío Global Standard.
+
+**Pendiente hardware (antes de ordenar):**
+- Verificar LCSC# del PJ302M (placeholder C2899878) en lcsc.com.
+- Verificar visualmente posición del logo en KiCad PCB editor.
+- SA818-V + PJ302M: comprar por separado en AliExpress.
+
+**Pendiente app:** Sprint 9 — compilar working tree, re-test 5 hallazgos campo, tests, PR.
+
+---
