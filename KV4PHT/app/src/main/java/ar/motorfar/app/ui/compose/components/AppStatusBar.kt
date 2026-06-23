@@ -58,7 +58,7 @@ fun AppStatusBar(
             text       = "VHF · SIMPLEX",
             color      = colors.textSecondary,
             fontFamily = ShareTechMono,
-            fontSize   = 10.sp
+            fontSize   = 14.sp
         )
     }
 }

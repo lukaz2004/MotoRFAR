@@ -88,7 +88,7 @@ fun ChatScreen(
             text          = "CHAT VHF",
             color         = colors.accent,
             fontFamily    = ShareTechMono,
-            fontSize      = 14.sp,
+            fontSize      = 19.sp,
             fontWeight    = FontWeight.Bold,
             letterSpacing = 2.sp,
             modifier      = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
@@ -110,7 +110,7 @@ fun ChatScreen(
                     text          = "// CANAL EN SILENCIO //",
                     color         = colors.textSecondary.copy(alpha = 0.7f),
                     fontFamily    = ShareTechMono,
-                    fontSize      = 13.sp,
+                    fontSize      = 18.sp,
                     letterSpacing = 1.sp
                 )
                 Spacer(Modifier.height(8.dp))
@@ -118,7 +118,7 @@ fun ChatScreen(
                     text       = "Mantené PTT para hablar, o escribí abajo para enviar texto al grupo.",
                     color      = colors.textGhost,
                     fontFamily = ShareTechMono,
-                    fontSize   = 11.sp,
+                    fontSize   = 15.sp,
                     textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
                     lineHeight = 17.sp
                 )
@@ -147,11 +147,11 @@ fun ChatScreen(
                 onValueChange = { if (it.length <= 67) draft = it }, // límite APRS típico
                 modifier      = Modifier.weight(1f),
                 placeholder   = {
-                    Text("Mensaje...", fontFamily = ShareTechMono, fontSize = 15.sp, color = colors.textSecondary)
+                    Text("Mensaje...", fontFamily = ShareTechMono, fontSize = 20.sp, color = colors.textSecondary)
                 },
                 textStyle     = TextStyle(
                     fontFamily = ShareTechMono,
-                    fontSize   = 16.sp,
+                    fontSize   = 22.sp,
                     color      = colors.textPrimary
                 ),
                 singleLine    = true,
@@ -245,7 +245,7 @@ private fun ChatBubble(
                     text          = "$header · ${msg.fromAlias}",
                     color         = txtColor,
                     fontFamily    = ShareTechMono,
-                    fontSize      = 15.sp,
+                    fontSize      = 20.sp,
                     fontWeight    = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -256,7 +256,7 @@ private fun ChatBubble(
                     text       = msg.fromAlias,
                     color      = colors.accent,
                     fontFamily = ShareTechMono,
-                    fontSize   = 15.sp,
+                    fontSize   = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -279,7 +279,7 @@ private fun ChatBubble(
                     text       = "POS: %.5f, %.5f".format(lat, lon),
                     color      = txtColor.copy(alpha = 0.85f),
                     fontFamily = ShareTechMono,
-                    fontSize   = 13.sp
+                    fontSize   = 18.sp
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(
@@ -300,7 +300,7 @@ private fun ChatBubble(
                         text          = "IR A UBICACIÓN",
                         color         = txtColor,
                         fontFamily    = ShareTechMono,
-                        fontSize      = 12.sp,
+                        fontSize      = 17.sp,
                         fontWeight    = FontWeight.Bold,
                         letterSpacing = 1.sp,
                         modifier      = Modifier.padding(start = 8.dp)
@@ -312,7 +312,7 @@ private fun ChatBubble(
                 text       = timeFmt.format(Date(msg.timestampMs)),
                 color      = (if (isAlert) txtColor else colors.textSecondary).copy(alpha = 0.6f),
                 fontFamily = ShareTechMono,
-                fontSize   = 11.sp,
+                fontSize   = 15.sp,
                 modifier   = Modifier.align(Alignment.End)
             )
         }
@@ -336,7 +336,7 @@ private fun AlertHistoryPanel(alerts: List<ReceivedAlert>) {
             text          = "ALERTAS RECIENTES",
             color         = colors.textSecondary,
             fontFamily    = ShareTechMono,
-            fontSize      = 10.sp,
+            fontSize      = 14.sp,
             letterSpacing = 2.sp
         )
         alerts.forEach { alert ->
@@ -354,14 +354,14 @@ private fun AlertHistoryPanel(alerts: List<ReceivedAlert>) {
                     text       = "$label · ${alert.fromAlias}",
                     color      = tint,
                     fontFamily = ShareTechMono,
-                    fontSize   = 12.sp,
+                    fontSize   = 17.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
                 Text(
                     text       = timeFmt.format(Date(alert.receivedAtMs)),
                     color      = colors.textSecondary,
                     fontFamily = ShareTechMono,
-                    fontSize   = 11.sp
+                    fontSize   = 15.sp
                 )
             }
         }

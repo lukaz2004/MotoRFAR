@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.motorfar.app.R
@@ -125,6 +126,15 @@ fun MapScreen(
             if (!mapView.overlays.contains(myLocationOverlay)) {
                 mapView.overlays.add(myLocationOverlay)
             }
+            // Arranca centrado en MI ubicación (no en el Obelisco) al primer fix de GPS
+            myLocationOverlay.runOnFirstFix {
+                myLocationOverlay.myLocation?.let { loc ->
+                    mapView.post {
+                        mapView.controller.animateTo(loc)
+                        mapView.controller.setZoom(17.0)
+                    }
+                }
+            }
             mapView.invalidate()
         }
     }
@@ -176,7 +186,16 @@ fun MapScreen(
         onFocusConsumed()
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    // Primer render en horizontal: el MapView llegaba a dibujarse fuera de sus límites y
+    // tapaba la NavigationRail hasta el primer redraw. clipToBounds lo contiene y el nudge
+    // fuerza un re-layout al entrar al mapa.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(60)
+        mapView.requestLayout()
+        mapView.invalidate()
+    }
+
+    Box(modifier = modifier.fillMaxSize().clipToBounds()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { mapView },
@@ -228,13 +247,13 @@ fun MapScreen(
                     text       = hudCoord(hudLat, hudLon),
                     color      = colors.textPrimary,
                     fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize   = 11.sp
+                    fontSize   = 15.sp
                 )
                 androidx.compose.material3.Text(
                     text       = "ZM " + hudZoom.toInt() + (headingDeg?.let { "   ·   HDG " + (((it % 360) + 360) % 360).toInt() + "°" } ?: ""),
                     color      = colors.textSecondary,
                     fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize   = 11.sp
+                    fontSize   = 13.sp
                 )
             }
         }
@@ -313,7 +332,7 @@ fun MapScreen(
                     text     = "▲ RUTA ARRIBA",
                     color    = colors.accent,
                     fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize = 11.sp,
+                    fontSize = 14.sp,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
@@ -392,7 +411,7 @@ private fun MapPttButton(
         color  = if (isTransmitting) colors.accent else colors.surface,
         border = BorderStroke(if (isTransmitting) 2.dp else 1.5.dp, ringColor),
         modifier = Modifier
-            .size(58.dp)
+            .size(110.dp)
             .pointerInput(listenOnly) {
                 detectTapGestures(
                     onPress = {
@@ -410,7 +429,7 @@ private fun MapPttButton(
                 text       = if (isTransmitting) "TX" else "PTT",
                 color      = labelColor,
                 fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                fontSize   = 15.sp,
+                fontSize   = 22.sp,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
         }

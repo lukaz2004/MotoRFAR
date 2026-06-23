@@ -366,7 +366,7 @@ class MainActivity : ComponentActivity() {
                                     selected = false,
                                     onClick  = { navController.navigate("main") { launchSingleTop = true } },
                                     icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT") },
-                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
                             if (currentRoute != "map") {
@@ -374,7 +374,7 @@ class MainActivity : ComponentActivity() {
                                     selected = false,
                                     onClick  = { navController.navigate("map") { launchSingleTop = true } },
                                     icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
-                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
                             if (currentRoute != "chat") {
@@ -382,7 +382,7 @@ class MainActivity : ComponentActivity() {
                                     selected = false,
                                     onClick  = { navController.navigate("chat") { launchSingleTop = true } },
                                     icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT") },
-                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
                         }

@@ -127,7 +127,7 @@ private fun TopBar(
                 text          = "RUTA",
                 color         = if (state.isRouteActive) colors.background else colors.textSecondary,
                 fontFamily    = ShareTechMono,
-                fontSize      = 10.sp,
+                fontSize      = 14.sp,
                 fontWeight    = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
@@ -220,7 +220,7 @@ private fun ThemeOption(
                 text       = (if (selected) "› " else "   ") + label,
                 color      = if (selected) colors.accent else colors.textPrimary,
                 fontFamily = ShareTechMono,
-                fontSize   = 13.sp,
+                fontSize   = 18.sp,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             )
         },
@@ -263,7 +263,7 @@ private fun RouteActiveLayout(
                     text          = "SALIR RUTA",
                     color         = colors.accent,
                     fontFamily    = ShareTechMono,
-                    fontSize      = 11.sp,
+                    fontSize      = 15.sp,
                     fontWeight    = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -278,7 +278,7 @@ private fun RouteActiveLayout(
                 text          = state.activeChannelName,
                 color         = colors.textSecondary,
                 fontFamily    = ShareTechMono,
-                fontSize      = 13.sp,
+                fontSize      = 18.sp,
                 letterSpacing = 3.sp
             )
             Spacer(Modifier.height(4.dp))
@@ -293,7 +293,7 @@ private fun RouteActiveLayout(
                 text          = "MHz",
                 color         = colors.textSecondary,
                 fontFamily    = ShareTechMono,
-                fontSize      = 16.sp,
+                fontSize      = 22.sp,
                 letterSpacing = 2.sp
             )
         }
@@ -329,7 +329,7 @@ private fun RouteActiveLayout(
             text          = "● GPS MONITOR · auto-off al detenerte",
             color         = colors.accent.copy(alpha = 0.6f),
             fontFamily    = ShareTechMono,
-            fontSize      = 10.sp,
+            fontSize      = 14.sp,
             letterSpacing = 1.sp,
             modifier      = Modifier.padding(bottom = 8.dp)
         )
@@ -343,7 +343,7 @@ private fun ListenOnlyTag(modifier: Modifier = Modifier) {
         text          = "[ SOLO ESCUCHA ]",
         color         = colors.accent.copy(alpha = 0.75f),
         fontFamily    = ShareTechMono,
-        fontSize      = 11.sp,
+        fontSize      = 15.sp,
         fontWeight    = FontWeight.Bold,
         letterSpacing = 2.sp,
         modifier      = modifier.padding(vertical = 2.dp)
