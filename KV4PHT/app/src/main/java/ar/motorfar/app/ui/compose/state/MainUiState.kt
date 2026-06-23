@@ -15,7 +15,9 @@ data class MainUiState(
     val activeAlert: ReceivedAlert?     = null,
     val isListenOnly: Boolean           = false,
     val locationGranted: Boolean        = false,
-    val headingDeg: Float?              = null
+    val headingDeg: Float?              = null,
+    val isRouteActive: Boolean          = false,
+    val alertHistory: List<ReceivedAlert> = emptyList()
 ) {
     companion object {
         fun preview() = MainUiState(

@@ -38,7 +38,7 @@ fun PttButton(
     enabled: Boolean,
     onPttDown: () -> Unit,
     onPttUp: () -> Unit,
-    diameter: Dp = 150.dp,
+    diameter: Dp = 180.dp,
     modifier: Modifier = Modifier
 ) {
     val colors      = LocalMotoRFARColors.current

@@ -2,6 +2,8 @@ package ar.motorfar.app.ui.compose
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,6 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -27,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,12 +44,15 @@ import ar.motorfar.app.ui.compose.components.AlertBanner
 import ar.motorfar.app.ui.compose.components.AlertButtonsPanel
 import ar.motorfar.app.ui.compose.components.AppStatusBar
 import ar.motorfar.app.ui.compose.components.ChannelRow
+import ar.motorfar.app.ui.compose.components.EmergencyConfirmButton
 import ar.motorfar.app.ui.compose.components.FrequencyDisplayCard
 import ar.motorfar.app.ui.compose.components.ModulationVisualizer
 import ar.motorfar.app.ui.compose.components.PttButton
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
 import ar.motorfar.app.ui.compose.theme.AppTheme
+import ar.motorfar.app.ui.compose.theme.BorderHairline
+import ar.motorfar.app.ui.compose.theme.ControlShape
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARTheme
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
@@ -72,7 +81,9 @@ fun MainScreen(
             .background(colors.background)
             .systemBarsPadding()
     ) {
-        if (isLandscape) {
+        if (state.isRouteActive) {
+            RouteActiveLayout(state, onAction)
+        } else if (isLandscape) {
             LandscapeLayout(state, onAction, onDismissAlert, onOpenSettings)
         } else {
             PortraitLayout(state, onAction, onDismissAlert, onOpenSettings)
@@ -100,6 +111,36 @@ private fun TopBar(
             isRx     = state.isRxActive,
             modifier = Modifier.weight(1f)
         )
+
+        // RUTA: modo pantalla siempre-on con UI simplificada
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 2.dp)
+                .clip(ControlShape)
+                .background(if (state.isRouteActive) colors.accent else colors.surface)
+                .border(BorderHairline, if (state.isRouteActive) colors.accent else colors.borderSubtle, ControlShape)
+                .clickable { onAction(MainUiAction.ToggleRouteActive) }
+                .padding(horizontal = 8.dp, vertical = 5.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            Text(
+                text          = "RUTA",
+                color         = if (state.isRouteActive) colors.background else colors.textSecondary,
+                fontFamily    = ShareTechMono,
+                fontSize      = 14.sp,
+                fontWeight    = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+        }
+
+        // WAYPOINT: transmite posición GPS al grupo en un toque
+        IconButton(onClick = { onAction(MainUiAction.SendWaypoint) }) {
+            Icon(
+                painter            = painterResource(R.drawable.ic_pin),
+                contentDescription = "Enviar waypoint",
+                tint               = colors.textSecondary
+            )
+        }
 
         // Selector de tema (Verde / Ámbar / Día)
         Box {
@@ -130,11 +171,26 @@ private fun TopBar(
             checked         = state.isListenOnly,
             onCheckedChange = { onAction(MainUiAction.ToggleListenOnly) }
         ) {
-            Icon(
-                painter            = painterResource(R.drawable.ic_headphones),
-                contentDescription = if (state.isListenOnly) "Solo escucha activo" else "Modo normal",
-                tint               = if (state.isListenOnly) colors.accent else colors.textSecondary
-            )
+            // Estado inequívoco: activo = círculo relleno de acento con ícono oscuro;
+            // inactivo = contorno sutil. Antes solo cambiaba el tint y no se notaba.
+            val active = state.isListenOnly
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .then(
+                        if (active) Modifier.background(colors.accent)
+                        else Modifier.border(1.dp, colors.borderSubtle, CircleShape)
+                    )
+            ) {
+                Icon(
+                    painter            = painterResource(R.drawable.ic_headphones),
+                    contentDescription = if (active) "Solo escucha ACTIVO" else "Modo normal (tocar para solo escucha)",
+                    tint               = if (active) colors.background else colors.textSecondary,
+                    modifier           = Modifier.size(18.dp)
+                )
+            }
         }
         IconButton(
             onClick  = onOpenSettings,
@@ -164,12 +220,120 @@ private fun ThemeOption(
                 text       = (if (selected) "› " else "   ") + label,
                 color      = if (selected) colors.accent else colors.textPrimary,
                 fontFamily = ShareTechMono,
-                fontSize   = 13.sp,
+                fontSize   = 18.sp,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             )
         },
         onClick = { onPick(theme) }
     )
+}
+
+// ── Modo Ruta Activa — UI minimalista para moto en movimiento ────────────
+@Composable
+private fun RouteActiveLayout(
+    state: MainUiState,
+    onAction: (MainUiAction) -> Unit
+) {
+    val colors = LocalMotoRFARColors.current
+    Column(
+        modifier            = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+    ) {
+        // Barra superior con estado TX/RX y salida de modo ruta
+        Row(
+            modifier          = Modifier.fillMaxWidth(),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            AppStatusBar(
+                isTx     = state.isTxActive,
+                isRx     = state.isRxActive,
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .clip(ControlShape)
+                    .background(colors.surface)
+                    .border(BorderHairline, colors.accent, ControlShape)
+                    .clickable { onAction(MainUiAction.ToggleRouteActive) }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text          = "SALIR RUTA",
+                    color         = colors.accent,
+                    fontFamily    = ShareTechMono,
+                    fontSize      = 15.sp,
+                    fontWeight    = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Frecuencia activa — máximo tamaño para lectura a alta velocidad
+        Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+            Text(
+                text          = state.activeChannelName,
+                color         = colors.textSecondary,
+                fontFamily    = ShareTechMono,
+                fontSize      = 18.sp,
+                letterSpacing = 3.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text       = state.activeFrequency,
+                color      = colors.textPrimary,
+                fontFamily = ShareTechMono,
+                fontSize   = 72.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text          = "MHz",
+                color         = colors.textSecondary,
+                fontFamily    = ShareTechMono,
+                fontSize      = 22.sp,
+                letterSpacing = 2.sp
+            )
+        }
+
+        // PTT grande central
+        BoxWithConstraints(
+            modifier         = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(vertical = 8.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            val ptt = (minOf(maxWidth, maxHeight) - 32.dp).coerceIn(120.dp, 200.dp)
+            PttButton(
+                isTransmitting = state.isTxActive,
+                enabled        = !state.isListenOnly,
+                onPttDown      = { onAction(MainUiAction.PttPressed) },
+                onPttUp        = { onAction(MainUiAction.PttReleased) },
+                diameter       = ptt
+            )
+        }
+
+        // Solo EMERGENCIA visible — modo ruta prioriza seguridad
+        EmergencyConfirmButton(
+            onConfirmed = { onAction(MainUiAction.EmergencyAlert) },
+            modifier    = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+
+        // Indicador de estado GPS auto-off
+        Text(
+            text          = "● GPS MONITOR · auto-off al detenerte",
+            color         = colors.accent.copy(alpha = 0.6f),
+            fontFamily    = ShareTechMono,
+            fontSize      = 14.sp,
+            letterSpacing = 1.sp,
+            modifier      = Modifier.padding(bottom = 8.dp)
+        )
+    }
 }
 
 @Composable
@@ -179,7 +343,7 @@ private fun ListenOnlyTag(modifier: Modifier = Modifier) {
         text          = "[ SOLO ESCUCHA ]",
         color         = colors.accent.copy(alpha = 0.75f),
         fontFamily    = ShareTechMono,
-        fontSize      = 11.sp,
+        fontSize      = 15.sp,
         fontWeight    = FontWeight.Bold,
         letterSpacing = 2.sp,
         modifier      = modifier.padding(vertical = 2.dp)

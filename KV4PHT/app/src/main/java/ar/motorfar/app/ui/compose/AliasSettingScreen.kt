@@ -76,7 +76,7 @@ fun AliasSettingScreen(
             text     = "TU ALIAS EN LA RED",
             color    = colors.textPrimary,
             fontFamily = ShareTechMono,
-            fontSize = 14.sp,
+            fontSize = 19.sp,
             letterSpacing = 2.sp
         )
 
@@ -111,14 +111,14 @@ fun AliasSettingScreen(
                         "1-6 caracteres A-Z 0-9, sin espacios",
                         color = EmergencyBorder,
                         fontFamily = ShareTechMono,
-                        fontSize = 11.sp
+                        fontSize = 15.sp
                     )
                 } else {
                     Text(
                         "Identificás tu moto en el mapa del grupo",
                         color = colors.textSecondary,
                         fontFamily = ShareTechMono,
-                        fontSize = 11.sp
+                        fontSize = 15.sp
                     )
                 }
             }
@@ -135,14 +135,14 @@ fun AliasSettingScreen(
                     text     = "BALIZA INTELIGENTE",
                     color    = colors.textPrimary,
                     fontFamily = ShareTechMono,
-                    fontSize = 13.sp,
+                    fontSize = 18.sp,
                     letterSpacing = 2.sp
                 )
                 Text(
                     text     = "Ajusta el envío de posición según tu velocidad. Ahorra batería parado y es preciso en ruta.",
                     color    = colors.textSecondary,
                     fontFamily = ShareTechMono,
-                    fontSize = 11.sp
+                    fontSize = 15.sp
                 )
             }
             androidx.compose.material3.Switch(
@@ -166,7 +166,7 @@ fun AliasSettingScreen(
                 text     = "INTERVALO FIJO",
                 color    = colors.textSecondary,
                 fontFamily = ShareTechMono,
-                fontSize = 12.sp,
+                fontSize = 17.sp,
                 letterSpacing = 1.sp
             )
             Row(
@@ -174,7 +174,7 @@ fun AliasSettingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 BEACON_INTERVAL_LABELS.forEach { label ->
-                    Text(label, color = colors.textSecondary, fontFamily = ShareTechMono, fontSize = 12.sp)
+                    Text(label, color = colors.textSecondary, fontFamily = ShareTechMono, fontSize = 17.sp)
                 }
             }
             Slider(
@@ -195,7 +195,7 @@ fun AliasSettingScreen(
             text     = "VOLUMEN ALERTAS  ${volume.toInt()}%",
             color    = colors.textPrimary,
             fontFamily = ShareTechMono,
-            fontSize = 13.sp,
+            fontSize = 18.sp,
             letterSpacing = 2.sp
         )
         Slider(
@@ -215,14 +215,14 @@ fun AliasSettingScreen(
             text     = "MAPAS OFFLINE",
             color    = colors.textPrimary,
             fontFamily = ShareTechMono,
-            fontSize = 13.sp,
+            fontSize = 18.sp,
             letterSpacing = 2.sp
         )
         Text(
             text     = "Descargá el mapa de Argentina para usar sin señal en ruta. Próximamente.",
             color    = colors.textSecondary,
             fontFamily = ShareTechMono,
-            fontSize = 11.sp
+            fontSize = 15.sp
         )
         OutlinedButton(
             onClick  = onDownloadMaps,
@@ -233,7 +233,7 @@ fun AliasSettingScreen(
                 contentColor = colors.accent
             )
         ) {
-            Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 12.sp, letterSpacing = 1.sp)
+            Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
         }
 
         Spacer(Modifier.weight(1f))

@@ -75,7 +75,8 @@ public abstract class AppDatabase extends RoomDatabase {
                 MIGRATION_4_5,
                 MIGRATION_5_6
             )
-            .fallbackToDestructiveMigration(true)
+            // Sin fallbackToDestructiveMigration: si falta una migración, la app
+            // lanzará IllegalStateException en lugar de borrar datos silenciosamente.
             .build();
     }
 

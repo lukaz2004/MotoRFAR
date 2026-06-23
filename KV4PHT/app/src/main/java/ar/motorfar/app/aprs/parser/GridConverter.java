@@ -47,7 +47,6 @@ public class GridConverter {
 			latitude = Double.parseDouble(ARGS[0]);
 			longitude = Double.parseDouble(ARGS[1]);
 		} catch ( NumberFormatException nfe ) {
-			System.err.println("Please check your number formats.");
 			System.exit(1);
 		}
 		latitude = 41.7146;

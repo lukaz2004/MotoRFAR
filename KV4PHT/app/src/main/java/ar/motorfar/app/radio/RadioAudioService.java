@@ -471,7 +471,7 @@ public class RadioAudioService extends Service {
                 .setDeleteIntent(pStopSelf)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // visible on lock screen
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .build();
     }
 
@@ -489,7 +489,7 @@ public class RadioAudioService extends Service {
                 .setDeleteIntent(pStopSelf)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // visible on lock screen
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .build();
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -1640,9 +1640,10 @@ public class RadioAudioService extends Service {
             Log.e(TAG, "Tried to send AX.25 packet with no ESP32 connection.");
             return;
         }
-        Log.d(TAG, "Sending AX25 packet: " + ax25Packet);
+        if (ar.motorfar.app.BuildConfig.DEBUG) {
+            Log.d(TAG, "Sending AX25 packet (" + ax25Packet.bytesWithoutCRC().length + " bytes)");
+        }
         hostToEsp32.txAx25(ax25Packet.bytesWithoutCRC());
-        Log.i(TAG, "Send AX25 packet: " + ax25Packet);
     }
 
     public int getAudioTrackSessionId() {

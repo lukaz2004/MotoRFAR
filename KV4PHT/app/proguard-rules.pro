@@ -19,3 +19,26 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# ── Room ──────────────────────────────────────────────────────────────────
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-keep @androidx.room.Dao interface *
+-keepclassmembers @androidx.room.Entity class * { *; }
+
+# ── Lombok ────────────────────────────────────────────────────────────────
+-keep @lombok.* class *
+-keepclassmembers @lombok.* class * { *; }
+
+# ── APRS parser (herencia AVRS, usa reflection en algunos parsers) ─────────
+-keep class ar.motorfar.app.aprs.** { *; }
+
+# ── Concentus codec (JNI internals) ───────────────────────────────────────
+-keep class concentus.** { *; }
+
+# ── ESP32 flash lib ───────────────────────────────────────────────────────
+-keep class io.github.dkaukov.** { *; }
+
+# ── Stack traces legibles en Crashlytics / logcat ─────────────────────────
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

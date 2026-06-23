@@ -11,4 +11,6 @@ sealed class MainUiAction {
     object RegroupAlert                           : MainUiAction()
     object ToggleListenOnly                       : MainUiAction()
     data class SetTheme(val theme: AppTheme)      : MainUiAction()
+    object ToggleRouteActive                      : MainUiAction()
+    object SendWaypoint                           : MainUiAction()
 }

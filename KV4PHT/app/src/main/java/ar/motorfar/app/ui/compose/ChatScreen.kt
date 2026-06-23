@@ -42,7 +42,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.R
+import ar.motorfar.app.ui.AlertHelper
 import ar.motorfar.app.ui.compose.state.ChatMessage
+import ar.motorfar.app.ui.compose.state.ReceivedAlert
 import ar.motorfar.app.ui.compose.theme.EmergencyBackground
 import ar.motorfar.app.ui.compose.theme.EmergencyBorder
 import ar.motorfar.app.ui.compose.theme.EmergencyText
@@ -61,6 +63,7 @@ import java.util.Locale
 @Composable
 fun ChatScreen(
     messages: List<ChatMessage>,
+    alertHistory: List<ReceivedAlert> = emptyList(),
     onSend: (String) -> Unit,
     onGoToLocation: (Double, Double) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
@@ -85,11 +88,16 @@ fun ChatScreen(
             text          = "CHAT VHF",
             color         = colors.accent,
             fontFamily    = ShareTechMono,
-            fontSize      = 14.sp,
+            fontSize      = 19.sp,
             fontWeight    = FontWeight.Bold,
             letterSpacing = 2.sp,
             modifier      = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
         )
+
+        // Historial de alertas recibidas (últimas 5)
+        if (alertHistory.isNotEmpty()) {
+            AlertHistoryPanel(alertHistory)
+        }
 
         // Lista de mensajes
         if (messages.isEmpty()) {
@@ -102,7 +110,7 @@ fun ChatScreen(
                     text          = "// CANAL EN SILENCIO //",
                     color         = colors.textSecondary.copy(alpha = 0.7f),
                     fontFamily    = ShareTechMono,
-                    fontSize      = 13.sp,
+                    fontSize      = 18.sp,
                     letterSpacing = 1.sp
                 )
                 Spacer(Modifier.height(8.dp))
@@ -110,7 +118,7 @@ fun ChatScreen(
                     text       = "Mantené PTT para hablar, o escribí abajo para enviar texto al grupo.",
                     color      = colors.textGhost,
                     fontFamily = ShareTechMono,
-                    fontSize   = 11.sp,
+                    fontSize   = 15.sp,
                     textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
                     lineHeight = 17.sp
                 )
@@ -139,11 +147,11 @@ fun ChatScreen(
                 onValueChange = { if (it.length <= 67) draft = it }, // límite APRS típico
                 modifier      = Modifier.weight(1f),
                 placeholder   = {
-                    Text("Mensaje...", fontFamily = ShareTechMono, fontSize = 15.sp, color = colors.textSecondary)
+                    Text("Mensaje...", fontFamily = ShareTechMono, fontSize = 20.sp, color = colors.textSecondary)
                 },
                 textStyle     = TextStyle(
                     fontFamily = ShareTechMono,
-                    fontSize   = 16.sp,
+                    fontSize   = 22.sp,
                     color      = colors.textPrimary
                 ),
                 singleLine    = true,
@@ -237,7 +245,7 @@ private fun ChatBubble(
                     text          = "$header · ${msg.fromAlias}",
                     color         = txtColor,
                     fontFamily    = ShareTechMono,
-                    fontSize      = 15.sp,
+                    fontSize      = 20.sp,
                     fontWeight    = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
@@ -248,7 +256,7 @@ private fun ChatBubble(
                     text       = msg.fromAlias,
                     color      = colors.accent,
                     fontFamily = ShareTechMono,
-                    fontSize   = 15.sp,
+                    fontSize   = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -271,7 +279,7 @@ private fun ChatBubble(
                     text       = "POS: %.5f, %.5f".format(lat, lon),
                     color      = txtColor.copy(alpha = 0.85f),
                     fontFamily = ShareTechMono,
-                    fontSize   = 13.sp
+                    fontSize   = 18.sp
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(
@@ -292,7 +300,7 @@ private fun ChatBubble(
                         text          = "IR A UBICACIÓN",
                         color         = txtColor,
                         fontFamily    = ShareTechMono,
-                        fontSize      = 12.sp,
+                        fontSize      = 17.sp,
                         fontWeight    = FontWeight.Bold,
                         letterSpacing = 1.sp,
                         modifier      = Modifier.padding(start = 8.dp)
@@ -304,9 +312,58 @@ private fun ChatBubble(
                 text       = timeFmt.format(Date(msg.timestampMs)),
                 color      = (if (isAlert) txtColor else colors.textSecondary).copy(alpha = 0.6f),
                 fontFamily = ShareTechMono,
-                fontSize   = 11.sp,
+                fontSize   = 15.sp,
                 modifier   = Modifier.align(Alignment.End)
             )
+        }
+    }
+}
+
+// ── Historial de alertas recibidas (últimas 5) ────────────────────────────
+@Composable
+private fun AlertHistoryPanel(alerts: List<ReceivedAlert>) {
+    val colors = LocalMotoRFARColors.current
+    val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.surface)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text          = "ALERTAS RECIENTES",
+            color         = colors.textSecondary,
+            fontFamily    = ShareTechMono,
+            fontSize      = 14.sp,
+            letterSpacing = 2.sp
+        )
+        alerts.forEach { alert ->
+            val (label, tint) = when (alert.type) {
+                AlertHelper.AlertType.EMERGENCY -> "⚠ EMERGENCIA" to EmergencyText
+                AlertHelper.AlertType.STOP      -> "■ DETENCIÓN"  to StopText
+                AlertHelper.AlertType.REGROUP   -> "● REAGRUPAR"  to RegroupText
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text       = "$label · ${alert.fromAlias}",
+                    color      = tint,
+                    fontFamily = ShareTechMono,
+                    fontSize   = 17.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+                Text(
+                    text       = timeFmt.format(Date(alert.receivedAtMs)),
+                    color      = colors.textSecondary,
+                    fontFamily = ShareTechMono,
+                    fontSize   = 15.sp
+                )
+            }
         }
     }
 }

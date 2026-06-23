@@ -48,7 +48,7 @@ fun FrequencyDisplayCard(
             text  = channelName,
             color = colors.textSecondary,
             fontFamily = ShareTechMono,
-            fontSize = 9.sp,
+            fontSize = 14.sp,
             letterSpacing = 0.15.sp
         )
         Spacer(Modifier.height(2.dp))
@@ -63,7 +63,7 @@ fun FrequencyDisplayCard(
             text  = "MHz · FM · SIMPLEX",
             color = colors.textGhost,
             fontFamily = ShareTechMono,
-            fontSize = 9.sp
+            fontSize = 14.sp
         )
         Spacer(Modifier.height(8.dp))
         SMeter(level = sMeterLevel)

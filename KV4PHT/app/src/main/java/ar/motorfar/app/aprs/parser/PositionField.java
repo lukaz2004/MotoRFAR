@@ -33,8 +33,7 @@ public class PositionField extends APRSData {
 	DataExtension extension = null;
 
 	public PositionField(byte[] msgBody, String destinationField) throws Exception {
-		System.err.println("Executing alternate constructor");
-		new PositionField(msgBody, destinationField, 0);
+		this(msgBody, destinationField, 0);
 	}
 
 	public PositionField(byte[] msgBody, String destinationField, int cursor) throws Exception {
@@ -90,7 +89,6 @@ public class PositionField extends APRSData {
 								this.position = PositionParser.parseUncompressed(msgBody, cursor);
 							} catch (Exception ex) {
 								this.comment = ex.getMessage();
-								System.err.println(ex);
 								hasFault = true;
 							}
 							try {

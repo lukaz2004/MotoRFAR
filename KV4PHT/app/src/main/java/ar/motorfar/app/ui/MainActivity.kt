@@ -32,6 +32,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.padding
@@ -70,6 +71,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import ar.motorfar.app.ui.OnboardingHelper
 import ar.motorfar.app.ui.onboarding.OnboardingActivity
+import android.view.WindowManager
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
@@ -90,9 +92,21 @@ class MainActivity : ComponentActivity() {
     private var listenOnly: Boolean = false
     private var smartBeaconEnabled: Boolean = true
 
-    // Estado de movimiento del GPS (alimenta SmartBeaconing)
+    // Estado de movimiento del GPS (alimenta SmartBeaconing y Modo Ruta)
     @Volatile private var currentSpeedKmh: Double = 0.0
     @Volatile private var currentHeadingDeg: Double? = null
+    private var stationaryStartMs: Long = 0L
+    private val routeAutoOffHandler = Handler(Looper.getMainLooper())
+    private val routeAutoOffRunnable = Runnable {
+        // Auto-desactiva Modo Ruta si lleva >60 s detenido (<3 km/h)
+        if (uiState.value.isRouteActive && currentSpeedKmh < 3.0) {
+            _uiState.update { it.copy(isRouteActive = false) }
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            android.widget.Toast.makeText(
+                this, "MODO RUTA · desactivado (vehículo detenido)", android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
 
@@ -124,6 +138,18 @@ class MainActivity : ComponentActivity() {
         if (loc.hasBearing() && loc.speed > 0.5f) {
             currentHeadingDeg = loc.bearing.toDouble()
             _uiState.update { it.copy(headingDeg = loc.bearing) }
+        }
+        // Modo Ruta: si la velocidad baja de 3 km/h, programa la auto-desactivación
+        if (uiState.value.isRouteActive) {
+            if (currentSpeedKmh < 3.0) {
+                if (stationaryStartMs == 0L) {
+                    stationaryStartMs = System.currentTimeMillis()
+                    routeAutoOffHandler.postDelayed(routeAutoOffRunnable, 60_000L)
+                }
+            } else {
+                stationaryStartMs = 0L
+                routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
+            }
         }
     }
 
@@ -178,7 +204,8 @@ class MainActivity : ComponentActivity() {
         }
         override fun moduleTxStateChanged(txActive: Boolean) {
             if (!txActive) {
-                ToneHelper.playStaticBurst(alertVolume / 100f)
+                // Fin de TX confirmado por el módulo → roger beep estilo VHF real
+                ToneHelper.playRogerBeep(alertVolume / 100f)
             }
             _uiState.update { it.copy(isTxActive = txActive) }
         }
@@ -218,7 +245,12 @@ class MainActivity : ComponentActivity() {
                         fromAlias     = alias,
                         receivedAtMs  = System.currentTimeMillis()
                     )
-                    _uiState.update { it.copy(activeAlert = alert) }
+                    _uiState.update { s ->
+                        s.copy(
+                            activeAlert  = alert,
+                            alertHistory = (listOf(alert) + s.alertHistory).take(5)
+                        )
+                    }
                     // También al chat con formato de alerta (posición si vino en el mismo beacon)
                     val pos = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField
                     addAlertToChat(
@@ -320,7 +352,12 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     androidx.compose.foundation.layout.Row(
-                        modifier = Modifier.padding(innerPadding).fillMaxSize()
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            // Mantiene el rail y las pantallas fuera del recorte de
+                            // la cámara (isla) en horizontal — antes lo pisaba.
+                            .displayCutoutPadding()
+                            .fillMaxSize()
                     ) {
                     if (isLandscape) {
                         NavigationRail(containerColor = colors.surface) {
@@ -329,7 +366,7 @@ class MainActivity : ComponentActivity() {
                                     selected = false,
                                     onClick  = { navController.navigate("main") { launchSingleTop = true } },
                                     icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT") },
-                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
                             if (currentRoute != "map") {
@@ -337,7 +374,7 @@ class MainActivity : ComponentActivity() {
                                     selected = false,
                                     onClick  = { navController.navigate("map") { launchSingleTop = true } },
                                     icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
-                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
                             if (currentRoute != "chat") {
@@ -345,7 +382,7 @@ class MainActivity : ComponentActivity() {
                                     selected = false,
                                     onClick  = { navController.navigate("chat") { launchSingleTop = true } },
                                     icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT") },
-                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 9.sp) }
+                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
                         }
@@ -380,7 +417,11 @@ class MainActivity : ComponentActivity() {
                                 locationGranted = state.locationGranted,
                                 headingDeg      = state.headingDeg,
                                 focusTarget     = mapFocus,
-                                onFocusConsumed = { _mapFocus.value = null }
+                                onFocusConsumed = { _mapFocus.value = null },
+                                isTransmitting  = state.isTxActive,
+                                listenOnly      = state.isListenOnly,
+                                onPttDown       = { handleAction(MainUiAction.PttPressed) },
+                                onPttUp         = { handleAction(MainUiAction.PttReleased) }
                             )
                         }
                         composable("settings") {
@@ -411,6 +452,7 @@ class MainActivity : ComponentActivity() {
                         composable("chat") {
                             ChatScreen(
                                 messages       = chatMessages,
+                                alertHistory   = state.alertHistory,
                                 onSend         = ::sendChatMessage,
                                 onGoToLocation = { lat, lon ->
                                     _mapFocus.value = lat to lon
@@ -469,6 +511,7 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         serviceScope.cancel()
         executor.shutdownNow()
+        routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
     }
 
     // ── Service binding ───────────────────────────────────────────────
@@ -531,7 +574,7 @@ class MainActivity : ComponentActivity() {
         when (action) {
             MainUiAction.PttPressed    -> {
                 // En modo escucha el PTT no transmite (guard de seguridad)
-                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 ToneHelper.playPttDown(vol)
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
@@ -543,25 +586,26 @@ class MainActivity : ComponentActivity() {
             }
             MainUiAction.PttReleased   -> {
                 if (listenOnly) return
-                ToneHelper.playPttUp(vol)
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
+                    // El roger beep lo dispara moduleTxStateChanged(false) cuando el
+                    // módulo confirma el fin de TX (evita el doble sonido al soltar).
                     svc.endPtt()
                 } else {
-                    // Fin de simulación
+                    // Fin de simulación: sin módulo, el roger beep va acá
                     _uiState.update { it.copy(isTxActive = false) }
-                    ToneHelper.playStaticBurst(vol)
+                    ToneHelper.playRogerBeep(vol)
                 }
             }
             is MainUiAction.ChannelSelected -> tuneToChannel(action.freq)
             // EMERGENCIA siempre disponible, incluso en modo escucha (seguridad)
             MainUiAction.EmergencyAlert -> { ToneHelper.playEmergencyBeep(vol); requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY) }
             MainUiAction.StopAlert     -> {
-                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.STOP)
             }
             MainUiAction.RegroupAlert  -> {
-                if (listenOnly) { ToneHelper.playAlertBeep(vol); return }
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP)
             }
             MainUiAction.ToggleListenOnly -> toggleListenOnly()
@@ -570,6 +614,37 @@ class MainActivity : ComponentActivity() {
                 _uiState.update { it.copy(theme = action.theme) }
                 ToneHelper.playPttUp(vol)
             }
+            MainUiAction.ToggleRouteActive -> {
+                val nowActive = !uiState.value.isRouteActive
+                _uiState.update { it.copy(isRouteActive = nowActive) }
+                if (nowActive) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    stationaryStartMs = 0L
+                    android.widget.Toast.makeText(
+                        this, "MODO RUTA ACTIVO · pantalla siempre encendida", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    stationaryStartMs = 0L
+                    routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
+                }
+                ToneHelper.playPttUp(vol)
+            }
+            MainUiAction.SendWaypoint -> {
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
+                val svc = radioService
+                if (svc != null && uiState.value.isConnected) {
+                    svc.sendPositionBeacon()
+                    ToneHelper.playPttUp(vol)
+                    android.widget.Toast.makeText(
+                        this, "WAYPOINT · posición enviada al grupo", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    android.widget.Toast.makeText(
+                        this, "Sin radio · waypoint no transmitido", android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
         }
     }
 
@@ -577,10 +652,28 @@ class MainActivity : ComponentActivity() {
         listenOnly = !listenOnly
         _uiState.update { it.copy(isListenOnly = listenOnly) }
         ToneHelper.playPttUp(alertVolume / 100f)
+        // Aviso del estado al que se pasa, para que el cambio sea inequívoco
+        android.widget.Toast.makeText(
+            this,
+            if (listenOnly) "MODO SOLO ESCUCHA · TX deshabilitada" else "MODO NORMAL · TX habilitada",
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
         executor.execute {
             RadioServiceAccessor.getAppDb(viewModel)
                 .saveAppSetting(AppSetting.SETTING_LISTEN_ONLY, listenOnly.toString())
         }
+    }
+
+    /**
+     * Cartel cuando el usuario intenta una función de TX estando en modo escucha.
+     * Evita que parezca que el botón (o la app) no responde.
+     */
+    private fun notifyListenOnlyBlocked() {
+        android.widget.Toast.makeText(
+            this,
+            "MODO SOLO ESCUCHA · soltá el modo escucha para transmitir",
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
     }
 
     // DEMO: simula 3 integrantes del grupo alrededor de Villa Martelli
@@ -653,7 +746,7 @@ class MainActivity : ComponentActivity() {
 
     private fun sendChatMessage(text: String) {
         // En modo escucha no se transmite texto
-        if (listenOnly) { ToneHelper.playAlertBeep(alertVolume / 100f); return }
+        if (listenOnly) { ToneHelper.playAlertBeep(alertVolume / 100f); notifyListenOnlyBlocked(); return }
         addChatMessage(userAlias, text, outgoing = true)
         val svc = radioService
         if (svc != null && uiState.value.isConnected) {

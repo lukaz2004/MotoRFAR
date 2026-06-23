@@ -231,3 +231,84 @@ La primera acción es A0: ./gradlew test para confirmar que los 59 tests pasan a
 - Verificación con SA818-V hardware real
 
 ---
+
+## 2026-06-15 · Sesión 9 — Testing de campo + handoff (sin código nuevo)
+
+**Lo que se hizo:**
+
+- Testing de campo en emulador (Pixel 10 Pro XL, landscape). 5 observaciones del usuario:
+  (1) el rail lateral pisa la isla de la cámara, (2) "RUTA ARRIBA" sin explicar,
+  (3) falta PTT / volver atrás en el mapa, (4) sin sonido de radio al emitir/terminar TX,
+  (5) modo solo-escucha sin feedback visual ni aviso al bloquear funciones.
+- **Hallazgo central:** los 5 ítems YA están implementados en el working tree, como
+  cambios **sin commitear** en 4 archivos: `MainActivity.kt`, `ToneHelper.java`,
+  `MainScreen.kt`, `MapScreen.kt`. El emulador corría un APK viejo → de ahí la discrepancia
+  entre las capturas y el código.
+  - #1 → `.displayCutoutPadding()` en el Row raíz. #2 → toggle heading-up + indicador.
+  - #3 → `MapPttButton` sobre el zoom + `NavigationRail` en landscape (todas las pantallas).
+  - #4 → `playPttDown` + `playRogerBeep` (fin TX, estilo VHF). #5 → toggle con estado relleno
+    + `notifyListenOnlyBlocked()` Toast + Toast de cambio de modo.
+- Verificado que el código es auto-consistente (`MainActivity` llama `ToneHelper.playRogerBeep`,
+  que existe en el archivo).
+- **No se commiteó ni compiló nada** (decisión: verificar build antes de commitear, y en branch,
+  no en `main`).
+- Creado `docs/SPRINT-9.md` con el handoff "CONTINUAR ACÁ" + checklist de re-test.
+
+**Estado git al cierre:** branch `main`; 4 archivos `M` sin commitear; sin stash.
+
+**Pendiente (mañana / Sprint 9):** compilar (`assembleDebug`, JAVA_HOME = jbr de Android Studio)
+→ commit en `sprint/9-field-polish` → `installDebug` → re-test de los 5 ítems → tests → PR.
+Arrastrado de S8: mergear el PR de Sprint 8, revocar los tokens gh expuestos, borrar
+`EmergencyConfirmDialog.kt`.
+
+---
+
+## 2026-06-23 · Sesión 10 — Hardware: modificación esquemático PCB v2.0e (Día 3)
+
+**Lo que se hizo:**
+
+- Esquemático `pcb/v2.0e/kv4p-ht/kv4p-ht.kicad_sch` modificado para MotoRFAR (sin botones físicos, PTT externo).
+- SW1 y SW2 marcados DNP (`(dnp yes)` + `(in_bom no)`) — no se pueblan en el PCB.
+- R14 se mantiene: mantiene GPIO35 en HIGH permanente (PTT Right = nunca presionado = seguro).
+- Agregado `Connector_Generic:Conn_01x02` a `lib_symbols` (definición embebida en el .kicad_sch).
+- Agregado J2 "PTT_EXT_3.5mm" (jack 3.5mm TS mono, footprint PJ302M_Vertical):
+  - Pin 1 (Tip/PTT) → net "PTT Button Left" (vía wires hasta la junction existente en (148.59, 146.685))
+  - Pin 2 (Sleeve/GND) → símbolo GND
+- BOM `production-vhf/bom.csv` actualizado: SW1/SW2 removidos, J2 agregado (LCSC TODO — verificar C2899878 o equivalente PJ302M).
+- Errores de sintaxis KiCad resueltos en el proceso:
+  - `pin_background` → `background` (fill type inválido en KiCad 10.0)
+  - `(at X Y)` → `(at X Y 0)` en definición de pines (faltaba el ángulo)
+  - Backtick-n literal en reemplazo regex con single-quotes → corregido con `.Replace()` directo
+- Esquemático abre y guarda sin errores en KiCad 10.0.3.
+
+**Decisiones:**
+- Sin botones PTT físicos en la PCB de MotoRFAR. Un solo conector 3.5mm TS para PTT externo por manillar.
+- R14 se mantiene (sin ADR nuevo — es consecuencia directa de SW2 DNP).
+
+**Pendiente:**
+- Verificar LCSC part number del jack 3.5mm TS (PJ302M o equivalente) antes de ordenar.
+- ERC del esquemático (puede haber warning de pin desconectado — es aceptable).
+- Actualizar `docs/06-HARDWARE.md` para reflejar el conector J2 PTT externo.
+
+---
+
+## 2026-06-23 · Sesión 11 — Hardware: archivos de producción PCB listos para JLCPCB
+
+**Lo que se hizo:**
+
+- Confirmado: SW1/SW2 no están en el layout del PCB (solo en el esquemático) — no hay nada que sincronizar.
+- Logo BAQUEANO V2.0 convertido a footprint KiCad (`kv4p-ht.pretty/Logo_Baqueano.kicad_mod`, 98 polígonos en B.SilkS, 28×19.4mm). Instancia agregada al PCB en posición (146.05, 158.0) cara trasera.
+- Gerbers generados con `kicad-cli pcb export gerbers` (22 archivos, 4 capas de cobre, silkscreen, mask, Edge.Cuts, drill).
+- CPL convertido a formato JLCPCB (`CPL_JLCPCB.csv`, 89 componentes con columnas Designator / Mid X / Mid Y / Layer / Rotation).
+- BOM limpiado a formato JLCPCB (`BOM_JLCPCB.csv`, 38 componentes con LCSC#). Excluidos de PCBA: SA818-V (no en LCSC) y J2 jack 3.5mm PJ302M (through-hole, no Economic PCBA) — se compran por separado y se sueldan a mano.
+- ZIP final `production-vhf/MotoRFAR_JLCPCB_READY.zip` (536 KB) listo para subir a jlcpcb.com/quote.
+- Color PCB: negro o azul ($0 extra). Estimado total: ~USD 100–130 para 5 placas ensambladas + envío Global Standard.
+
+**Pendiente hardware (antes de ordenar):**
+- Verificar LCSC# del PJ302M (placeholder C2899878) en lcsc.com.
+- Verificar visualmente posición del logo en KiCad PCB editor.
+- SA818-V + PJ302M: comprar por separado en AliExpress.
+
+**Pendiente app:** Sprint 9 — compilar working tree, re-test 5 hallazgos campo, tests, PR.
+
+---

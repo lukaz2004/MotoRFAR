@@ -61,6 +61,26 @@
     <color name="status_warning">#FFEF9F27</color>
     <color name="status_gps">#FF8FE875</color>
 
+    <!-- PTT button layers -->
+    <color name="ptt_shadow">#FF0c1a04</color>
+
+    <!-- Alert — DETENCIÓN (naranja táctico) -->
+    <color name="stop_shadow">#FF2a0c04</color>
+    <color name="stop_highlight">#FFF5C4B3</color>
+    <color name="stop_center">#FFD85A30</color>
+    <color name="stop_dark">#FF993C1D</color>
+
+    <!-- Alert — REAGRUPAR (verde olivo) -->
+    <color name="regroup_shadow">#FF0c1a04</color>
+    <color name="regroup_highlight">#FFC0DD97</color>
+    <color name="regroup_center">#FF639922</color>
+    <color name="regroup_dark">#FF3B6D11</color>
+
+    <!-- Alert — EMERGENCIA (capas de gradiente) -->
+    <color name="emergency_shadow">#FF1a0404</color>
+    <color name="emergency_highlight">#FFF7C1C1</color>
+    <color name="emergency_dark">#FFA32D2D</color>
+
     <!-- Legado -->
     <color name="medium_gray">#FF1a2a1a</color>
 

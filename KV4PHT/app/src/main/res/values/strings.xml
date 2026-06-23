@@ -2,6 +2,9 @@
 <resources>
     <string name="app_name">MotoRFAR</string>
 
+    <!-- PTT -->
+    <string name="ptt_instruction">Mantené\npresionado\npara TX</string>
+
     <!-- Navegación -->
     <string name="next">Siguiente</string>
     <string name="previous">Anterior</string>
