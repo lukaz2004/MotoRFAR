@@ -10,11 +10,13 @@ Es un fork especializado de [kv4p HT](https://github.com/VanceVagell/kv4p-ht) (d
 
 ## Estado actual
 
-- **Fase:** desarrollo de v1.0 (MVP)
+- **Fase:** desarrollo de v1.0 (MVP) — **Sprint 10 activo** (ver `docs/SPRINT-10.md`)
+- **Branch principal:** `main` (limpio, Sprints 1-9 mergeados)
 - **Equipo:** un desarrollador solo (LuKaZ), presupuesto ajustado
 - **Hardware target:** ESP32-S3 + SA818-V (módulo VHF) + antena externa
 - **Idioma de la app:** español rioplatense
 - **Idioma del código:** inglés (estándar de la industria)
+- **Modalidad:** sesiones largas posibles vía Claude desde celular controlando la PC
 
 ## Reglas operativas para cualquier sesión
 
@@ -60,13 +62,21 @@ Si alguno falta, recomendar instalación pero no bloquear el trabajo.
 
 ## Próxima acción al abrir el proyecto
 
-El plan del sprint actual ya está escrito y auditado en `docs/SPRINT-7.md` — **no hacer brainstorming de cosas ya decididas** (los ADRs de `docs/03-DECISIONES.md` cubren las decisiones de fondo). Ir directo a ejecución:
+El plan del sprint activo está en `docs/SPRINT-10.md`. No hacer brainstorming — las decisiones de fondo están en los ADRs. Ir directo a ejecución:
 
 ```
-Leé docs/SPRINT-7.md. Es el design doc con la auditoría de código incluida.
-Creá el branch sprint/7-onboarding-package desde main.
-Usá /write-plan tomando SPRINT-7.md como input y ejecutá por fases en orden (A → B → C → D),
-con TDD: test primero, código después. Commit atómico al cerrar cada fase.
+Leé docs/SPRINT-10.md. Es el design doc completo con fases A → D.
+Creá el branch sprint/10-offline-docs desde main.
+Ejecutá por fases en orden (A → B → C → D) con TDD donde aplique.
+Commit atómico al cerrar cada fase. PR al terminar todo el sprint.
 ```
+
+### Para sesiones desde celular (control remoto de PC)
+
+- Las fases están diseñadas para ser **autónomas**: Claude puede ejecutar una fase entera sin preguntas.
+- Si hay un bloqueante real (build roto, decisión de arquitectura), parar y reportar.
+- `JAVA_HOME` para builds: `C:\Program Files\Android\Android Studio\jbr`
+- Build command: `cd MotoRFAR-MTTT\KV4PHT && .\gradlew assembleDebug`
+- Tests: `.\gradlew testDebugUnitTest`
 
 Usar `/brainstorm` únicamente si aparece una decisión NO cubierta por los ADRs existentes.
