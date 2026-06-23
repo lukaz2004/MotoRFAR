@@ -262,3 +262,32 @@ Arrastrado de S8: mergear el PR de Sprint 8, revocar los tokens gh expuestos, bo
 `EmergencyConfirmDialog.kt`.
 
 ---
+
+## 2026-06-23 · Sesión 10 — Hardware: modificación esquemático PCB v2.0e (Día 3)
+
+**Lo que se hizo:**
+
+- Esquemático `pcb/v2.0e/kv4p-ht/kv4p-ht.kicad_sch` modificado para MotoRFAR (sin botones físicos, PTT externo).
+- SW1 y SW2 marcados DNP (`(dnp yes)` + `(in_bom no)`) — no se pueblan en el PCB.
+- R14 se mantiene: mantiene GPIO35 en HIGH permanente (PTT Right = nunca presionado = seguro).
+- Agregado `Connector_Generic:Conn_01x02` a `lib_symbols` (definición embebida en el .kicad_sch).
+- Agregado J2 "PTT_EXT_3.5mm" (jack 3.5mm TS mono, footprint PJ302M_Vertical):
+  - Pin 1 (Tip/PTT) → net "PTT Button Left" (vía wires hasta la junction existente en (148.59, 146.685))
+  - Pin 2 (Sleeve/GND) → símbolo GND
+- BOM `production-vhf/bom.csv` actualizado: SW1/SW2 removidos, J2 agregado (LCSC TODO — verificar C2899878 o equivalente PJ302M).
+- Errores de sintaxis KiCad resueltos en el proceso:
+  - `pin_background` → `background` (fill type inválido en KiCad 10.0)
+  - `(at X Y)` → `(at X Y 0)` en definición de pines (faltaba el ángulo)
+  - Backtick-n literal en reemplazo regex con single-quotes → corregido con `.Replace()` directo
+- Esquemático abre y guarda sin errores en KiCad 10.0.3.
+
+**Decisiones:**
+- Sin botones PTT físicos en la PCB de MotoRFAR. Un solo conector 3.5mm TS para PTT externo por manillar.
+- R14 se mantiene (sin ADR nuevo — es consecuencia directa de SW2 DNP).
+
+**Pendiente:**
+- Verificar LCSC part number del jack 3.5mm TS (PJ302M o equivalente) antes de ordenar.
+- ERC del esquemático (puede haber warning de pin desconectado — es aceptable).
+- Actualizar `docs/06-HARDWARE.md` para reflejar el conector J2 PTT externo.
+
+---
