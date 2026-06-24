@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MotoRFAR HT — Comunicación VHF para grupos moto y 4x4</title>
+  <meta name="description" content="Kit de comunicación VHF para grupos moto y 4x4. Hardware ESP32 + radio SA818-V + app Android integrada. Frecuencias legales Argentina." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #090a0e;
+      --surface:   #0d0f16;
+      --card:      #111520;
+      --border:    #1c2030;
+      --border2:   #252b3e;
+      --amber:     #f0a020;
+      --amber-dim: #a06c10;
+      --green:     #10c870;
+      --green-dim: #0a7042;
+      --text:      #dde1ec;
+      --text-dim:  #6b7585;
+      --text-mute: #3a4055;
+      --mono:      'DM Mono', monospace;
+      --sans:      'Space Grotesk', sans-serif;
+      --body:      'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 16px;
+      line-height: 1.65;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Noise texture overlay ─────────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.022;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── Utility ───────────────────────────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .mono { font-family: var(--mono); }
+    .amber { color: var(--amber); }
+    .green { color: var(--green); }
+
+    /* fade-in-up animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    /* ── Nav ──────────────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 900;
+      background: rgba(9,10,14,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.3s;
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .nav-logo {
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--amber); }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 14px;
+      font-family: var(--sans);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      background: var(--amber);
+      color: #000;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .nav-cta:hover { background: #ffc030; transform: translateY(-1px); }
+
+    /* ── Hero ─────────────────────────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      padding-top: 60px;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 60% 50%, rgba(240,160,32,0.07) 0%, transparent 70%),
+                  radial-gradient(ellipse 50% 40% at 20% 80%, rgba(16,200,112,0.04) 0%, transparent 60%);
+    }
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 64px 64px;
+      opacity: 0.35;
+      mask-image: radial-gradient(ellipse 70% 70% at 60% 40%, black 20%, transparent 80%);
+    }
+    .hero-inner {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      min-height: calc(100vh - 60px);
+    }
+    .hero-text { position: relative; z-index: 2; }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--amber);
+      border: 1px solid rgba(240,160,32,0.3);
+      padding: 6px 14px;
+      margin-bottom: 32px;
+      text-transform: uppercase;
+    }
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .hero-title {
+      font-family: var(--sans);
+      font-size: clamp(38px, 5.5vw, 68px);
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      color: #f0f2f8;
+      margin-bottom: 24px;
+    }
+    .hero-title em {
+      font-style: normal;
+      color: var(--amber);
+    }
+    .hero-sub {
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 440px;
+      margin-bottom: 40px;
+    }
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--amber);
+      color: #000;
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      padding: 14px 28px;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { background: #ffc030; transform: translateY(-2px); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      padding: 14px 28px;
+      border: 1px solid var(--border2);
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text-dim); color: #fff; transform: translateY(-2px); }
+
+    .hero-visual {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-device-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+    }
+    .hero-glow {
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(240,160,32,0.15) 0%, transparent 70%);
+      filter: blur(30px);
+    }
+    .hero-device-img {
+      position: relative;
+      width: 100%;
+      border: 1px solid var(--border2);
+      display: block;
+    }
+    .hero-specs {
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .spec-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-mute);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .hero-scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--amber), transparent);
+      animation: scroll-line 2s ease-in-out infinite;
+    }
+    @keyframes scroll-line {
+      0% { transform: scaleY(0); transform-origin: top; }
+      50% { transform: scaleY(1); transform-origin: top; }
+      51% { transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    /* ── Section base ─────────────────────────────────────────────────────── */
+    section { padding: 100px 0; position: relative; }
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: var(--amber);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--amber);
+    }
+    .section-title {
+      font-family: var(--sans);
+      font-size: clamp(28px, 3.5vw, 44px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: #f0f2f8;
+      margin-bottom: 20px;
+    }
+    .section-body {
+      font-size: 17px;
+      font-weight: 300;
+      color: var(--text-dim);
+      line-height: 1.75;
+      max-width: 580px;
+    }
+
+    /* ── What is it ───────────────────────────────────────────────────────── */
+    #que-es {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .que-es-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .que-es-diagram {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      padding: 40px;
+    }
+    .diagram-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--text-mute);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .diagram-nodes {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .diagram-node {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .diagram-node:last-child { border-bottom: none; }
+    .node-icon {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+    .node-icon.active { border-color: var(--amber); background: rgba(240,160,32,0.08); }
+    .node-text-label {
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .node-text-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+    .node-conn {
+      position: absolute;
+      left: 19px;
+      top: 100%;
+      width: 1px;
+      height: 16px;
+      background: var(--border2);
+    }
+    .node-conn.active { background: rgba(240,160,32,0.4); }
+    .signal-flow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      margin-top: 20px;
+      letter-spacing: 0.06em;
+    }
+    .signal-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: signal-blink 1.5s ease-in-out infinite;
+    }
+    @keyframes signal-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* ── Kit Section ──────────────────────────────────────────────────────── */
+    #kit { background: var(--bg); }
+    .kit-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: end;
+      margin-bottom: 60px;
+    }
+    .kit-image-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+    .kit-image-wrap img { width: 100%; display: block; }
+    .kit-image-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, var(--bg) 0%, transparent 15%, transparent 85%, var(--bg) 100%);
+      pointer-events: none;
+    }
+    .kit-components {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+    }
+    .kit-comp {
+      background: var(--card);
+      padding: 28px 24px;
+      transition: background 0.2s;
+    }
+    .kit-comp:hover { background: #161a26; }
+    .comp-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .comp-name {
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .comp-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    /* ── Features ─────────────────────────────────────────────────────────── */
+    #features {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-top: 60px;
+    }
+    .feature-card {
+      background: var(--card);
+      padding: 36px 32px;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: #161a26; }
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    .feature-icon.amber { border-color: rgba(240,160,32,0.4); background: rgba(240,160,32,0.06); }
+    .feature-icon.green { border-color: rgba(16,200,112,0.4); background: rgba(16,200,112,0.06); }
+    .feature-name {
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .feature-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    /* ── Frequencies ──────────────────────────────────────────────────────── */
+    #frecuencias { background: var(--bg); }
+    .freq-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-top: 48px;
+    }
+    .freq-card {
+      background: var(--card);
+      padding: 36px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .freq-card.primary { background: #0e1520; }
+    .freq-card.primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--amber);
+    }
+    .freq-type {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--text-mute);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .freq-number {
+      font-family: var(--mono);
+      font-size: clamp(26px, 3.5vw, 38px);
+      font-weight: 500;
+      color: var(--amber);
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+    .freq-unit {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-mute);
+      margin-bottom: 20px;
+    }
+    .freq-label {
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .freq-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .freq-legal {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      letter-spacing: 0.08em;
+      margin-top: 16px;
+      padding: 4px 10px;
+      border: 1px solid rgba(16,200,112,0.3);
+    }
+    .freq-legal::before {
+      content: '✓';
+      font-size: 12px;
+    }
+
+    /* ── App Section ──────────────────────────────────────────────────────── */
+    #app {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .app-features { list-style: none; margin-top: 32px; }
+    .app-feature {
+      display: flex;
+      gap: 16px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .app-feature:first-child { border-top: 1px solid var(--border); }
+    .af-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      color: var(--amber);
+      border: 1px solid rgba(240,160,32,0.2);
+      margin-top: 2px;
+    }
+    .af-text { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+    .af-text strong { color: var(--text); font-weight: 600; display: block; margin-bottom: 3px; }
+
+    .phone-mockup {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    .phone-frame {
+      width: 240px;
+      background: #0a0d12;
+      border: 2px solid #232840;
+      border-radius: 28px;
+      padding: 16px 12px;
+      position: relative;
+      box-shadow: 0 0 60px rgba(0,0,0,0.6), 0 0 30px rgba(240,160,32,0.08);
+    }
+    .phone-notch {
+      width: 60px;
+      height: 8px;
+      background: #1a1e2e;
+      border-radius: 4px;
+      margin: 0 auto 14px;
+    }
+    .phone-screen {
+      background: #030805;
+      border-radius: 14px;
+      padding: 14px;
+      min-height: 340px;
+    }
+    .ps-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #0d200d;
+    }
+    .ps-callsign {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #0dc850;
+      letter-spacing: 0.08em;
+    }
+    .ps-freq {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #f0a020;
+    }
+    .ps-map {
+      background: #040f04;
+      border: 1px solid #0d200d;
+      border-radius: 6px;
+      height: 130px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Grid lines on map */
+    .ps-map::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(13,40,13,0.8) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(13,40,13,0.8) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .map-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #0dc850;
+      position: absolute;
+      box-shadow: 0 0 12px rgba(13,200,80,0.6);
+    }
+    .map-dot-2 { background: #f0a020; box-shadow: 0 0 12px rgba(240,160,32,0.6); }
+    .ps-members {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ps-member {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 6px;
+      border: 1px solid transparent;
+    }
+    .ps-member.active { border-color: rgba(13,200,80,0.3); background: rgba(13,200,80,0.04); }
+    .pm-avatar {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #0d200d;
+      border: 1px solid #0dc850;
+      font-family: var(--mono);
+      font-size: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0dc850;
+    }
+    .pm-name { font-family: var(--mono); font-size: 10px; color: #4a6050; flex: 1; }
+    .pm-name.active { color: #0dc850; }
+    .pm-dist { font-family: var(--mono); font-size: 9px; color: #2a4030; }
+    .ptt-btn {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 40% 35%, #1a4a1a, #062006);
+      border: 2px solid #0dc850;
+      margin: 14px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #0dc850;
+      letter-spacing: 0.06em;
+      box-shadow: 0 0 20px rgba(13,200,80,0.2);
+    }
+
+    /* ── Vehicles ─────────────────────────────────────────────────────────── */
+    #vehiculos { background: var(--bg); }
+    .vehicle-types {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-top: 48px;
+    }
+    .vehicle-card {
+      background: var(--card);
+      padding: 40px 36px;
+      display: flex;
+      gap: 24px;
+      transition: background 0.2s;
+    }
+    .vehicle-card:hover { background: #161a26; }
+    .vehicle-icon-large {
+      font-size: 36px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .vehicle-title {
+      font-family: var(--sans);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .vehicle-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+    .mount-points {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .mount-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--amber);
+      border: 1px solid rgba(240,160,32,0.25);
+      padding: 4px 10px;
+    }
+
+    /* ── Accessories ──────────────────────────────────────────────────────── */
+    #accesorios {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .acc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-top: 48px;
+    }
+    .acc-card {
+      background: var(--card);
+      padding: 40px 36px;
+      position: relative;
+    }
+    .acc-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--amber);
+    }
+    .acc-placeholder {
+      background: var(--bg);
+      border: 1px dashed var(--border2);
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .placeholder-text {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--text-mute);
+      text-transform: uppercase;
+      text-align: center;
+    }
+    .placeholder-icon { font-size: 28px; opacity: 0.3; }
+    .acc-name {
+      font-family: var(--sans);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .acc-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .acc-specs {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .acc-spec {
+      display: flex;
+      gap: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .acc-spec-key { color: var(--text-mute); min-width: 80px; }
+
+    /* ── Specs Table ──────────────────────────────────────────────────────── */
+    #specs { background: var(--bg); }
+    .specs-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 48px;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .specs-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .specs-table tr:last-child td { border-bottom: none; }
+    .specs-table td:first-child {
+      color: var(--text-mute);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      width: 40%;
+    }
+    .specs-table td:last-child { color: var(--text); }
+    .specs-table tr { transition: background 0.15s; }
+    .specs-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .specs-table thead td {
+      color: var(--text-mute);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      border-bottom: 1px solid var(--amber);
+      padding-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .specs-table thead td:last-child { color: var(--amber); }
+
+    /* ── CTA / Contact ────────────────────────────────────────────────────── */
+    #contacto { background: var(--surface); border-top: 1px solid var(--border); }
+    .cta-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 80px 0;
+    }
+    .cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      border: 1px solid rgba(16,200,112,0.3);
+      padding: 6px 14px;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
+    .cta-title {
+      font-family: var(--sans);
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #f0f2f8;
+      margin-bottom: 20px;
+      line-height: 1.1;
+    }
+    .cta-body {
+      font-size: 17px;
+      font-weight: 300;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+    .cta-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .cta-email {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+      margin-top: 24px;
+      display: block;
+    }
+    .cta-email a { color: var(--amber); text-decoration: none; }
+    .cta-email a:hover { text-decoration: underline; }
+
+    /* ── Footer ───────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .footer-logo {
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-dim);
+    }
+    .footer-logo span { color: var(--amber); }
+    .footer-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-mute);
+      letter-spacing: 0.06em;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-mute);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text-dim); }
+
+    /* ── Responsive ───────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+      .hero-visual { display: none; }
+      .que-es-grid { grid-template-columns: 1fr; gap: 48px; }
+      .app-grid { grid-template-columns: 1fr; gap: 48px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .kit-components { grid-template-columns: 1fr 1fr; }
+      .kit-header { grid-template-columns: 1fr; }
+      .freq-grid { grid-template-columns: 1fr; }
+      .vehicle-types { grid-template-columns: 1fr; }
+      .acc-grid { grid-template-columns: 1fr; }
+      .hero-specs { display: none; }
+    }
+    @media (max-width: 640px) {
+      section { padding: 64px 0; }
+      .features-grid { grid-template-columns: 1fr; }
+      .kit-components { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .phone-mockup { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">Moto<span>RFAR</span> HT</a>
+      <ul class="nav-links">
+        <li><a href="#que-es">Producto</a></li>
+        <li><a href="#kit">Kit</a></li>
+        <li><a href="#app">App</a></li>
+        <li><a href="#frecuencias">Frecuencias</a></li>
+        <li><a href="#accesorios">Accesorios</a></li>
+        <li><a href="#specs">Specs</a></li>
+      </ul>
+      <a href="#contacto" class="nav-cta">Consultá</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge reveal">VHF · Argentina · Beta</div>
+        <h1 class="hero-title reveal reveal-delay-1">
+          Tu grupo.<br />
+          Tu frecuencia.<br />
+          <em>Sin límites.</em>
+        </h1>
+        <p class="hero-sub reveal reveal-delay-2">
+          MotoRFAR HT es un kit de comunicación VHF de fabricación propia para grupos moto y 4×4.
+          Hardware compacto, app Android integrada y adaptación directa a tu vehículo.
+        </p>
+        <div class="hero-actions reveal reveal-delay-3">
+          <a href="#kit" class="btn-primary">
+            <span>Ver el kit</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#contacto" class="btn-secondary">Quiero uno →</a>
+        </div>
+      </div>
+      <div class="hero-visual reveal reveal-delay-2">
+        <div class="hero-device-wrap">
+          <div class="hero-glow"></div>
+          <img src="assets/hero_device.png" alt="MotoRFAR HT — dispositivo VHF" class="hero-device-img" />
+          <div class="hero-specs">
+            <div class="spec-pill">VHF · SA818-V</div>
+            <div class="spec-pill">ESP32 · WiFi</div>
+            <div class="spec-pill">USB-C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="hero-scroll-line"></div>
+      <span>scroll</span>
+    </div>
+  </section>
+
+  <!-- QUÉ ES -->
+  <section id="que-es">
+    <div class="container">
+      <div class="que-es-grid">
+        <div>
+          <div class="section-label reveal">Sistema</div>
+          <h2 class="section-title reveal reveal-delay-1">Un radio VHF que<br/>habla con tu celular.</h2>
+          <p class="section-body reveal reveal-delay-2">
+            MotoRFAR HT combina un módulo de radio VHF profesional (SA818-V), un microcontrolador ESP32
+            y una app Android propia. El dispositivo crea su propia red WiFi: tu teléfono se conecta y
+            tenés PTT, mapa en tiempo real y ajuste de frecuencia desde la pantalla.
+          </p>
+          <p class="section-body reveal reveal-delay-3" style="margin-top:16px;">
+            Sin Bluetooth. Sin internet. Sin suscripciones.<br/>
+            Solo radio VHF de alcance real en frecuencias habilitadas por ENACOM.
+          </p>
+        </div>
+        <div class="que-es-diagram reveal reveal-delay-2">
+          <div class="diagram-title">DIAGRAMA DE SISTEMA</div>
+          <div class="diagram-nodes">
+            <div class="diagram-node">
+              <div class="node-icon active">📡</div>
+              <div>
+                <div class="node-text-label">Radio VHF — SA818-V</div>
+                <div class="node-text-sub">TX/RX · 1–5W · 134–174 MHz</div>
+              </div>
+              <div class="node-conn active"></div>
+            </div>
+            <div class="diagram-node">
+              <div class="node-icon active">⚙️</div>
+              <div>
+                <div class="node-text-label">ESP32-WROOM-32</div>
+                <div class="node-text-sub">Controlador · KISS bridge · SoftAP</div>
+              </div>
+              <div class="node-conn active"></div>
+            </div>
+            <div class="diagram-node">
+              <div class="node-icon active">📶</div>
+              <div>
+                <div class="node-text-label">WiFi 2.4GHz (SoftAP)</div>
+                <div class="node-text-sub">SSID: MotoRFAR-HT · UDP:4210</div>
+              </div>
+              <div class="node-conn"></div>
+            </div>
+            <div class="diagram-node">
+              <div class="node-icon">📱</div>
+              <div>
+                <div class="node-text-label">App Android</div>
+                <div class="node-text-sub">PTT · Mapa OSM · Canales</div>
+              </div>
+            </div>
+          </div>
+          <div class="signal-flow">
+            <div class="signal-dot"></div>
+            <span>SEÑAL ACTIVA — 139.970 MHz</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KIT -->
+  <section id="kit">
+    <div class="container">
+      <div class="kit-header">
+        <div>
+          <div class="section-label reveal">Contenido</div>
+          <h2 class="section-title reveal reveal-delay-1">El kit completo.</h2>
+        </div>
+        <p class="section-body reveal reveal-delay-1" style="max-width:340px; font-size:15px;">
+          Hardware + firmware + app + guía de instalación.
+          Todo lo que necesitás para equipar tu moto o 4×4.
+        </p>
+      </div>
+
+      <div class="kit-image-wrap reveal">
+        <img src="assets/kit_overview.png" alt="MotoRFAR HT — Vista del kit completo" />
+        <div class="kit-image-overlay"></div>
+      </div>
+
+      <div class="kit-components">
+        <div class="kit-comp reveal">
+          <div class="comp-num">01</div>
+          <div class="comp-name">Unidad MotoRFAR HT</div>
+          <div class="comp-desc">PCB 38.1×82.55mm en carcasa de aluminio. ESP32 + SA818-V. Puerto USB-C. Jack 3.5mm PTT. Dos antenas externas.</div>
+        </div>
+        <div class="kit-comp reveal reveal-delay-1">
+          <div class="comp-num">02</div>
+          <div class="comp-name">App Android</div>
+          <div class="comp-desc">PTT por pantalla, mapa offline OSMDroid, historial de transmisiones, alias de miembros y selector de canal.</div>
+        </div>
+        <div class="kit-comp reveal reveal-delay-2">
+          <div class="comp-num">03</div>
+          <div class="comp-name">Antena VHF SMA</div>
+          <div class="comp-desc">Antena flexible de banda VHF incluida. Compatible con antenas magnéticas externas vía conector SMA hembra.</div>
+        </div>
+        <div class="kit-comp reveal reveal-delay-3">
+          <div class="comp-num">04</div>
+          <div class="comp-name">Guía de instalación</div>
+          <div class="comp-desc">Diagrama de montaje, conexión de alimentación (12V o USB) y primeros pasos con la app. Open-source: GPL-3.0.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="section-label reveal">Características</div>
+      <h2 class="section-title reveal reveal-delay-1">Diseñado para el campo.</h2>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon amber">📡</div>
+          <div class="feature-name">Radio VHF real</div>
+          <div class="feature-desc">Módulo SA818-V de banda estrecha. Potencia ajustable 1W / 5W. Rango de hasta varios kilómetros en campo abierto. Nada de simulaciones de radio por datos.</div>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon green">📶</div>
+          <div class="feature-name">WiFi propio</div>
+          <div class="feature-desc">El dispositivo crea su propia red WiFi (SoftAP). Sin internet, sin roaming, sin datos móviles. Tu celular se conecta directo al HT.</div>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon amber">🗺️</div>
+          <div class="feature-name">Mapa offline</div>
+          <div class="feature-desc">Tiles OSM descargables desde la app. Funciona sin señal. Ves a todos los miembros del grupo en tiempo real sobre el mapa.</div>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon green">⚡</div>
+          <div class="feature-name">Bajo consumo</div>
+          <div class="feature-desc">Alimentado por USB-C (5V) o directo desde la batería del vehículo (12V con regulador incluido). Diseñado para uso prolongado en ruta.</div>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon amber">🔒</div>
+          <div class="feature-name">Frecuencias legales</div>
+          <div class="feature-desc">Preconfigurado en los canales habilitados por Res. 5/2015 de ENACOM para grupos vehiculares. Sin necesidad de licencia individual.</div>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon green">🔧</div>
+          <div class="feature-name">Open source</div>
+          <div class="feature-desc">Firmware, esquemáticos y app publicados bajo GPL-3.0 en GitHub. Fork activo de kv4p HT, adaptado para Argentina.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FRECUENCIAS -->
+  <section id="frecuencias">
+    <div class="container">
+      <div class="section-label reveal">Canales legales</div>
+      <h2 class="section-title reveal reveal-delay-1">Preconfigurado.<br/>Habilitado. Listo.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        Resolución ENACOM 5/2015. Canales asignados para grupos vehiculares en Argentina.
+        Sin gestión de frecuencias, sin trámites.
+      </p>
+      <div class="freq-grid">
+        <div class="freq-card primary reveal">
+          <div class="freq-type">Canal principal</div>
+          <div class="freq-number">139.970</div>
+          <div class="freq-unit">MHz</div>
+          <div class="freq-label">GRUPO</div>
+          <div class="freq-desc">Canal de uso general para comunicación del grupo en movimiento.</div>
+          <div class="freq-legal">RES 5/2015 · ENACOM</div>
+        </div>
+        <div class="freq-card reveal reveal-delay-1">
+          <div class="freq-type">Canal alternativo</div>
+          <div class="freq-number">138.510</div>
+          <div class="freq-unit">MHz</div>
+          <div class="freq-label">ALTERNATIVO</div>
+          <div class="freq-desc">Canal secundario para comunicación cuando el principal está ocupado.</div>
+          <div class="freq-legal">RES 5/2015 · ENACOM</div>
+        </div>
+        <div class="freq-card reveal reveal-delay-2">
+          <div class="freq-type">Canal de emergencia</div>
+          <div class="freq-number">140.970</div>
+          <div class="freq-unit">MHz</div>
+          <div class="freq-label">EMERGENCIA</div>
+          <div class="freq-desc">Canal dedicado para situaciones de emergencia. Siempre activo en background.</div>
+          <div class="freq-legal">RES 5/2015 · ENACOM</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <section id="app">
+    <div class="container">
+      <div class="app-grid">
+        <div>
+          <div class="section-label reveal">Aplicación Android</div>
+          <h2 class="section-title reveal reveal-delay-1">La radio en la pantalla de tu celular.</h2>
+          <p class="section-body reveal reveal-delay-2">
+            La app MotoRFAR HT se conecta al dispositivo por WiFi y te da control total:
+            PTT por pantalla, ubicación del grupo en mapa offline y cambio de canal al instante.
+          </p>
+          <ul class="app-features reveal reveal-delay-3">
+            <li class="app-feature">
+              <div class="af-icon">🎙</div>
+              <div class="af-text">
+                <strong>PTT táctil</strong>
+                Botón de transmisión en pantalla. Mantené presionado para hablar, soltá para escuchar.
+              </div>
+            </li>
+            <li class="app-feature">
+              <div class="af-icon">🗺</div>
+              <div class="af-text">
+                <strong>Mapa offline</strong>
+                Tiles OSM descargables desde la misma app. Ubicación de todos los miembros en tiempo real.
+              </div>
+            </li>
+            <li class="app-feature">
+              <div class="af-icon">📻</div>
+              <div class="af-text">
+                <strong>Selector de canal</strong>
+                Cambiá entre los tres canales legales con un toque. Indicador visual de actividad de RF.
+              </div>
+            </li>
+            <li class="app-feature">
+              <div class="af-icon">🔖</div>
+              <div class="af-text">
+                <strong>Alias de grupos</strong>
+                Asigná nombres a cada callsign. Cada integrante aparece identificado en el mapa.
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="phone-mockup reveal reveal-delay-2">
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="ps-topbar">
+                <span class="ps-callsign">LU3HT-1</span>
+                <span class="ps-freq">139.970 MHz</span>
+              </div>
+              <div class="ps-map">
+                <div class="map-dot" style="top:40%;left:45%"></div>
+                <div class="map-dot map-dot-2" style="top:55%;left:58%"></div>
+                <div class="map-dot" style="top:35%;left:62%"></div>
+              </div>
+              <div class="ps-members">
+                <div class="ps-member active">
+                  <div class="pm-avatar">M1</div>
+                  <span class="pm-name active">MOTO-1</span>
+                  <span class="pm-dist">0.0km</span>
+                </div>
+                <div class="ps-member">
+                  <div class="pm-avatar" style="border-color:#f0a020;color:#f0a020;">M2</div>
+                  <span class="pm-name">MOTO-2</span>
+                  <span class="pm-dist">1.4km</span>
+                </div>
+                <div class="ps-member">
+                  <div class="pm-avatar">M3</div>
+                  <span class="pm-name">MOTO-3</span>
+                  <span class="pm-dist">2.1km</span>
+                </div>
+              </div>
+              <div class="ptt-btn">PTT</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VEHÍCULOS -->
+  <section id="vehiculos">
+    <div class="container">
+      <div class="section-label reveal">Adaptación</div>
+      <h2 class="section-title reveal reveal-delay-1">Se monta en lo que<br/>ya tenés.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        El kit es compacto y versátil. Se adapta a motos, 4×4 y pick-ups con el mismo hardware.
+        El punto de montaje cambia; la comunicación, no.
+      </p>
+      <div class="vehicle-types">
+        <div class="vehicle-card reveal">
+          <div class="vehicle-icon-large">🏍</div>
+          <div>
+            <div class="vehicle-title">Motocicletas</div>
+            <div class="vehicle-desc">
+              Montaje bajo asiento o en portaequipajes. Alimentación desde la batería de 12V.
+              Antena VHF flexible o magnética en tanque/cola. El comando PTT de manillar
+              se conecta al jack 3.5mm y te permite transmitir sin soltar el manubrio.
+            </div>
+            <div class="mount-points">
+              <span class="mount-tag">BAJO ASIENTO</span>
+              <span class="mount-tag">PORTAEQUIPAJES</span>
+              <span class="mount-tag">PTT MANILLAR</span>
+              <span class="mount-tag">ANT. MAGNÉTICA</span>
+            </div>
+          </div>
+        </div>
+        <div class="vehicle-card reveal reveal-delay-1">
+          <div class="vehicle-icon-large">🚙</div>
+          <div>
+            <div class="vehicle-title">4×4 y Pick-ups</div>
+            <div class="vehicle-desc">
+              Montaje en consola central o bajo tablero. Antena VHF exterior vía pigtail SMA.
+              Alimentación desde el encendedor de 12V o directo a batería.
+              El pigtail SMA de 5m permite ubicar el HT y la antena en posiciones óptimas.
+            </div>
+            <div class="mount-points">
+              <span class="mount-tag">CONSOLA</span>
+              <span class="mount-tag">BAJO TABLERO</span>
+              <span class="mount-tag">PIGTAIL SMA 5M</span>
+              <span class="mount-tag">ANT. EXTERIOR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCESORIOS -->
+  <section id="accesorios">
+    <div class="container">
+      <div class="section-label reveal">Accesorios</div>
+      <h2 class="section-title reveal reveal-delay-1">Completá tu instalación.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        Accesorios diseñados para el kit MotoRFAR HT. Compatibles con la unidad base
+        y disponibles por separado.
+      </p>
+      <div class="acc-grid">
+        <div class="acc-card reveal">
+          <div class="acc-placeholder">
+            <div class="placeholder-icon">📡</div>
+            <div class="placeholder-text">Imagen próximamente<br/>Pigtail SMA VHF</div>
+          </div>
+          <div class="acc-name">Pigtail SMA — VHF</div>
+          <div class="acc-desc">
+            Cable de extensión SMA macho a hembra para separar la unidad HT del punto
+            de montaje de la antena. Ideal para instalaciones en 4×4 donde la antena
+            va en el techo o toldo.
+          </div>
+          <div class="acc-specs">
+            <div class="acc-spec">
+              <span class="acc-spec-key">LONGITUD</span>
+              <span>5m / 3m</span>
+            </div>
+            <div class="acc-spec">
+              <span class="acc-spec-key">CONECTOR</span>
+              <span>SMA macho – SMA hembra</span>
+            </div>
+            <div class="acc-spec">
+              <span class="acc-spec-key">BANDA</span>
+              <span>VHF 134–174 MHz</span>
+            </div>
+          </div>
+        </div>
+        <div class="acc-card reveal reveal-delay-1">
+          <div class="acc-placeholder">
+            <div class="placeholder-icon">🎮</div>
+            <div class="placeholder-text">Imagen próximamente<br/>Comando PTT manillar</div>
+          </div>
+          <div class="acc-name">Comando PTT — Manillar</div>
+          <div class="acc-desc">
+            Control de transmisión para montaje en manillar de moto. Se conecta al jack
+            3.5mm del HT y te permite transmitir sin soltar el manubrio. Imprescindible
+            para uso en movimiento.
+          </div>
+          <div class="acc-specs">
+            <div class="acc-spec">
+              <span class="acc-spec-key">MONTAJE</span>
+              <span>Manillar 22mm / 25mm</span>
+            </div>
+            <div class="acc-spec">
+              <span class="acc-spec-key">CONECTOR</span>
+              <span>Jack 3.5mm TRRS</span>
+            </div>
+            <div class="acc-spec">
+              <span class="acc-spec-key">CABLE</span>
+              <span>120cm espiral</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPECS -->
+  <section id="specs">
+    <div class="container">
+      <div class="section-label reveal">Especificaciones técnicas</div>
+      <h2 class="section-title reveal reveal-delay-1">Los números que importan.</h2>
+      <table class="specs-table reveal reveal-delay-2">
+        <thead>
+          <tr><td>PARÁMETRO</td><td>VALOR</td></tr>
+        </thead>
+        <tbody>
+          <tr><td>Módulo de radio</td><td>SA818-V · VHF narrowband</td></tr>
+          <tr><td>Rango de frecuencia</td><td>134 — 174 MHz</td></tr>
+          <tr><td>Potencia TX</td><td>1W (Low) / 5W (High)</td></tr>
+          <tr><td>Modulación</td><td>FM — 12.5kHz / 25kHz</td></tr>
+          <tr><td>Controlador</td><td>ESP32-WROOM-32</td></tr>
+          <tr><td>Conectividad app</td><td>WiFi 2.4GHz SoftAP · UDP:4210</td></tr>
+          <tr><td>SSID</td><td>MotoRFAR-HT</td></tr>
+          <tr><td>Protocolo audio</td><td>KISS framing · raw PCM 8kHz</td></tr>
+          <tr><td>Alimentación</td><td>USB-C 5V / 12V con regulador</td></tr>
+          <tr><td>Dimensiones PCB</td><td>38.1 × 82.55 mm</td></tr>
+          <tr><td>Carcasa</td><td>Aluminio anodizado (jaula de Faraday)</td></tr>
+          <tr><td>Conectores</td><td>USB-C · SMA-F VHF · SMA-F WiFi · Jack 3.5mm</td></tr>
+          <tr><td>App Android</td><td>Kotlin + Compose · paquete ar.motorfar.app</td></tr>
+          <tr><td>Mapas</td><td>OSMDroid 6.1.18 — tiles offline</td></tr>
+          <tr><td>Licencia</td><td>GPL-3.0 (fork de kv4p HT)</td></tr>
+          <tr><td>Frecuencias legales</td><td>Res. 5/2015 ENACOM</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CTA / CONTACTO -->
+  <section id="contacto">
+    <div class="cta-inner">
+      <div class="cta-badge reveal">
+        <span>🔴</span> Beta abierta — unidades limitadas
+      </div>
+      <h2 class="cta-title reveal reveal-delay-1">
+        ¿Querés equipar tu grupo?
+      </h2>
+      <p class="cta-body reveal reveal-delay-2">
+        MotoRFAR HT está en fase beta. Si tenés un grupo moto o 4×4 en Argentina
+        y querés ser de los primeros en probarlo, escribinos.
+        También podés revisar el código fuente en GitHub.
+      </p>
+      <div class="cta-actions reveal reveal-delay-3">
+        <a href="mailto:lukaz1979@gmail.com?subject=MotoRFAR%20HT%20-%20Consulta" class="btn-primary">
+          Escribinos por el kit
+        </a>
+        <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener" class="btn-secondary">
+          Ver en GitHub →
+        </a>
+      </div>
+      <span class="cta-email reveal reveal-delay-4">
+        o directo a <a href="mailto:lukaz1979@gmail.com">lukaz1979@gmail.com</a>
+      </span>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">Moto<span>RFAR</span> HT</div>
+      <div class="footer-links">
+        <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/lukaz2004/MotoRFAR/blob/main/KV4PHT/docs/PRIVACY-POLICY.md" target="_blank" rel="noopener">Privacidad</a>
+        <a href="https://github.com/lukaz2004/MotoRFAR/releases/tag/v1.0-beta1" target="_blank" rel="noopener">v1.0-beta1</a>
+      </div>
+      <div class="footer-meta">GPL-3.0 · Argentina · 2024</div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Scroll reveal ────────────────────────────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Trigger hero elements immediately
+    setTimeout(() => {
+      document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('visible'));
+    }, 100);
+
+    // ── Nav scroll behavior ──────────────────────────────────────────────────
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 60) {
+        nav.style.borderBottomColor = 'rgba(240,160,32,0.2)';
+      } else {
+        nav.style.borderBottomColor = 'var(--border)';
+      }
+    }, { passive: true });
+
+    // ── Animated frequency counter ────────────────────────────────────────
+    function animateCounter(el, target, duration = 1200) {
+      const start = performance.now();
+      const from = 0;
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = (from + (target - from) * eased).toFixed(3);
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+
+    const freqObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting && !e.target.dataset.animated) {
+          e.target.dataset.animated = '1';
+          const target = parseFloat(e.target.textContent);
+          animateCounter(e.target, target, 1000);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('.freq-number').forEach(el => freqObserver.observe(el));
+
+    // ── Signal dot animation stagger ─────────────────────────────────────
+    document.querySelectorAll('.signal-dot').forEach((dot, i) => {
+      dot.style.animationDelay = `${i * 0.3}s`;
+    });
+  </script>
+</body>
+</html>
