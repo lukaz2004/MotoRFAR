@@ -1,6 +1,7 @@
 package ar.motorfar.app.ui.compose
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,7 +51,9 @@ fun AliasSettingScreen(
     currentSmartBeacon: Boolean = true,
     onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> },
     onToggleSmartBeacon: (Boolean) -> Unit = {},
-    onDownloadMaps: () -> Unit = {}
+    onDownloadMaps: () -> Unit = {},
+    onPrivacyPolicy: () -> Unit = {},
+    onAbout: () -> Unit = {}
 ) {
     val colors = LocalMotoRFARColors.current
 
@@ -237,6 +240,32 @@ fun AliasSettingScreen(
         }
 
         Spacer(Modifier.weight(1f))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text       = "Política de privacidad ›",
+                color      = colors.accent,
+                fontFamily = ShareTechMono,
+                fontSize   = 14.sp,
+                modifier   = Modifier
+                    .clickable(onClick = onPrivacyPolicy)
+                    .padding(vertical = 8.dp)
+            )
+            Text(
+                text       = "Acerca de / Licencias ›",
+                color      = colors.accent,
+                fontFamily = ShareTechMono,
+                fontSize   = 14.sp,
+                modifier   = Modifier
+                    .clickable(onClick = onAbout)
+                    .padding(vertical = 8.dp)
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
 
         Button(
             onClick  = {

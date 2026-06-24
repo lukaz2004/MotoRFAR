@@ -446,6 +446,12 @@ class MainActivity : ComponentActivity() {
                                         "Descarga de mapas offline — próximamente",
                                         android.widget.Toast.LENGTH_SHORT
                                     ).show()
+                                },
+                                onPrivacyPolicy          = {
+                                    startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
+                                },
+                                onAbout                  = {
+                                    startActivity(android.content.Intent(this@MainActivity, AboutActivity::class.java))
                                 }
                             )
                         }
