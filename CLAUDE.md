@@ -1,82 +1,41 @@
-# CLAUDE.md — Boot loader del proyecto MotoRFAR
+# CLAUDE.md — MotoRFAR HT
 
-> **Esta es la primera lectura obligatoria de cualquier sesión de Claude Code en este proyecto.** Leer también los docs referenciados antes de proponer cambios estructurales.
+> **IMPORTANTE:** El sistema de gestión del proyecto vive en `_PROYECTO/`.
+> Leé `_PROYECTO/NEXT_SESSION.md` y `_PROYECTO/PENDIENTES.md` para entender el estado real.
+> Este archivo es solo contexto técnico de base, NO es la fuente de estado del proyecto.
 
-## Qué es MotoRFAR
+## Qué es
 
-App Android + accesorio hardware abierto que permite comunicación de radio VHF grupal entre motociclistas y vehículos 4x4 en zonas sin cobertura celular. Opera bajo el marco legal argentino de la **Resolución 5/2015 (M.T.T.T.)** en los 3 canales libres VHF (138.510, 139.970, 140.970 MHz). Sin licencia. Sin trámites.
+Radio VHF grupal para motociclistas y 4x4 en Argentina. Opera en los 3 canales libres de la Resolución 5/2015 (M.T.T.T.): 138.510 / 139.970 / 140.970 MHz. Sin licencia. Sin trámites.
+Fork de [kv4p HT](https://github.com/VanceVagell/kv4p-ht) (Vance Vagell, KV4P), GPL-3.0.
 
-Es un fork especializado de [kv4p HT](https://github.com/VanceVagell/kv4p-ht) (de Vance Vagell, KV4P).
+## Ubicación de componentes
 
-## Estado actual
+| Qué | Dónde |
+|-----|-------|
+| Gestión del proyecto | `_PROYECTO/` — FUENTE DE VERDAD |
+| App Android | `KV4PHT/` |
+| Firmware ESP32 | `..\kv4p-ht-main\microcontroller-src\kv4p_ht_esp32_wroom_32\` |
+| PCB | `..\kv4p-ht-main\pcb\v2.0e\kv4p-ht\` |
 
-- **Fase:** desarrollo de v1.0 (MVP) — **Sprint 10 activo** (ver `docs/SPRINT-10.md`)
-- **Branch principal:** `main` (limpio, Sprints 1-9 mergeados)
-- **Equipo:** un desarrollador solo (LuKaZ), presupuesto ajustado
-- **Hardware target:** ESP32-S3 + SA818-V (módulo VHF) + antena externa
-- **Idioma de la app:** español rioplatense
-- **Idioma del código:** inglés (estándar de la industria)
-- **Modalidad:** sesiones largas posibles vía Claude desde celular controlando la PC
+## Comandos clave
 
-## Reglas operativas para cualquier sesión
+```powershell
+# Build Android
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+cd KV4PHT && .\gradlew assembleDebug
 
-1. **Antes de proponer features nuevas, leer `docs/04-ROADMAP.md`.** Lo que está en v1.0 se hace, lo que está en v1.1/v2.0 se posterga.
-2. **Antes de cuestionar una decisión técnica, leer `docs/03-DECISIONES.md`.** Si la decisión está ahí, fue debatida y tiene fundamento. Para revertirla hay que escribir un ADR nuevo.
-3. **Antes de tocar frecuencias o aspectos legales, leer `docs/02-MARCO-LEGAL.md`.** Operar fuera del marco invalida el proyecto.
-4. **Antes de proponer cambios visuales, leer `docs/05-DISEÑO.md`.** La estética CRT ámbar/verde no es decorativa, es funcional.
-5. **TDD por defecto** — el plugin Superpowers fuerza tests antes de código. Respetar el flujo, no saltearlo.
-6. **No commits directos a main.** Trabajar en feature branches, abrir PR aunque sea solo de uno mismo.
+# Build Firmware
+$env:PLATFORMIO_BUILD_DIR = 'C:\Users\lukaz\pio-build'
+& 'C:\Users\lukaz\pio-venv\Scripts\pio.exe' run -e esp32dev -d '..\kv4p-ht-main\microcontroller-src'
 
-## Mapa de los docs
-
-| Archivo | Contenido |
-|---|---|
-| `docs/01-PROYECTO.md` | Visión, usuario objetivo, propuesta de valor |
-| `docs/02-MARCO-LEGAL.md` | Res. 5/2015 + decisiones legales consolidadas |
-| `docs/03-DECISIONES.md` | ADRs: cada decisión técnica con contexto y consecuencias |
-| `docs/04-ROADMAP.md` | v1.0 / v1.1 / v2.0 con features explícitas |
-| `docs/05-DISEÑO.md` | Sistema visual: paleta ámbar/verde, tipografía, mockup |
-| `docs/06-HARDWARE.md` | Especificación de PCB, SA818-V, antena, PTT externo |
-| `docs/SESSION-LOG.md` | Bitácora cronológica de lo que se hizo en cada sesión de Claude Code |
-
-## Ritual de cierre de sesión
-
-Al final de cada sesión de Claude Code, antes de cerrar:
-
-1. Actualizar `docs/SESSION-LOG.md` con una entrada nueva: fecha, qué se hizo, decisiones tomadas, qué quedó pendiente, trampas/descubrimientos. Conciso (15-20 líneas máximo).
-2. Si se introdujeron decisiones de arquitectura nuevas, escribir el ADR correspondiente en `docs/03-DECISIONES.md`.
-3. `git add . && git commit -m "session: <descripción corta>"`.
-4. Esto reemplaza a sistemas tipo claude-mem para nuestro caso: control total, cero dependencias.
-
-## Stack de tooling esperado (instalado a nivel usuario)
-
-- Plugin **superpowers** para flujos de brainstorm/spec/plan/TDD
-- Plugin **security-guidance** (configurado vía `.claude/claude-security-guidance.md`)
-- Plugin **code-review** para revisiones multi-agente
-- MCP **context7** para docs de librerías Android al día
-- MCP **sequential-thinking** para decisiones de arquitectura
-- MCP **github** (token READ-ONLY)
-- MCP **fetch** para investigación
-
-Si alguno falta, recomendar instalación pero no bloquear el trabajo.
-
-## Próxima acción al abrir el proyecto
-
-El plan del sprint activo está en `docs/SPRINT-10.md`. No hacer brainstorming — las decisiones de fondo están en los ADRs. Ir directo a ejecución:
-
-```
-Leé docs/SPRINT-10.md. Es el design doc completo con fases A → D.
-Creá el branch sprint/10-offline-docs desde main.
-Ejecutá por fases en orden (A → B → C → D) con TDD donde aplique.
-Commit atómico al cerrar cada fase. PR al terminar todo el sprint.
+# kicad-cli
+C:\Users\lukaz\AppData\Local\Programs\KiCad\10.0\bin\kicad-cli.exe
 ```
 
-### Para sesiones desde celular (control remoto de PC)
+## Reglas que no se negocian
 
-- Las fases están diseñadas para ser **autónomas**: Claude puede ejecutar una fase entera sin preguntas.
-- Si hay un bloqueante real (build roto, decisión de arquitectura), parar y reportar.
-- `JAVA_HOME` para builds: `C:\Program Files\Android\Android Studio\jbr`
-- Build command: `cd MotoRFAR-MTTT\KV4PHT && .\gradlew assembleDebug`
-- Tests: `.\gradlew testDebugUnitTest`
-
-Usar `/brainstorm` únicamente si aparece una decisión NO cubierta por los ADRs existentes.
+- **Whitelist TX:** solo 3 frecuencias Res. 5/2015. El firmware es la autoridad final.
+- **Nunca rutear cobre crítico del PCB por script** — siempre GUI KiCad.
+- **No commits directos a main.** Feature branches + PR.
+- **Idioma del código:** inglés. **Idioma de la app:** español rioplatense.
