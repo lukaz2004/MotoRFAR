@@ -27,8 +27,19 @@
 -keepclassmembers @androidx.room.Entity class * { *; }
 
 # ── Lombok ────────────────────────────────────────────────────────────────
+# Clases generadas por Lombok en runtime (anotaciones de comportamiento)
 -keep @lombok.* class *
 -keepclassmembers @lombok.* class * { *; }
+# Handlers javac-side de Lombok: solo existen en el compilador, no en Android runtime
+-dontwarn lombok.javac.**
+-dontwarn lombok.javac.handlers.**
+-dontwarn lombok.javac.handlers.singulars.**
+-dontwarn lombok.eclipse.**
+-dontwarn lombok.experimental.**
+
+# ── FindBugs / SpotBugs (anotaciones compile-time, no existen en runtime) ─────
+# Usadas por esp32-flash-lib (io.github.dkaukov). R8 las detecta pero no son necesarias.
+-dontwarn edu.umd.cs.findbugs.annotations.**
 
 # ── APRS parser (herencia AVRS, usa reflection en algunos parsers) ─────────
 -keep class ar.motorfar.app.aprs.** { *; }
