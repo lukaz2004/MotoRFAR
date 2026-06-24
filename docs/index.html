@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MotoRFAR HT — Comunicación VHF para grupos moto y 4x4</title>
+  <title>Baqueano — Comunicación VHF para grupos moto y 4x4</title>
   <meta name="description" content="Kit de comunicación VHF para grupos moto y 4x4. Hardware ESP32 + radio SA818-V + app Android integrada. Frecuencias legales Argentina." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -97,12 +97,22 @@
       padding: 0 24px;
     }
     .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo img {
+      height: 36px;
+      width: auto;
+      filter: drop-shadow(0 0 8px rgba(240,160,32,0.3));
+    }
+    .nav-logo-text {
       font-family: var(--sans);
       font-weight: 700;
       font-size: 17px;
       letter-spacing: 0.02em;
       color: var(--text);
-      text-decoration: none;
     }
     .nav-logo span { color: var(--amber); }
     .nav-links {
@@ -293,6 +303,19 @@
       color: var(--green);
       letter-spacing: 0.06em;
       white-space: nowrap;
+    }
+
+    .hero-logo-wrap {
+      margin-bottom: 24px;
+    }
+    .hero-logo-img {
+      height: 100px;
+      width: auto;
+      filter: drop-shadow(0 4px 24px rgba(240,160,32,0.35));
+      transition: filter 0.3s;
+    }
+    .hero-logo-img:hover {
+      filter: drop-shadow(0 4px 32px rgba(240,160,32,0.6));
     }
 
     .hero-scroll {
@@ -1060,7 +1083,10 @@
   <!-- NAV -->
   <nav>
     <div class="nav-inner">
-      <a href="#" class="nav-logo">Moto<span>RFAR</span> HT</a>
+      <a href="#" class="nav-logo">
+        <img src="assets/baqueano-logo.png" alt="Baqueano" />
+        <span class="nav-logo-text"><span>Baqueano</span></span>
+      </a>
       <ul class="nav-links">
         <li><a href="#que-es">Producto</a></li>
         <li><a href="#kit">Kit</a></li>
@@ -1080,16 +1106,19 @@
     <div class="hero-inner">
       <div class="hero-text">
         <div class="hero-badge reveal">VHF · Argentina · Beta</div>
-        <h1 class="hero-title reveal reveal-delay-1">
+        <div class="hero-logo-wrap reveal reveal-delay-1">
+          <img src="assets/baqueano-logo.png" alt="Baqueano" class="hero-logo-img" />
+        </div>
+        <h1 class="hero-title reveal reveal-delay-2">
           Tu grupo.<br />
           Tu frecuencia.<br />
           <em>Sin límites.</em>
         </h1>
-        <p class="hero-sub reveal reveal-delay-2">
-          MotoRFAR HT es un kit de comunicación VHF de fabricación propia para grupos moto y 4×4.
+        <p class="hero-sub reveal reveal-delay-3">
+          Baqueano es un kit de comunicación VHF de fabricación propia para grupos moto y 4×4.
           Hardware compacto, app Android integrada y adaptación directa a tu vehículo.
         </p>
-        <div class="hero-actions reveal reveal-delay-3">
+        <div class="hero-actions reveal reveal-delay-4">
           <a href="#kit" class="btn-primary">
             <span>Ver el kit</span>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1100,7 +1129,7 @@
       <div class="hero-visual reveal reveal-delay-2">
         <div class="hero-device-wrap">
           <div class="hero-glow"></div>
-          <img src="assets/hero_device.png" alt="MotoRFAR HT — dispositivo VHF" class="hero-device-img" />
+          <img src="assets/hero_device.png" alt="Baqueano — dispositivo VHF" class="hero-device-img" />
           <div class="hero-specs">
             <div class="spec-pill">VHF · SA818-V</div>
             <div class="spec-pill">ESP32 · WiFi</div>
@@ -1123,7 +1152,7 @@
           <div class="section-label reveal">Sistema</div>
           <h2 class="section-title reveal reveal-delay-1">Un radio VHF que<br/>habla con tu celular.</h2>
           <p class="section-body reveal reveal-delay-2">
-            MotoRFAR HT combina un módulo de radio VHF profesional (SA818-V), un microcontrolador ESP32
+            Baqueano combina un módulo de radio VHF profesional (SA818-V), un microcontrolador ESP32
             y una app Android propia. El dispositivo crea su propia red WiFi: tu teléfono se conecta y
             tenés PTT, mapa en tiempo real y ajuste de frecuencia desde la pantalla.
           </p>
@@ -1155,7 +1184,7 @@
               <div class="node-icon active">📶</div>
               <div>
                 <div class="node-text-label">WiFi 2.4GHz (SoftAP)</div>
-                <div class="node-text-sub">SSID: MotoRFAR-HT · UDP:4210</div>
+                <div class="node-text-sub">SSID: Baqueano-HT · UDP:4210</div>
               </div>
               <div class="node-conn"></div>
             </div>
@@ -1191,14 +1220,14 @@
       </div>
 
       <div class="kit-image-wrap reveal">
-        <img src="assets/kit_overview.png" alt="MotoRFAR HT — Vista del kit completo" />
+        <img src="assets/kit_overview.png" alt="Baqueano — Vista del kit completo" />
         <div class="kit-image-overlay"></div>
       </div>
 
       <div class="kit-components">
         <div class="kit-comp reveal">
           <div class="comp-num">01</div>
-          <div class="comp-name">Unidad MotoRFAR HT</div>
+          <div class="comp-name">Unidad Baqueano</div>
           <div class="comp-desc">PCB 38.1×82.55mm en carcasa de aluminio. ESP32 + SA818-V. Puerto USB-C. Jack 3.5mm PTT. Dos antenas externas.</div>
         </div>
         <div class="kit-comp reveal reveal-delay-1">
@@ -1306,7 +1335,7 @@
           <div class="section-label reveal">Aplicación Android</div>
           <h2 class="section-title reveal reveal-delay-1">La radio en la pantalla de tu celular.</h2>
           <p class="section-body reveal reveal-delay-2">
-            La app MotoRFAR HT se conecta al dispositivo por WiFi y te da control total:
+            La app Baqueano se conecta al dispositivo por WiFi y te da control total:
             PTT por pantalla, ubicación del grupo en mapa offline y cambio de canal al instante.
           </p>
           <ul class="app-features reveal reveal-delay-3">
@@ -1432,7 +1461,7 @@
       <div class="section-label reveal">Accesorios</div>
       <h2 class="section-title reveal reveal-delay-1">Completá tu instalación.</h2>
       <p class="section-body reveal reveal-delay-2">
-        Accesorios diseñados para el kit MotoRFAR HT. Compatibles con la unidad base
+        Accesorios diseñados para el kit Baqueano. Compatibles con la unidad base
         y disponibles por separado.
       </p>
       <div class="acc-grid">
@@ -1508,7 +1537,7 @@
           <tr><td>Modulación</td><td>FM — 12.5kHz / 25kHz</td></tr>
           <tr><td>Controlador</td><td>ESP32-WROOM-32</td></tr>
           <tr><td>Conectividad app</td><td>WiFi 2.4GHz SoftAP · UDP:4210</td></tr>
-          <tr><td>SSID</td><td>MotoRFAR-HT</td></tr>
+          <tr><td>SSID</td><td>Baqueano-HT</td></tr>
           <tr><td>Protocolo audio</td><td>KISS framing · raw PCM 8kHz</td></tr>
           <tr><td>Alimentación</td><td>USB-C 5V / 12V con regulador</td></tr>
           <tr><td>Dimensiones PCB</td><td>38.1 × 82.55 mm</td></tr>
@@ -1533,12 +1562,12 @@
         ¿Querés equipar tu grupo?
       </h2>
       <p class="cta-body reveal reveal-delay-2">
-        MotoRFAR HT está en fase beta. Si tenés un grupo moto o 4×4 en Argentina
+        Baqueano está en fase beta. Si tenés un grupo moto o 4×4 en Argentina
         y querés ser de los primeros en probarlo, escribinos.
         También podés revisar el código fuente en GitHub.
       </p>
       <div class="cta-actions reveal reveal-delay-3">
-        <a href="mailto:lukaz1979@gmail.com?subject=MotoRFAR%20HT%20-%20Consulta" class="btn-primary">
+        <a href="mailto:lukaz1979@gmail.com?subject=Baqueano%20-%20Consulta" class="btn-primary">
           Escribinos por el kit
         </a>
         <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener" class="btn-secondary">
@@ -1554,7 +1583,7 @@
   <!-- FOOTER -->
   <footer>
     <div class="footer-inner">
-      <div class="footer-logo">Moto<span>RFAR</span> HT</div>
+      <div class="footer-logo"><img src="assets/baqueano-logo.png" alt="Baqueano" style="height:32px;filter:drop-shadow(0 0 6px rgba(240,160,32,0.3))"></div>
       <div class="footer-links">
         <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/lukaz2004/MotoRFAR/blob/main/KV4PHT/docs/PRIVACY-POLICY.md" target="_blank" rel="noopener">Privacidad</a>
