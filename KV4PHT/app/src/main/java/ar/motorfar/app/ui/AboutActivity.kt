@@ -1,4 +1,4 @@
-package ar.motorfar.app.ui
+﻿package ar.motorfar.app.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -194,7 +194,7 @@ Google Play Services Location 21.3 — Propietario
                 textPri = textPri,
                 textSec = textSec,
                 body    = """
-Desarrollo Baqueano: LuKaZ (lukaz1979@gmail.com)
+Desarrollo Baqueano: LuKaZ
 Proyecto original kv4p HT: Vance Vagell, KV4P
 Comunidad de radioaficionados y grupos 4x4 de Argentina
                 """.trimIndent()

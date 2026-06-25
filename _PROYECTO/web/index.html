@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MotoRFAR HT — Radio VHF para grupos de motos</title>
+  <meta name="description" content="Walkie-talkie VHF digital para grupos de motociclistas y 4x4 en Argentina. Sin licencia, sin internet, sin costo mensual. Open source." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Share+Tech&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #00ff41;
+      --green-dim: #00cc33;
+      --green-faint: #003310;
+      --green-glow: rgba(0, 255, 65, 0.15);
+      --bg: #050505;
+      --bg-card: #0a0a0a;
+      --bg-card2: #0f0f0f;
+      --border: #1a3a1a;
+      --text: #c0e0c0;
+      --text-dim: #5a7a5a;
+      --mono: 'Share Tech Mono', 'Courier New', monospace;
+      --sans: 'Share Tech', 'Courier New', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 15px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── scanline overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.07) 2px,
+        rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(5,5,5,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      backdrop-filter: blur(4px);
+    }
+    nav .logo {
+      color: var(--green);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+    nav .logo span { color: var(--text-dim); font-weight: 400; }
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem 1.2rem;
+      margin-left: auto;
+    }
+    nav ul a {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    nav ul a:hover { color: var(--green); text-decoration: none; }
+
+    /* ── SECTIONS ── */
+    section { padding: 5rem 1.5rem; max-width: 900px; margin: 0 auto; }
+
+    .label {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 0.8rem;
+    }
+    .label::before { content: '// '; color: var(--green-dim); }
+
+    h1, h2 {
+      font-family: var(--mono);
+      color: var(--green);
+      line-height: 1.15;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 4rem;
+      padding-bottom: 4rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    #hero .callsign {
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      margin-bottom: 1.2rem;
+      text-transform: uppercase;
+    }
+    #hero .callsign::before {
+      content: '▶ ';
+      color: var(--green);
+      animation: blink 1.2s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    #hero h1 {
+      font-size: clamp(2.4rem, 8vw, 5rem);
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 40px rgba(0,255,65,0.4), 0 0 80px rgba(0,255,65,0.15);
+      margin-bottom: 0.5rem;
+    }
+
+    #hero .tagline {
+      font-size: clamp(1rem, 3vw, 1.35rem);
+      color: var(--text);
+      margin-bottom: 2.5rem;
+      max-width: 600px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 3rem;
+    }
+    .badge {
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.7rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .badge.highlight {
+      border-color: var(--green-dim);
+      color: var(--green);
+      background: var(--green-faint);
+    }
+
+    .freq-preview {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      border-left: 2px solid var(--green-dim);
+      padding-left: 1rem;
+      line-height: 2;
+    }
+    .freq-preview strong { color: var(--green); font-weight: 400; }
+
+    /* ── QUÉ ES ── */
+    #que-es { border-bottom: 1px solid var(--border); }
+    #que-es h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+    .feature-item {
+      background: var(--bg-card);
+      padding: 1.5rem;
+    }
+    .feature-item .icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.6rem;
+      display: block;
+    }
+    .feature-item .title {
+      color: var(--green);
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .feature-item p {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+
+    /* ── CANALES ── */
+    #canales { border-bottom: 1px solid var(--border); }
+    #canales h2 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    #canales .sub {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      margin-bottom: 2rem;
+    }
+
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    thead tr {
+      border-bottom: 1px solid var(--green-dim);
+    }
+    thead th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    tbody tr:hover { background: var(--green-glow); }
+    tbody td {
+      padding: 0.9rem 1rem;
+      vertical-align: middle;
+    }
+    .freq-num {
+      color: var(--green);
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+    }
+    .ch-name { color: var(--text); }
+    .ch-name small { display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 0.15rem; }
+    .ch-badge {
+      display: inline-block;
+      border: 1px solid currentColor;
+      padding: 0.1rem 0.5rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .ch-badge.principal { color: var(--green); border-color: var(--green-dim); background: var(--green-faint); }
+    .ch-badge.alt { color: #88aaff; border-color: #334488; background: #050510; }
+    .ch-badge.emerg { color: #ffaa33; border-color: #553300; background: #0f0800; }
+
+    .legal-note {
+      margin-top: 1.5rem;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      border-left: 2px solid var(--border);
+      padding-left: 1rem;
+    }
+    .legal-note a { color: var(--text-dim); }
+    .legal-note a:hover { color: var(--green); }
+
+    /* ── CÓMO FUNCIONA ── */
+    #como-funciona { border-bottom: 1px solid var(--border); }
+    #como-funciona h2 { font-size: 1.8rem; margin-bottom: 2rem; }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 1.15rem;
+      top: 0.5rem;
+      bottom: 0.5rem;
+      width: 1px;
+      background: var(--border);
+    }
+    .step {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+      padding: 1.2rem 0;
+      position: relative;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 2.3rem;
+      height: 2.3rem;
+      border: 1px solid var(--green-dim);
+      background: var(--bg);
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      position: relative;
+      z-index: 1;
+    }
+    .step-content .title {
+      color: var(--text);
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    .step-content p {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+    }
+    .step-content code {
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.4rem;
+      color: var(--green);
+      font-size: 0.8rem;
+    }
+
+    /* ── ESTADO ── */
+    #estado { border-bottom: 1px solid var(--border); }
+    #estado h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+
+    .status-box {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 1.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .status-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--green-dim);
+    }
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 0.8rem;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+      50% { opacity: 0.5; box-shadow: 0 0 3px var(--green); }
+    }
+    .status-text {
+      color: var(--green);
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+    }
+    .status-detail {
+      color: var(--text-dim);
+      font-size: 0.82rem;
+      line-height: 1.8;
+    }
+
+    .progress-table {
+      width: 100%;
+      margin-top: 1.5rem;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .progress-table td { padding: 0.4rem 0; }
+    .progress-table td:first-child { color: var(--text-dim); width: 55%; }
+    .done { color: var(--green); }
+    .wip  { color: #ffaa33; }
+    .todo { color: var(--text-dim); opacity: 0.5; }
+
+    /* ── CONTACTO ── */
+    #contacto { border-bottom: 1px solid var(--border); }
+    #contacto h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    #contacto p { color: var(--text-dim); margin-bottom: 1rem; }
+    .contact-block {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      padding: 1.5rem 2rem;
+      display: inline-block;
+    }
+    .contact-block .email {
+      color: var(--green);
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+    }
+    .contact-block small {
+      display: block;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      margin-top: 0.3rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+    footer a { color: var(--text-dim); }
+    footer a:hover { color: var(--green); }
+    .footer-logo { color: var(--green-dim); font-size: 0.9rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav ul { display: none; }
+      section { padding: 3.5rem 1.2rem; }
+      #hero { min-height: 80vh; }
+      #hero h1 { font-size: 2.4rem; }
+      tbody td { padding: 0.7rem 0.6rem; }
+      thead th { padding: 0.5rem 0.6rem; }
+      .contact-block { width: 100%; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">MotoRFAR <span>HT</span></div>
+  <ul>
+    <li><a href="#que-es">Qué es</a></li>
+    <li><a href="#canales">Canales</a></li>
+    <li><a href="#como-funciona">Cómo funciona</a></li>
+    <li><a href="#estado">Estado</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <p class="callsign">MotoRFAR-MTTT // VHF // AR</p>
+  <h1>MotoRFAR&nbsp;HT</h1>
+  <p class="tagline">Radio VHF para grupos de motos y 4x4 en Argentina.<br>Sin licencia. Sin internet. Sin costo mensual.</p>
+  <div class="badge-row">
+    <span class="badge highlight">Open Source</span>
+    <span class="badge">GPL-3.0</span>
+    <span class="badge">ESP32 + SA818-V</span>
+    <span class="badge">Android</span>
+    <span class="badge">Res. 5/2015 M.T.T.T.</span>
+  </div>
+  <div class="freq-preview">
+    <strong>139.970 MHz</strong> — Canal Principal<br>
+    <strong>138.510 MHz</strong> — Canal Alternativo<br>
+    <strong>140.970 MHz</strong> — Canal Emergencia
+  </div>
+</section>
+
+<!-- QUÉ ES -->
+<section id="que-es">
+  <p class="label">Descripción</p>
+  <h2>¿Qué es MotoRFAR HT?</h2>
+  <p>
+    Un walkie-talkie VHF digital de bolsillo que se conecta al celular por USB y opera en los tres canales autorizados por la Resolución&nbsp;5/2015 del Ministerio de Transporte. Ideal para comunicación directa entre motos en ruta, sin depender de cobertura celular, aplicaciones de terceros ni suscripciones.
+  </p>
+  <div class="feature-grid">
+    <div class="feature-item">
+      <span class="icon">📡</span>
+      <div class="title">Radio VHF real</div>
+      <p>Módulo SA818-V de 1&nbsp;W. Alcance útil de 3&nbsp;–&nbsp;8&nbsp;km en campo abierto según terreno.</p>
+    </div>
+    <div class="feature-item">
+      <span class="icon">📱</span>
+      <div class="title">App Android</div>
+      <p>Controla la radio desde el teléfono: canal, volumen, PTT táctil. Conexión USB-C.</p>
+    </div>
+    <div class="feature-item">
+      <span class="icon">⚡</span>
+      <div class="title">Hardware ESP32</div>
+      <p>Microcontrolador ESP32-WROOM-32. PCB compacto, montable en el manubrio o chaleco.</p>
+    </div>
+    <div class="feature-item">
+      <span class="icon">🔓</span>
+      <div class="title">Sin trámites</div>
+      <p>Los tres canales son de uso libre según normativa ENACOM. No requiere licencia de radioaficionado.</p>
+    </div>
+    <div class="feature-item">
+      <span class="icon">🌐</span>
+      <div class="title">Sin internet</div>
+      <p>Comunicación directa radio-a-radio. Funciona donde no hay señal.</p>
+    </div>
+    <div class="feature-item">
+      <span class="icon">🔧</span>
+      <div class="title">Open source</div>
+      <p>Fork de kv4p HT. Código, firmware y PCB disponibles en GitHub bajo licencia GPL-3.0.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CANALES -->
+<section id="canales">
+  <p class="label">Frecuencias legales</p>
+  <h2>Canales Res. 5/2015</h2>
+  <p class="sub">Resolución 5/2015 del Ministerio de Transporte, Turismo y Telecomunicaciones — uso libre en Argentina</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Frecuencia</th>
+          <th>Canal</th>
+          <th>Uso</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="freq-num">139.970 MHz</span></td>
+          <td>
+            <span class="ch-name">Principal<small>Canal 1 — uso primario de grupo</small></span>
+          </td>
+          <td>Comunicación general, convoy, coordinación de ruta</td>
+          <td><span class="ch-badge principal">Principal</span></td>
+        </tr>
+        <tr>
+          <td><span class="freq-num">138.510 MHz</span></td>
+          <td>
+            <span class="ch-name">Alternativo<small>Canal 2 — subgrupos o canal libre</small></span>
+          </td>
+          <td>Subgrupos, canal secundario, coordinación logística</td>
+          <td><span class="ch-badge alt">Alternativo</span></td>
+        </tr>
+        <tr>
+          <td><span class="freq-num">140.970 MHz</span></td>
+          <td>
+            <span class="ch-name">Emergencia<small>Canal 3 — reservado para urgencias</small></span>
+          </td>
+          <td>Accidentes, asistencia mecánica, urgencias médicas</td>
+          <td><span class="ch-badge emerg">Emergencia</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="legal-note">
+    Fuente: <a href="https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-5-2015-242846" target="_blank" rel="noopener">Resolución 5/2015 — InfoLEG</a>.
+    El firmware valida que solo sea posible transmitir en estas tres frecuencias.
+    No requiere licencia ni trámite ante ENACOM para usuarios finales.
+  </p>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<section id="como-funciona">
+  <p class="label">Uso</p>
+  <h2>Cómo funciona</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <div class="title">Instalá la app Android</div>
+        <p>Descargá el APK desde GitHub Releases o compilalo vos mismo. Compatible con Android 8.0+.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <div class="title">Conectá el hardware por USB-C</div>
+        <p>El módulo MotoRFAR HT se conecta al teléfono como dispositivo USB. La app lo detecta automáticamente.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <div class="title">Elegí el canal</div>
+        <p>Seleccioná <code>139.970</code>, <code>138.510</code> o <code>140.970&nbsp;MHz</code> según el uso. El firmware solo permite estas tres frecuencias.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-content">
+        <div class="title">PTT — Push to Talk</div>
+        <p>Tocá el botón PTT en pantalla o usá el botón físico del hardware para transmitir. Soltá para escuchar.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-content">
+        <div class="title">Listo — comunicación directa</div>
+        <p>Sin internet, sin servidor, sin costo. Radio-a-radio, igual que un handy profesional.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ESTADO -->
+<section id="estado">
+  <p class="label">Estado del proyecto</p>
+  <h2>Estado actual</h2>
+  <div class="status-box">
+    <div class="status-line">
+      <span class="dot"></span>
+      <span class="status-text">BETA — Hardware en desarrollo activo</span>
+    </div>
+    <p class="status-detail">
+      El firmware y la app Android están operativos. El diseño del PCB v2.0e está en revisión final.<br>
+      Hardware de producción no disponible públicamente todavía — próximamente.
+    </p>
+    <table class="progress-table">
+      <tbody>
+        <tr>
+          <td>Firmware ESP32 (whitelist TX)</td>
+          <td class="done">✓ Operativo</td>
+        </tr>
+        <tr>
+          <td>App Android</td>
+          <td class="done">✓ Funcional (beta)</td>
+        </tr>
+        <tr>
+          <td>PCB v2.0e</td>
+          <td class="wip">⟳ En revisión</td>
+        </tr>
+        <tr>
+          <td>Hardware disponible públicamente</td>
+          <td class="todo">◻ Próximamente</td>
+        </tr>
+        <tr>
+          <td>Instrucciones de fabricación (BOM + Gerbers)</td>
+          <td class="todo">◻ Próximamente</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <p class="label">Contacto</p>
+  <h2>Contacto</h2>
+  <p>Preguntas, colaboración o reporte de bugs:</p>
+  <div class="contact-block">
+    <div class="email"><a href="mailto:lukaz1979@gmail.com">lukaz1979@gmail.com</a></div>
+    <small>Respuesta en ~24–48 h. Proyecto personal, sin soporte comercial.</small>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">MotoRFAR HT</span>
+  <span>
+    Licencia <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a>
+    &nbsp;·&nbsp;
+    Fork de <a href="https://github.com/VanceVagell/kv4p-ht" target="_blank" rel="noopener">kv4p HT</a> (Vance Vagell, KV4P)
+  </span>
+  <span>Argentina · Res. 5/2015 M.T.T.T.</span>
+</footer>
+
+</body>
+</html>

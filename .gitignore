@@ -50,3 +50,7 @@ docs/superpowers/
 *.png
 !app/src/**/*.png
 !**/res/**/*.png
+
+# Release keystore (nunca commitear)
+*.jks
+*.keystore

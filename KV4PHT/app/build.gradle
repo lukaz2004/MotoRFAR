@@ -4,6 +4,13 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'
 }
 
+// ── Signing config (lee keystore.properties local, NO commiteado) ──────────
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
 android {
     namespace 'ar.motorfar.app'
     compileSdk 35
@@ -24,11 +31,25 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile     file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias      keystoreProps['keyAlias']
+                keyPassword   keystoreProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
         debug {
             minifyEnabled false
@@ -62,7 +83,7 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui:2.9.1'
     def room_version = "2.7.2"
     implementation "androidx.room:room-runtime:$room_version"
-    annotationProcessor "androidx.room:room-compiler:$room_version"
+    annotationProcessor "androidx.room:room-runtime:$room_version"
 
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
