@@ -1,4 +1,4 @@
-﻿package ar.motorfar.app.ui
+package ar.motorfar.app.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -99,8 +100,7 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                     color      = textSec
                 )
             }
-
-            Divider(color = divider)
+            HorizontalDivider(color = divider)
 
             // ── Origen del proyecto ───────────────────────────────────────
             AboutSection(
@@ -120,8 +120,7 @@ para grupos vehiculares.
 Gracias, Vance. El proyecto no existiría sin tu trabajo.
                 """.trimIndent()
             )
-
-            Divider(color = divider)
+            HorizontalDivider(color = divider)
 
             // ── Licencia ──────────────────────────────────────────────────
             AboutSection(
@@ -143,8 +142,7 @@ Cualquier distribución del binario debe incluir
 acceso al código fuente completo.
                 """.trimIndent()
             )
-
-            Divider(color = divider)
+            HorizontalDivider(color = divider)
 
             // ── Dependencias open source ──────────────────────────────────
             AboutSection(
@@ -184,8 +182,7 @@ Google Play Services Location 21.3 — Propietario
   Acceso a GPS del dispositivo.
                 """.trimIndent()
             )
-
-            Divider(color = divider)
+            HorizontalDivider(color = divider)
 
             // ── Créditos ──────────────────────────────────────────────────
             AboutSection(
