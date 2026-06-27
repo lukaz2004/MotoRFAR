@@ -1147,6 +1147,7 @@ public class RadioAudioService extends Service {
         Log.i(TAG, connectLog("radioMissing(): state=" + connectionStateSummary()));
         connectionController.markAttemptFinished();
         closePortAndReset();
+        updateForegroundNotification("Sin radio · Conectate a " + WifiTransport.AP_SSID);
         if (!radioMissingNotified) {
             radioMissingNotified = true;
             callbacks.radioMissing(); // Notify UI only on transition into missing state
