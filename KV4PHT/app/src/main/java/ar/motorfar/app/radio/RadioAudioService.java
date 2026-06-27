@@ -155,12 +155,16 @@ public class RadioAudioService extends Service {
         new OpusUtils.OpusEncoderWrapper(AUDIO_SAMPLE_RATE, OPUS_FRAME_SIZE);
     private final byte[] txAudioFrame = new byte[Protocol.PROTO_MTU];
 
-    // === USB / Serial ===
+    // === WiFi transport (F0=WiFi, Contrato A) ===
+    private WifiTransport wifiTransport;
+
+    // === USB / Serial (kept for FLASHING mode only) ===
     private UsbManager usbManager;
     @Getter
     private UsbSerialPort serialPort;
     private SerialInputOutputManager usbIoManager;
     private boolean usbPermissionRequestPending = false;
+
     @Getter
     private Protocol.Sender hostToEsp32;
     @Getter
@@ -208,7 +212,7 @@ public class RadioAudioService extends Service {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private static final long CONNECT_RETRY_PERIOD_MS = 500L;
     private final ConnectionController connectionController =
-        new ConnectionController(handler, CONNECT_RETRY_PERIOD_MS, this::isConnectionReady, this::attemptUsbConnect);
+        new ConnectionController(handler, CONNECT_RETRY_PERIOD_MS, this::isConnectionReady, this::attemptWifiConnect);
     private boolean radioMissingNotified = false;
     private Runnable txTimeoutHandler;
     private LiveData<List<ChannelMemory>> channelMemoriesLiveData = null;
@@ -420,7 +424,7 @@ public class RadioAudioService extends Service {
      * necessary callback handlers.
      */
     public void start() {
-        usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+        usbManager = (UsbManager) getSystemService(Context.USB_SERVICE); // kept for FLASHING mode
         createNotificationChannels();
         initAudioTrack();
         connectionController.start();
@@ -523,7 +527,13 @@ public class RadioAudioService extends Service {
             beaconScheduler.shutdownNow();
         }
 
-        // Clean up USB resources to prevent race conditions on restart
+        // Clean up WiFi transport.
+        if (wifiTransport != null) {
+            wifiTransport.close();
+            wifiTransport = null;
+        }
+
+        // Clean up USB resources (FLASHING mode fallback) to prevent race conditions on restart.
         if (usbIoManager != null) {
             usbIoManager.stop();
             usbIoManager = null;
@@ -824,9 +834,11 @@ public class RadioAudioService extends Service {
     }
 
     private boolean isConnectionReady() {
+        // WiFi transport is the primary path (F0=WiFi).
+        // USB serialPort check is retained for FLASHING mode compatibility.
         return hostToEsp32 != null
-            && serialPort != null
-            && usbIoManager != null;
+            && (wifiTransport != null && wifiTransport.isConnected()
+                || (serialPort != null && usbIoManager != null));
     }
 
     private void closePortAndReset() {
@@ -834,6 +846,14 @@ public class RadioAudioService extends Service {
         cancelHelloTimeout();
         radioModule.detachSender();
         hostToEsp32 = null;
+
+        // WiFi transport teardown (primary).
+        if (wifiTransport != null) {
+            wifiTransport.close();
+            wifiTransport = null;
+        }
+
+        // USB teardown (FLASHING mode fallback).
         if (usbIoManager != null) {
             try {
                 usbIoManager.stop();
@@ -873,6 +893,56 @@ public class RadioAudioService extends Service {
         }
         Log.d(TAG, connectLog("attemptUsbConnect(): no ESP32 detected"));
         radioMissing();
+    }
+
+    /**
+     * Primary connection path (F0=WiFi).
+     * Requests the MotoRFAR-HT WiFi network, binds a UDP socket to it, and starts
+     * the handshake once the socket is ready. Called by {@link ConnectionController}
+     * every CONNECT_RETRY_PERIOD_MS while not connected.
+     */
+    private void attemptWifiConnect() {
+        Log.d(TAG, connectLog("attemptWifiConnect(): starting"));
+        if (isConnectionReady()) {
+            Log.d(TAG, connectLog("attemptWifiConnect(): already connected, skipping"));
+            connectionController.markAttemptFinished();
+            return;
+        }
+        setMode(RadioMode.STARTUP);
+        clearRadioTypeAndLimits();
+
+        WifiTransport transport = new WifiTransport(this);
+        wifiTransport = transport;
+
+        transport.connect(new WifiTransport.Listener() {
+            @Override
+            public void onData(byte[] data) {
+                // Feed bytes from the ESP32 into the KISS parser (same as USB path).
+                esp32DataStreamParser.processBytes(data);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.w(TAG, connectLog("WifiTransport error: " + e.getMessage()));
+                if (audioTrack != null) {
+                    audioTrack.stop();
+                }
+                closePortAndReset();
+                radioMissing();
+            }
+        });
+
+        // Socket setup and handshake trigger happen in WifiTransport.Listener.onData
+        // once the network callback fires (onAvailable). We wire the sender NOW so that
+        // the handshake can start as soon as the socket is bound.
+        hostToEsp32 = new Protocol.Sender(transport.frameWriter);
+        radioModule.attachSender(hostToEsp32);
+        Log.i(TAG, connectLog("attemptWifiConnect(): WiFi transport requested; waiting for network"));
+        // The handshake will start once WifiTransport.onAvailable fires and the first
+        // data arrives (Hello from ESP32). We mark the attempt unfinished; the
+        // ConnectionController will retry if isConnectionReady() is still false.
+        // Actually we start the handshake timer now so we detect AP-not-found.
+        startProtocolHandshake();
     }
 
     private boolean isESP32Device(UsbDevice device) {

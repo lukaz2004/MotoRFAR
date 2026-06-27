@@ -304,18 +304,44 @@ public final class Protocol {
         }
     }
 
+    /**
+     * Low-level frame writer: receives a fully-encoded KISS frame and delivers it to
+     * the transport (USB async write, UDP datagram, etc.).
+     * For UDP: one call = one datagram (one KISS frame per packet per Contrato A).
+     */
+    @FunctionalInterface
+    public interface FrameWriter {
+        void writeFrame(byte[] frame, int frameSize);
+    }
+
     public static class Sender {
 
         private final AtomicInteger flowControlWindow = new AtomicInteger(1024);
+        /** Null when using FrameWriter-based transport (WiFi/UDP). */
         private final SerialInputOutputManager usbIoManager;
+        /** Non-null when using FrameWriter-based transport (WiFi/UDP). */
+        private final FrameWriter frameWriter;
         private final Lock lock = new ReentrantLock();
         private final Condition canSendCondition = lock.newCondition();
         private final byte[] kissEncodeBuffer = new byte[KISS_MAX_ENCODED_FRAME_SIZE];
         private final ByteBuffer desiredStateBuffer =
             ByteBuffer.allocate(HostDesiredState.BYTE_LEN).order(ByteOrder.LITTLE_ENDIAN);
 
+        /** USB transport constructor (uses flow control). */
         public Sender(SerialInputOutputManager usbIoManager) {
             this.usbIoManager = usbIoManager;
+            this.frameWriter = null;
+        }
+
+        /**
+         * WiFi/UDP transport constructor.
+         * Flow control is disabled: window starts at MAX_VALUE and is never decremented.
+         * COMMAND_WINDOW_UPDATE messages from firmware are received but harmless (FW-3b will remove them).
+         */
+        public Sender(FrameWriter writer) {
+            this.usbIoManager = null;
+            this.frameWriter = writer;
+            flowControlWindow.set(Integer.MAX_VALUE);
         }
 
         private synchronized void sendKissFrame(int kissCommand, byte[] payload, int len) {
@@ -401,8 +427,14 @@ public final class Protocol {
         }
 
         private void writeEncodedFrame(int frameSize) {
-            if (waitUntilCanSend(frameSize)) {
-                usbIoManager.writeAsync(Arrays.copyOf(kissEncodeBuffer, frameSize));
+            if (!waitUntilCanSend(frameSize)) return;
+            byte[] encoded = Arrays.copyOf(kissEncodeBuffer, frameSize);
+            if (frameWriter != null) {
+                // WiFi/UDP: one frame = one datagram; no flow-control decrement.
+                frameWriter.writeFrame(encoded, frameSize);
+            } else {
+                // USB: stream write with flow-control window tracking.
+                usbIoManager.writeAsync(encoded);
                 flowControlWindow.addAndGet(-frameSize);
             }
         }
