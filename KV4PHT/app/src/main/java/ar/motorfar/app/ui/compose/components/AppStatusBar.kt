@@ -26,6 +26,7 @@ import ar.motorfar.app.ui.compose.theme.ShareTechMono
 fun AppStatusBar(
     isTx: Boolean,
     isRx: Boolean,
+    isConnected: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -40,9 +41,16 @@ fun AppStatusBar(
         label = "led_alpha"
     )
     val ledColor = when {
-        isTx -> Color(0xFFE24B4A)
-        isRx -> Color(0xFF4FBD3B).copy(alpha = pulse)
-        else -> Color(0xFF444444)
+        !isConnected -> Color(0xFF666666).copy(alpha = pulse) // gris pulsante = buscando radio
+        isTx         -> Color(0xFFE24B4A)                    // rojo = transmitiendo
+        isRx         -> Color(0xFF4FBD3B).copy(alpha = pulse) // verde pulsante = recibiendo
+        else         -> colors.accent.copy(alpha = 0.5f)      // acento tenue = listo/silencio
+    }
+    val statusLabel = when {
+        !isConnected -> "SIN RADIO"
+        isTx         -> "TX · VHF"
+        isRx         -> "RX · VHF"
+        else         -> "VHF · SIMPLEX"
     }
     Row(
         modifier = modifier
@@ -55,8 +63,9 @@ fun AppStatusBar(
             drawCircle(color = ledColor)
         }
         Text(
-            text       = "VHF · SIMPLEX",
-            color      = colors.textSecondary,
+            text       = statusLabel,
+            color      = if (!isConnected) colors.textSecondary.copy(alpha = 0.6f)
+                         else colors.textSecondary,
             fontFamily = ShareTechMono,
             fontSize   = 14.sp
         )

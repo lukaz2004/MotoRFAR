@@ -108,9 +108,10 @@ private fun TopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AppStatusBar(
-            isTx     = state.isTxActive,
-            isRx     = state.isRxActive,
-            modifier = Modifier.weight(1f)
+            isTx        = state.isTxActive,
+            isRx        = state.isRxActive,
+            isConnected = state.isConnected,
+            modifier    = Modifier.weight(1f)
         )
 
         // RUTA: modo pantalla siempre-on con UI simplificada
@@ -248,9 +249,10 @@ private fun RouteActiveLayout(
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
             AppStatusBar(
-                isTx     = state.isTxActive,
-                isRx     = state.isRxActive,
-                modifier = Modifier.weight(1f)
+                isTx        = state.isTxActive,
+                isRx        = state.isRxActive,
+                isConnected = state.isConnected,
+                modifier    = Modifier.weight(1f)
             )
             Box(
                 modifier = Modifier
