@@ -18,7 +18,7 @@
 
 ---
 
-## ESTADO AL 2026-06-24
+## ESTADO AL 2026-06-27
 
 | Etapa | Estado | Bloqueante |
 |-------|--------|------------|
@@ -30,8 +30,8 @@
 | FW-4 PTT J2 | 🟡 auditado | test físico con SA818 |
 | HW-1 PCB | 🟡 Gerbers/BOM/CPL/ZIP listos | 4 tareas GUI KiCad (ver abajo) |
 | HW-2/3/4 | ⬜ | tras HW-1 |
-| APP-1 | ✅ CERRADO (sprints 1-9, tiles offline, Privacy Policy, Release v1.0-beta1) | — |
-| APP-2 WiFi client | ⬜ | tras FW-3a validado completo |
+| APP-1 | ✅ CERRADO | — |
+| APP-2 WiFi client | 🟡 transport + UI guide hechos (PR #8+#9) | test real con SA818+ESP32 |
 | APP-3 disclaimer | ⬜ | tras APP-2 |
 | EST-1 carcasa | ⬜ arrancable | — |
 | WEB | ✅ publicada Netlify | reclamar cuenta + renombrar a baqueano.netlify.app |
@@ -50,8 +50,11 @@
 6. Regenerar Gerbers + BOM + ZIP
 
 **APP — pendientes sin hardware:**
-- Fix ProGuard/R8 (error con lombok/findbugs — bloquea APK release firmado)
-- Pantalla "Acerca de / Licencias" (compliance GPL antes de venta)
+- ✅ Fix ProGuard/R8 → APK release firmado (2026-06-24)
+- ✅ Pantalla "Acerca de / Licencias" (2026-06-24)
+- ✅ WifiTransport UDP + Protocol.FrameWriter (PR #8, 2026-06-27)
+- ✅ WifiConnectBanner — guía al usuario a la red MotoRFAR-HT (PR #9, 2026-06-27)
+- ⬜ Verificar Hello/handshake + audio RX/TX por WiFi (requiere SA818 físico)
 
 **WEB:**
 - Reclamar cuenta Netlify (si expiró: `netlify deploy --dir=docs --prod --allow-anonymous`)
