@@ -240,6 +240,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    public void privacyPolicyClicked(View view) {
+        startActivity(new Intent(this, PrivacyPolicyActivity.class));
+    }
+
     public void doneButtonClicked(View view) {
         Intent data = new Intent()
             .putExtra(EXTRA_RF_POWER_HIGH, isHighPowerSelected())

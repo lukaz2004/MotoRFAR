@@ -39,7 +39,9 @@ import ar.motorfar.app.R
 import ar.motorfar.app.ui.compose.state.GroupMember
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARColors
+import ar.motorfar.app.ui.compose.components.OfflineTilesDialog
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.cachemanager.CacheManager
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -77,6 +79,13 @@ fun MapScreen(
     var hudLat  by remember { mutableStateOf(OBELISCO.latitude) }
     var hudLon  by remember { mutableStateOf(OBELISCO.longitude) }
     var hudZoom by remember { mutableStateOf(INITIAL_ZOOM) }
+
+    // Descarga offline de tiles
+    var showDownloadDialog by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableStateOf(0f) }
+    var downloadDone by remember { mutableStateOf(0) }
+    var downloadTotal by remember { mutableStateOf(0) }
+    var cacheManagerRef by remember { mutableStateOf<CacheManager?>(null) }
 
     // Punto de foco: ubicación de una alerta a la que se "fue" desde el chat
     var focusPoint by remember { mutableStateOf<GeoPoint?>(null) }
@@ -315,6 +324,62 @@ fun MapScreen(
                         mapView.controller.animateTo(OBELISCO)
                         mapView.controller.setZoom(INITIAL_ZOOM)
                     }
+                }
+            )
+            // Descargar mapa de zona (tiles offline)
+            MapControlButton(
+                iconRes = R.drawable.ic_download,
+                colors  = colors,
+                onClick = {
+                    val cm = CacheManager(mapView)
+                    cacheManagerRef = cm
+                    downloadProgress = 0f
+                    downloadDone = 0
+                    downloadTotal = 0
+                    showDownloadDialog = true
+                    cm.downloadAreaAsync(
+                        context,
+                        mapView.boundingBox,
+                        10,
+                        16,
+                        object : CacheManager.CacheManagerCallback {
+                            override fun onTaskComplete() {
+                                showDownloadDialog = false
+                                cacheManagerRef = null
+                            }
+                            override fun onTaskFailed(errors: Int) {
+                                showDownloadDialog = false
+                                cacheManagerRef = null
+                            }
+                            override fun updateProgress(
+                                progress: Int,
+                                currentZoomLevel: Int,
+                                zoomMin: Int,
+                                zoomMax: Int
+                            ) {
+                                downloadDone = progress
+                            }
+                            override fun downloadStarted() {}
+                            override fun setPossibleTilesInArea(total: Int) {
+                                downloadTotal = total
+                            }
+                        }
+                    )
+                }
+            )
+        }
+
+        // Progreso de descarga: recalcula ratio cada vez que cambia downloadDone/Total
+        val dlProgress = if (downloadTotal > 0) downloadDone.toFloat() / downloadTotal else 0f
+        if (showDownloadDialog) {
+            OfflineTilesDialog(
+                progress   = dlProgress,
+                tilesDone  = downloadDone,
+                tilesTotal = downloadTotal,
+                onCancel   = {
+                    cacheManagerRef?.cancelAllJobs()
+                    cacheManagerRef = null
+                    showDownloadDialog = false
                 }
             )
         }
