@@ -124,6 +124,8 @@
     <string name="max_70cm_tx_frequency">Frec. TX máxima 70cm</string>
     <string name="sticky_ptt" translatable="false">PTT fijo</string>
 
+    <string name="privacy_policy">Política de privacidad ›</string>
+
     <!-- Créditos -->
     <string name="credits_title">Créditos</string>
     <string name="credits_body">MotoRFAR está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (KV4P).\n\nLicencia: GNU GPL v3\nFuente original: github.com/VanceVagell/kv4p-ht\n\nModificaciones para Argentina por el autor de esta versión.</string>
