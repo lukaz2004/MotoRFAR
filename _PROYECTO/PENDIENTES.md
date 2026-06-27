@@ -69,12 +69,17 @@
 - Split **TCP** (comandos confiables: PTT/freq/estado) / **UDP** (audio). Keepalive durante PTT + reconexión automática.
 - Resolver el windowing (redundante sobre TCP).
 
-## 🟣 APP-2 — cuando lleguemos a la app (no solapar ahora)
-- **Bindear el socket del cliente a la red del AP** (`Network.bindSocket` / `requestNetwork`) para que Android no enrute por "red sin internet".
-- Cliente WiFi: asociarse al AP, UDP 4210, KISS framing, manejar Hello/DeviceState, mandar `HostDesiredState` + TX audio, **keepalive durante PTT**.
-- Config de credenciales del AP desde la app (ver clave WPA2 arriba).
-- UI CTCSS/DCS por canal.
-- Decidir el windowing (ver arriba).
+## 🟡 APP-2 — transporte WiFi (PR #8, 2026-06-27)
+- ✅ `WifiTransport.java`: `ConnectivityManager.requestNetwork` + `network.bindSocket()` + loop UDP recv en thread daemon.
+- ✅ `Protocol.FrameWriter` (@FunctionalInterface): `Sender` acepta USB o WiFi. WiFi: flowControl=MAX (sin backpressure).
+- ✅ `RadioAudioService`: `connectionController` → `attemptWifiConnect()`. `isConnectionReady()` acepta ambos transports. USB solo para FLASHING.
+- ✅ Permisos: `CHANGE_NETWORK_STATE` + `ACCESS_NETWORK_STATE`.
+- ✅ Build: `assembleDebug` OK.
+- ⬜ **Requiere SA818 + ESP32 con FW-3a**: verificar Hello/handshake por WiFi, audio RX/TX real.
+- ⬜ UI "Conectate a MotoRFAR-HT": guiar al usuario a conectar el WiFi del teléfono a la red del AP.
+- ⬜ Config credenciales AP desde app (clave WPA2 hoy hardcodeada en firmware como `motorfar1234`).
+- ⬜ UI CTCSS/DCS por canal.
+- ⬜ Windowing: quitar/rediseñar en FW-3b (hoy inerte).
 
 ## ⚖️ Licencia / Venta — checklist pre-venta
 - ✅ Decidido: vender es compatible con GPL. Firmware y app siguen siendo forks GPL-3.0; se publica el fuente.
@@ -83,5 +88,5 @@
 - ✅ Web footer: crédito a kv4p HT / Vance Vagell (KV4P) agregado. (2026-06-24)
 - ✅ PCB production-vhf/README.md: atribución CC-BY-SA 4.0 KiCad Libraries + GPL-3.0 upstream. (2026-06-24)
 - ⬜ Equipo flasheable por USB, sin secure-boot bloqueado.
-- ⬜ Fix ProGuard para APK release firmado.
+- ✅ Fix ProGuard para APK release firmado. (2026-06-24)
 - ⬜ Revisión legal de IP antes de vender en serio.
