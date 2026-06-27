@@ -48,6 +48,7 @@ import ar.motorfar.app.ui.compose.components.EmergencyConfirmButton
 import ar.motorfar.app.ui.compose.components.FrequencyDisplayCard
 import ar.motorfar.app.ui.compose.components.ModulationVisualizer
 import ar.motorfar.app.ui.compose.components.PttButton
+import ar.motorfar.app.ui.compose.components.WifiConnectBanner
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
 import ar.motorfar.app.ui.compose.theme.AppTheme
@@ -364,6 +365,13 @@ private fun PortraitLayout(
     ) {
         TopBar(state, onAction, onOpenSettings)
 
+        // WiFi connection guide — visible when the radio module is not connected.
+        if (!state.isConnected) {
+            WifiConnectBanner(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+            )
+        }
+
         FrequencyDisplayCard(
             frequency   = state.activeFrequency,
             channelName = state.activeChannelName,
@@ -429,6 +437,12 @@ private fun LandscapeLayout(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(state, onAction, onOpenSettings)
+        // En landscape el banner es más compacto para no consumir altura.
+        if (!state.isConnected) {
+            WifiConnectBanner(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
         AlertBanner(
             alert     = state.activeAlert,
             onDismiss = onDismissAlert,
