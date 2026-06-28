@@ -63,6 +63,17 @@
     .reveal-delay-4 { transition-delay: 0.4s; }
     .reveal-delay-5 { transition-delay: 0.5s; }
 
+    /* Hero always visible — CSS animation, no JS needed */
+    @keyframes heroFadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-anim   { animation: heroFadeUp 0.7s ease both; }
+    .hero-anim-1 { animation: heroFadeUp 0.7s 0.05s ease both; }
+    .hero-anim-2 { animation: heroFadeUp 0.7s 0.15s ease both; }
+    .hero-anim-3 { animation: heroFadeUp 0.7s 0.25s ease both; }
+    .hero-anim-4 { animation: heroFadeUp 0.7s 0.35s ease both; }
+
     /* ── Nav ── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 900;
@@ -538,17 +549,17 @@
     <div class="hero-grid"></div>
     <div class="hero-inner">
       <div class="hero-text">
-        <div class="hero-badge reveal">VHF · Sin cobertura · Argentina · Beta</div>
-        <div class="hero-logo-wrap reveal reveal-delay-1">
+        <div class="hero-badge hero-anim">VHF · Sin cobertura · Argentina · Beta</div>
+        <div class="hero-logo-wrap hero-anim-1">
           <img src="assets/baqueano-logo.png" alt="Baqueano" class="hero-logo-svg">
         </div>
-        <h1 class="hero-title reveal reveal-delay-2">
+        <h1 class="hero-title hero-anim-2">
           Tu grupo,<br/>siempre<br/><em>conectado.</em>
         </h1>
-        <p class="hero-sub reveal reveal-delay-3">
+        <p class="hero-sub hero-anim-3">
           Radio VHF + app Android. Coordiná tu grupo donde no hay señal — motos, 4×4, trekking, campo. Sin celular, sin internet, sin licencia.
         </p>
-        <div class="hero-actions reveal reveal-delay-4">
+        <div class="hero-actions hero-anim-4">
           <a href="#salida" class="btn-primary">
             <span>Cómo funciona</span>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -556,7 +567,7 @@
           <a href="#waitlist" class="btn-secondary">Quiero uno →</a>
         </div>
       </div>
-      <div class="hero-visual reveal reveal-delay-2">
+      <div class="hero-visual hero-anim-2">
         <div class="hero-device-wrap">
           <div class="hero-glow"></div>
           <!-- SVG conceptual del dispositivo + red + motos -->
@@ -1052,4 +1063,101 @@
         </div>
         <div class="specs-table-wrap" id="specs-table">
           <table class="specs-table">
-       
+            <tbody>
+              <tr><td>Módulo de radio</td><td>SA818-V · VHF narrowband</td></tr>
+              <tr><td>Frecuencia</td><td>134 — 174 MHz</td></tr>
+              <tr><td>Potencia TX</td><td>1W (Low) / 5W (High)</td></tr>
+              <tr><td>Modulación</td><td>FM — 12.5kHz / 25kHz</td></tr>
+              <tr><td>Controlador</td><td>ESP32-WROOM-32</td></tr>
+              <tr><td>Conectividad app</td><td>WiFi 2.4GHz SoftAP · UDP:4210</td></tr>
+              <tr><td>Protocolo audio</td><td>KISS framing · raw PCM 8kHz</td></tr>
+              <tr><td>Alimentación</td><td>USB-C 5V / 12V con regulador</td></tr>
+              <tr><td>Dimensiones PCB</td><td>38.1 × 82.55 mm</td></tr>
+              <tr><td>Carcasa</td><td>Aluminio anodizado</td></tr>
+              <tr><td>Conectores</td><td>USB-C · U.FL VHF · Jack 3.5mm PTT</td></tr>
+              <tr><td>App Android</td><td>Kotlin + Compose · mín. Android 8</td></tr>
+              <tr><td>Mapas</td><td>OSMDroid 6.1.18 — tiles offline</td></tr>
+              <tr><td>Canales legales</td><td>Res. 5/2015 ENACOM — 3 frecuencias</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="contacto">
+    <div class="container">
+      <div class="cta-inner">
+        <div class="cta-badge reveal"><span>🔴</span> Beta — unidades limitadas</div>
+        <h2 class="cta-title reveal reveal-delay-1">¿Querés equipar<br/>tu grupo?</h2>
+        <p class="cta-body reveal reveal-delay-2">
+          Baqueano está en fase beta. Si operás con un grupo — motos, 4×4, trekking o trabajo rural — y necesitás comunicación donde no hay señal, anotate o escribinos directo.
+        </p>
+        <div class="cta-actions reveal reveal-delay-3">
+          <a href="#waitlist" class="btn-primary">Anotarme en la lista</a>
+          <a href="mailto:lukaz1979@gmail.com?subject=Baqueano%20-%20Consulta" class="btn-secondary">Escribir directo →</a>
+        </div>
+        <span class="cta-email reveal reveal-delay-4">o a <a href="mailto:lukaz1979@gmail.com">lukaz1979@gmail.com</a></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-meta">Baqueano HT · Argentina · 2026</div>
+      <div class="footer-links">
+        <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/lukaz2004/MotoRFAR/blob/main/KV4PHT/docs/PRIVACY-POLICY.md" target="_blank" rel="noopener">Privacidad</a>
+        <a href="https://github.com/lukaz2004/MotoRFAR/releases/tag/v1.0-beta1" target="_blank" rel="noopener">v1.0-beta1</a>
+      </div>
+      <div class="footer-meta" style="font-size:10px; opacity:0.5;">Fork de <a href="https://github.com/VanceVagell/kv4p-ht" target="_blank" rel="noopener" style="color:inherit;">kv4p HT</a> (KV4P) · GPL-3.0</div>
+    </div>
+  </footer>
+
+  <!-- WHATSAPP FLOTANTE -->
+  <a class="wa-fab" href="https://wa.me/5491134222243" target="_blank" rel="noopener" aria-label="Consultá por WhatsApp">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 3C8.82 3 3 8.82 3 16c0 2.32.63 4.5 1.73 6.38L3 29l6.78-1.7A13 13 0 0 0 16 29c7.18 0 13-5.82 13-13S23.18 3 16 3Z" fill="#fff"/>
+      <path d="M16 5.2A10.8 10.8 0 0 0 5.2 16c0 1.98.54 3.84 1.48 5.44L5.5 26.5l5.18-1.16A10.8 10.8 0 1 0 16 5.2Zm5.58 14.84c-.24.66-1.38 1.26-1.9 1.34-.5.08-1.12.1-1.8-.12-.42-.13-.96-.3-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.34-.14-.2-1.12-1.5-1.12-2.86s.7-2.02.96-2.3c.24-.26.52-.32.7-.32l.5.01c.16 0 .38-.06.6.46l.82 2.06c.07.16.12.34.02.54l-.3.44-.45.5c-.15.14-.3.3-.13.58.18.28.8 1.32 1.72 2.14 1.18 1.06 2.18 1.4 2.48 1.54.3.14.48.12.66-.08l.74-.88c.18-.24.36-.18.6-.1l1.9.9c.3.14.5.2.58.32.08.12.08.68-.16 1.34Z" fill="#25d366"/>
+    </svg>
+  </a>
+
+  <script>
+    // Reveal on scroll
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.querySelector('.faq-q').addEventListener('click', () => {
+        const open = item.classList.toggle('open');
+        item.querySelector('.faq-a').style.display = open ? 'block' : 'none';
+      });
+    });
+
+    // Waitlist form
+    const form = document.getElementById('waitlist-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = form.querySelector('button[type=submit]');
+        btn.textContent = 'Enviando...';
+        btn.disabled = true;
+        try {
+          const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+          if (res.ok) {
+            form.innerHTML = '<p style="color:var(--green);font-family:var(--mono);text-align:center;padding:24px 0;">✓ Anotado. Te avisamos cuando el Baqueano esté disponible.</p>';
+          } else {
+            btn.textContent = 'Reintentar';
+            btn.disabled = false;
+          }
+        } catch { btn.textContent = 'Reintentar'; btn.disabled = false; }
+      });
+    }
+  </script>
+</body>
+</html>
