@@ -1,16 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Baqueano — Comunicación VHF para grupos moto y 4x4</title>
-  <meta name="description" content="Kit de comunicación VHF para grupos moto y 4x4. Hardware ESP32 + radio SA818-V + app Android integrada. Frecuencias legales Argentina." />
+  <title>Baqueano — Comunicación grupal VHF donde no hay señal</title>
+  <meta name="description" content="Radio VHF + app Android + mapa offline. Coordiná tu grupo en zonas sin cobertura. Para motos, 4x4, trekking y trabajo rural en Argentina." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
 
   <style>
-    /* ── Reset & Base ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -32,7 +31,6 @@
     }
 
     html { scroll-behavior: smooth; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -42,8 +40,6 @@
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
-
-    /* ── Noise texture overlay ─────────────────────────────────────────────── */
     body::before {
       content: '';
       position: fixed;
@@ -54,289 +50,115 @@
       z-index: 1000;
     }
 
-    /* ── Utility ───────────────────────────────────────────────────────────── */
     .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
     .mono { font-family: var(--mono); }
     .amber { color: var(--amber); }
     .green { color: var(--green); }
 
-    /* fade-in-up animation */
-    .reveal {
-      opacity: 0;
-      transform: translateY(28px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
     .reveal-delay-1 { transition-delay: 0.1s; }
     .reveal-delay-2 { transition-delay: 0.2s; }
     .reveal-delay-3 { transition-delay: 0.3s; }
     .reveal-delay-4 { transition-delay: 0.4s; }
     .reveal-delay-5 { transition-delay: 0.5s; }
 
-    /* ── Nav ──────────────────────────────────────────────────────────────── */
+    /* ── Nav ── */
     nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 900;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 900;
       background: rgba(9,10,14,0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      transition: border-color 0.3s;
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border); transition: border-color 0.3s;
     }
     .nav-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 60px;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px; max-width: 1200px; margin: 0 auto; padding: 0 24px;
     }
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
-    .nav-logo img {
-      height: 36px;
-      width: auto;
-      filter: drop-shadow(0 0 8px rgba(240,160,32,0.3));
-    }
-    .nav-logo-text {
-      font-family: var(--sans);
-      font-weight: 700;
-      font-size: 17px;
-      letter-spacing: 0.02em;
-      color: var(--text);
-    }
-    .nav-logo span { color: var(--amber); }
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      list-style: none;
-    }
-    .nav-links a {
-      color: var(--text-dim);
-      text-decoration: none;
-      font-size: 14px;
-      font-family: var(--sans);
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      transition: color 0.2s;
-    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-svg { height: 36px; width: auto; }
+    .nav-logo-text { font-family: var(--sans); font-weight: 700; font-size: 17px; letter-spacing: 0.02em; color: var(--text); }
+    .nav-logo-text span { color: var(--amber); }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; font-family: var(--sans); font-weight: 400; letter-spacing: 0.02em; transition: color 0.2s; }
     .nav-links a:hover { color: var(--text); }
     .nav-cta {
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 18px;
-      background: var(--amber);
-      color: #000;
-      border: none;
-      cursor: pointer;
-      letter-spacing: 0.04em;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.1s;
+      font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 8px 18px;
+      background: var(--amber); color: #000; border: none; cursor: pointer;
+      letter-spacing: 0.04em; text-decoration: none; transition: background 0.2s, transform 0.1s;
     }
     .nav-cta:hover { background: #ffc030; transform: translateY(-1px); }
 
-    /* ── Hero ─────────────────────────────────────────────────────────────── */
+    /* ── Hero ── */
     #hero {
-      position: relative;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      padding-top: 60px;
+      position: relative; min-height: 100vh; display: flex; align-items: center;
+      overflow: hidden; padding-top: 60px;
     }
     .hero-bg {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: radial-gradient(ellipse 80% 60% at 60% 50%, rgba(240,160,32,0.07) 0%, transparent 70%),
                   radial-gradient(ellipse 50% 40% at 20% 80%, rgba(16,200,112,0.04) 0%, transparent 60%);
     }
     .hero-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 64px 64px;
-      opacity: 0.35;
+      position: absolute; inset: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 64px 64px; opacity: 0.35;
       mask-image: radial-gradient(ellipse 70% 70% at 60% 40%, black 20%, transparent 80%);
     }
     .hero-inner {
-      position: relative;
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 64px;
-      align-items: center;
+      position: relative; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
       min-height: calc(100vh - 60px);
     }
     .hero-text { position: relative; z-index: 2; }
     .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      color: var(--amber);
-      border: 1px solid rgba(240,160,32,0.3);
-      padding: 6px 14px;
-      margin-bottom: 32px;
-      text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--amber);
+      border: 1px solid rgba(240,160,32,0.3); padding: 6px 14px; margin-bottom: 32px; text-transform: uppercase;
     }
     .hero-badge::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--amber);
+      content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--amber);
       animation: pulse-dot 2s ease-in-out infinite;
     }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+    .hero-logo-wrap { margin-bottom: 24px; }
+    .hero-logo-svg { height: 90px; width: auto; filter: drop-shadow(0 4px 24px rgba(240,160,32,0.35)); transition: filter 0.3s; }
+    .hero-logo-svg:hover { filter: drop-shadow(0 4px 32px rgba(240,160,32,0.6)); }
     .hero-title {
-      font-family: var(--sans);
-      font-size: clamp(38px, 5.5vw, 68px);
-      font-weight: 700;
-      line-height: 1.06;
-      letter-spacing: -0.02em;
-      color: #f0f2f8;
-      margin-bottom: 24px;
+      font-family: var(--sans); font-size: clamp(36px, 5vw, 62px); font-weight: 700;
+      line-height: 1.06; letter-spacing: -0.02em; color: #f0f2f8; margin-bottom: 24px;
     }
-    .hero-title em {
-      font-style: normal;
-      color: var(--amber);
-    }
-    .hero-sub {
-      font-size: 18px;
-      font-weight: 300;
-      color: var(--text-dim);
-      line-height: 1.7;
-      max-width: 440px;
-      margin-bottom: 40px;
-    }
+    .hero-title em { font-style: normal; color: var(--amber); }
+    .hero-sub { font-size: 18px; font-weight: 300; color: var(--text-dim); line-height: 1.7; max-width: 440px; margin-bottom: 40px; }
     .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
     .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--amber);
-      color: #000;
-      font-family: var(--sans);
-      font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.06em;
-      padding: 14px 28px;
-      text-transform: uppercase;
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 10px; background: var(--amber); color: #000;
+      font-family: var(--sans); font-weight: 700; font-size: 14px; letter-spacing: 0.06em;
+      padding: 14px 28px; text-transform: uppercase; text-decoration: none;
       transition: background 0.2s, transform 0.15s;
     }
     .btn-primary:hover { background: #ffc030; transform: translateY(-2px); }
     .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: transparent;
-      color: var(--text);
-      font-family: var(--sans);
-      font-weight: 500;
-      font-size: 14px;
-      letter-spacing: 0.04em;
-      padding: 14px 28px;
-      border: 1px solid var(--border2);
-      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 10px; background: transparent; color: var(--text);
+      font-family: var(--sans); font-weight: 500; font-size: 14px; letter-spacing: 0.04em;
+      padding: 14px 28px; border: 1px solid var(--border2); text-decoration: none;
       transition: border-color 0.2s, color 0.2s, transform 0.15s;
     }
     .btn-secondary:hover { border-color: var(--text-dim); color: #fff; transform: translateY(-2px); }
-
-    .hero-visual {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .hero-device-wrap {
-      position: relative;
-      width: 100%;
-      max-width: 520px;
-    }
+    .hero-visual { position: relative; display: flex; align-items: center; justify-content: center; }
+    .hero-device-wrap { position: relative; width: 100%; max-width: 520px; }
     .hero-glow {
-      position: absolute;
-      inset: -40px;
+      position: absolute; inset: -40px;
       background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(240,160,32,0.15) 0%, transparent 70%);
       filter: blur(30px);
     }
-    .hero-device-img {
-      position: relative;
-      width: 100%;
-      border: 1px solid var(--border2);
-      display: block;
-    }
-    .hero-specs {
-      position: absolute;
-      right: -20px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .spec-pill {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 8px 14px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--green);
-      letter-spacing: 0.06em;
-      white-space: nowrap;
-    }
-
-    .hero-logo-wrap {
-      margin-bottom: 24px;
-    }
-    .hero-logo-img {
-      height: 100px;
-      width: auto;
-      filter: drop-shadow(0 4px 24px rgba(240,160,32,0.35));
-      transition: filter 0.3s;
-    }
-    .hero-logo-img:hover {
-      filter: drop-shadow(0 4px 32px rgba(240,160,32,0.6));
-    }
-
+    .hero-svg { position: relative; width: 100%; border: 1px solid var(--border2); display: block; }
     .hero-scroll {
-      position: absolute;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-mute);
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--text-mute); font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
     }
     .hero-scroll-line {
-      width: 1px;
-      height: 40px;
-      background: linear-gradient(to bottom, var(--amber), transparent);
+      width: 1px; height: 40px; background: linear-gradient(to bottom, var(--amber), transparent);
       animation: scroll-line 2s ease-in-out infinite;
     }
     @keyframes scroll-line {
@@ -346,735 +168,346 @@
       100% { transform: scaleY(0); transform-origin: bottom; }
     }
 
-    /* ── Section base ─────────────────────────────────────────────────────── */
+    /* ── Section base ── */
     section { padding: 100px 0; position: relative; }
     .section-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      color: var(--amber);
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--amber);
+      text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
     }
-    .section-label::before {
-      content: '';
-      width: 24px;
-      height: 1px;
-      background: var(--amber);
-    }
+    .section-label::before { content: ''; width: 24px; height: 1px; background: var(--amber); }
     .section-title {
-      font-family: var(--sans);
-      font-size: clamp(28px, 3.5vw, 44px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      color: #f0f2f8;
-      margin-bottom: 20px;
+      font-family: var(--sans); font-size: clamp(28px, 3.5vw, 44px); font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.1; color: #f0f2f8; margin-bottom: 20px;
     }
-    .section-body {
-      font-size: 17px;
-      font-weight: 300;
-      color: var(--text-dim);
-      line-height: 1.75;
-      max-width: 580px;
-    }
+    .section-body { font-size: 17px; font-weight: 300; color: var(--text-dim); line-height: 1.75; max-width: 580px; }
 
-    /* ── What is it ───────────────────────────────────────────────────────── */
-    #que-es {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
+    /* ── Salida — escenario narrativo ── */
+    #salida { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .salida-header { text-align: center; margin-bottom: 64px; }
+    .salida-header .section-label { justify-content: center; }
+    .salida-header .section-label::before { display: none; }
+    .salida-header .section-title { font-size: clamp(32px, 4vw, 52px); }
+    .salida-header .section-body { max-width: 640px; margin: 0 auto; text-align: center; }
+    .salida-steps {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+    }
+    .salida-step { background: var(--card); padding: 36px 28px; position: relative; overflow: hidden; }
+    .salida-step:hover { background: #161a26; }
+    .salida-step-num {
+      font-family: var(--mono); font-size: 48px; font-weight: 300; color: var(--border2);
+      position: absolute; top: 16px; right: 20px; line-height: 1; letter-spacing: -0.04em;
+    }
+    .salida-icon { font-size: 28px; margin-bottom: 20px; display: block; }
+    .salida-step-title { font-family: var(--sans); font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+    .salida-step-body { font-size: 14px; color: var(--text-dim); line-height: 1.75; }
+    .salida-highlight { color: var(--amber); font-weight: 600; }
+
+    /* ── Beneficios ── */
+    #beneficios { background: var(--bg); }
+    .beneficios-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+    .beneficios-list { list-style: none; margin-top: 32px; }
+    .beneficio-item {
+      display: flex; gap: 20px; padding: 22px 0;
       border-bottom: 1px solid var(--border);
     }
-    .que-es-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
+    .beneficio-item:first-child { border-top: 1px solid var(--border); }
+    .bene-icon {
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0; border: 1px solid var(--border2); margin-top: 2px;
     }
-    .que-es-diagram {
-      position: relative;
-      background: var(--card);
-      border: 1px solid var(--border2);
-      padding: 40px;
-    }
-    .diagram-title {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: var(--text-mute);
-      text-transform: uppercase;
-      margin-bottom: 28px;
-    }
-    .diagram-nodes {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .diagram-node {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--border);
-      position: relative;
-    }
-    .diagram-node:last-child { border-bottom: none; }
-    .node-icon {
-      width: 38px;
-      height: 38px;
-      border: 1px solid var(--border2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-size: 16px;
-    }
-    .node-icon.active { border-color: var(--amber); background: rgba(240,160,32,0.08); }
-    .node-text-label {
-      font-family: var(--sans);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .node-text-sub {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 2px;
-    }
-    .node-conn {
-      position: absolute;
-      left: 19px;
-      top: 100%;
-      width: 1px;
-      height: 16px;
-      background: var(--border2);
-    }
-    .node-conn.active { background: rgba(240,160,32,0.4); }
-    .signal-flow {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green);
-      margin-top: 20px;
-      letter-spacing: 0.06em;
-    }
-    .signal-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: signal-blink 1.5s ease-in-out infinite;
-    }
-    @keyframes signal-blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.2; }
-    }
+    .bene-icon.amber { border-color: rgba(240,160,32,0.4); background: rgba(240,160,32,0.06); }
+    .bene-icon.green { border-color: rgba(16,200,112,0.3); background: rgba(16,200,112,0.05); }
+    .bene-text { font-size: 15px; color: var(--text-dim); line-height: 1.65; }
+    .bene-text strong { color: var(--text); font-weight: 600; display: block; margin-bottom: 4px; font-size: 16px; }
+    .bene-visual { position: relative; display: flex; align-items: center; justify-content: center; }
 
-    /* ── Kit Section ──────────────────────────────────────────────────────── */
-    #kit { background: var(--bg); }
-    .kit-header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 40px;
-      align-items: end;
-      margin-bottom: 60px;
-    }
-    .kit-image-wrap {
-      position: relative;
-      border: 1px solid var(--border);
-      overflow: hidden;
-      margin-bottom: 60px;
-    }
-    .kit-image-wrap img { width: 100%; display: block; }
-    .kit-image-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to right, var(--bg) 0%, transparent 15%, transparent 85%, var(--bg) 100%);
-      pointer-events: none;
-    }
-    .kit-components {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-    }
-    .kit-comp {
-      background: var(--card);
-      padding: 28px 24px;
-      transition: background 0.2s;
-    }
-    .kit-comp:hover { background: #161a26; }
-    .comp-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--amber);
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
-    }
-    .comp-name {
-      font-family: var(--sans);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-    .comp-desc {
-      font-size: 13px;
-      color: var(--text-dim);
-      line-height: 1.6;
-    }
-
-    /* ── Features ─────────────────────────────────────────────────────────── */
-    #features {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      margin-top: 60px;
-    }
-    .feature-card {
-      background: var(--card);
-      padding: 36px 32px;
-      transition: background 0.2s;
-    }
-    .feature-card:hover { background: #161a26; }
-    .feature-icon {
-      width: 44px;
-      height: 44px;
-      border: 1px solid var(--border2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      margin-bottom: 20px;
-    }
-    .feature-icon.amber { border-color: rgba(240,160,32,0.4); background: rgba(240,160,32,0.06); }
-    .feature-icon.green { border-color: rgba(16,200,112,0.4); background: rgba(16,200,112,0.06); }
-    .feature-name {
-      font-family: var(--sans);
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
-    .feature-desc {
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.7;
-    }
-
-    /* ── Frequencies ──────────────────────────────────────────────────────── */
-    #frecuencias { background: var(--bg); }
-    .freq-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      margin-top: 48px;
-    }
-    .freq-card {
-      background: var(--card);
-      padding: 36px 28px;
-      position: relative;
-      overflow: hidden;
-    }
-    .freq-card.primary { background: #0e1520; }
-    .freq-card.primary::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--amber);
-    }
-    .freq-type {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      color: var(--text-mute);
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-    .freq-number {
-      font-family: var(--mono);
-      font-size: clamp(26px, 3.5vw, 38px);
-      font-weight: 500;
-      color: var(--amber);
-      letter-spacing: -0.01em;
-      margin-bottom: 4px;
-    }
-    .freq-unit {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text-mute);
-      margin-bottom: 20px;
-    }
-    .freq-label {
-      font-family: var(--sans);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-    .freq-desc {
-      font-size: 13px;
-      color: var(--text-dim);
-    }
-    .freq-legal {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green);
-      letter-spacing: 0.08em;
-      margin-top: 16px;
-      padding: 4px 10px;
-      border: 1px solid rgba(16,200,112,0.3);
-    }
-    .freq-legal::before {
-      content: '✓';
-      font-size: 12px;
-    }
-
-    /* ── App Section ──────────────────────────────────────────────────────── */
-    #app {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .app-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px;
-      align-items: center;
-    }
-    .app-features { list-style: none; margin-top: 32px; }
-    .app-feature {
-      display: flex;
-      gap: 16px;
-      padding: 18px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .app-feature:first-child { border-top: 1px solid var(--border); }
-    .af-icon {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      flex-shrink: 0;
-      color: var(--amber);
-      border: 1px solid rgba(240,160,32,0.2);
-      margin-top: 2px;
-    }
-    .af-text { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
-    .af-text strong { color: var(--text); font-weight: 600; display: block; margin-bottom: 3px; }
-
-    .phone-mockup {
-      position: relative;
-      display: flex;
-      justify-content: center;
-    }
+    /* ── Phone mockup ── */
+    .phone-mockup { position: relative; display: flex; justify-content: center; }
     .phone-frame {
-      width: 240px;
-      background: #0a0d12;
-      border: 2px solid #232840;
-      border-radius: 28px;
-      padding: 16px 12px;
-      position: relative;
+      width: 240px; background: #0a0d12; border: 2px solid #232840;
+      border-radius: 28px; padding: 16px 12px; position: relative;
       box-shadow: 0 0 60px rgba(0,0,0,0.6), 0 0 30px rgba(240,160,32,0.08);
     }
     .phone-notch {
-      width: 60px;
-      height: 8px;
-      background: #1a1e2e;
-      border-radius: 4px;
-      margin: 0 auto 14px;
+      width: 60px; height: 8px; background: #0a0d12; border-radius: 4px;
+      margin: 0 auto 12px; border: 1px solid #1c2232;
     }
-    .phone-screen {
-      background: #030805;
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 340px;
-    }
+    .phone-screen { background: #0c0f1a; border-radius: 12px; overflow: hidden; }
     .ps-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #0d200d;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; background: #0f1322; border-bottom: 1px solid var(--border);
     }
-    .ps-callsign {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: #0dc850;
-      letter-spacing: 0.08em;
-    }
-    .ps-freq {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: #f0a020;
-    }
+    .ps-callsign { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: 0.08em; }
+    .ps-freq { font-family: var(--mono); font-size: 10px; color: var(--amber); }
     .ps-map {
-      background: #040f04;
-      border: 1px solid #0d200d;
-      border-radius: 6px;
-      height: 130px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-    /* Grid lines on map */
-    .ps-map::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(13,40,13,0.8) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(13,40,13,0.8) 1px, transparent 1px);
+      position: relative; height: 120px; background: #0a1020;
+      background-image: linear-gradient(rgba(28,32,48,0.6) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(28,32,48,0.6) 1px, transparent 1px);
       background-size: 20px 20px;
     }
     .map-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #0dc850;
-      position: absolute;
-      box-shadow: 0 0 12px rgba(13,200,80,0.6);
+      position: absolute; width: 10px; height: 10px; background: var(--green);
+      border-radius: 50%; border: 2px solid rgba(16,200,112,0.3);
+      animation: map-pulse 2.5s ease-in-out infinite;
     }
-    .map-dot-2 { background: #f0a020; box-shadow: 0 0 12px rgba(240,160,32,0.6); }
-    .ps-members {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .map-dot-you { background: var(--amber); border-color: rgba(240,160,32,0.4); }
+    .map-dot-2 { animation-delay: 0.8s; }
+    .map-dot-3 { animation-delay: 1.6s; }
+    @keyframes map-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16,200,112,0.4); } 50% { box-shadow: 0 0 0 6px rgba(16,200,112,0); } }
+    .map-route {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible;
     }
+    .ps-members { padding: 8px 8px 4px; }
     .ps-member {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 5px 6px;
-      border: 1px solid transparent;
+      display: flex; align-items: center; gap: 8px; padding: 5px 4px;
+      border-bottom: 1px solid rgba(28,32,48,0.8);
     }
-    .ps-member.active { border-color: rgba(13,200,80,0.3); background: rgba(13,200,80,0.04); }
+    .ps-member:last-child { border-bottom: none; }
     .pm-avatar {
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      background: #0d200d;
-      border: 1px solid #0dc850;
-      font-family: var(--mono);
-      font-size: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #0dc850;
+      width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 9px; color: var(--text-dim); flex-shrink: 0;
     }
-    .pm-name { font-family: var(--mono); font-size: 10px; color: #4a6050; flex: 1; }
-    .pm-name.active { color: #0dc850; }
-    .pm-dist { font-family: var(--mono); font-size: 9px; color: #2a4030; }
+    .pm-name { font-family: var(--mono); font-size: 10px; color: var(--text-dim); flex: 1; }
+    .pm-name.tx { color: var(--amber); }
+    .pm-dist { font-family: var(--mono); font-size: 9px; color: var(--text-mute); }
+    .pm-tx-ind { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); animation: pulse-dot 1s ease-in-out infinite; }
     .ptt-btn {
-      width: 56px; height: 56px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 40% 35%, #1a4a1a, #062006);
-      border: 2px solid #0dc850;
-      margin: 14px auto 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: #0dc850;
-      letter-spacing: 0.06em;
-      box-shadow: 0 0 20px rgba(13,200,80,0.2);
+      margin: 10px 8px 8px; padding: 14px; text-align: center;
+      background: rgba(240,160,32,0.15); border: 1px solid rgba(240,160,32,0.4);
+      border-radius: 8px; font-family: var(--sans); font-weight: 700; font-size: 13px;
+      color: var(--amber); letter-spacing: 0.08em; cursor: pointer;
+      transition: background 0.15s;
     }
+    .ptt-btn:hover { background: rgba(240,160,32,0.25); }
 
-    /* ── Vehicles ─────────────────────────────────────────────────────────── */
-    #vehiculos { background: var(--bg); }
-    .vehicle-types {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1px;
-      background: var(--border);
-      margin-top: 48px;
+    /* ── Cómo funciona ── */
+    #como-funciona { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .cf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-top: 56px; }
+    .cf-step { background: var(--card); padding: 40px 32px; text-align: center; }
+    .cf-step-num {
+      font-family: var(--mono); font-size: 11px; color: var(--amber); letter-spacing: 0.1em;
+      border: 1px solid rgba(240,160,32,0.3); display: inline-block; padding: 4px 12px; margin-bottom: 24px;
     }
-    .vehicle-card {
-      background: var(--card);
-      padding: 40px 36px;
-      display: flex;
-      gap: 24px;
-      transition: background 0.2s;
+    .cf-icon { font-size: 36px; margin-bottom: 20px; display: block; }
+    .cf-title { font-family: var(--sans); font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+    .cf-body { font-size: 14px; color: var(--text-dim); line-height: 1.75; }
+    .cf-arrow {
+      display: none; /* desktop: step separators via grid gap */
     }
-    .vehicle-card:hover { background: #161a26; }
-    .vehicle-icon-large {
-      font-size: 36px;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .vehicle-title {
-      font-family: var(--sans);
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
-    .vehicle-desc {
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.7;
-    }
-    .mount-points {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 14px;
-    }
-    .mount-tag {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.06em;
-      color: var(--amber);
-      border: 1px solid rgba(240,160,32,0.25);
-      padding: 4px 10px;
-    }
+    .cf-diagram { margin-top: 60px; }
 
-    /* ── Accessories ──────────────────────────────────────────────────────── */
-    #accesorios {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .acc-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1px;
-      background: var(--border);
-      margin-top: 48px;
-    }
-    .acc-card {
-      background: var(--card);
-      padding: 40px 36px;
-      position: relative;
-    }
-    .acc-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px;
-      height: 100%;
-      background: var(--amber);
-    }
-    .acc-placeholder {
-      background: var(--bg);
-      border: 1px dashed var(--border2);
-      height: 180px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 28px;
-    }
-    .placeholder-text {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: var(--text-mute);
-      text-transform: uppercase;
-      text-align: center;
-    }
-    .placeholder-icon { font-size: 28px; opacity: 0.3; }
-    .acc-name {
-      font-family: var(--sans);
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
-    .acc-desc {
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-    .acc-specs {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .acc-spec {
-      display: flex;
-      gap: 12px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .acc-spec-key { color: var(--text-mute); min-width: 80px; }
-
-    /* ── Specs Table ──────────────────────────────────────────────────────── */
-    #specs { background: var(--bg); }
-    .specs-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 48px;
-      font-family: var(--mono);
-      font-size: 13px;
-    }
-    .specs-table td {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    .specs-table tr:last-child td { border-bottom: none; }
-    .specs-table td:first-child {
-      color: var(--text-mute);
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      width: 40%;
-    }
-    .specs-table td:last-child { color: var(--text); }
-    .specs-table tr { transition: background 0.15s; }
-    .specs-table tr:hover td { background: rgba(255,255,255,0.02); }
-    .specs-table thead td {
-      color: var(--text-mute);
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      border-bottom: 1px solid var(--amber);
-      padding-bottom: 12px;
-      text-transform: uppercase;
-    }
-    .specs-table thead td:last-child { color: var(--amber); }
-
-    /* ── CTA / Contact ────────────────────────────────────────────────────── */
-    #contacto { background: var(--surface); border-top: 1px solid var(--border); }
-    .cta-inner {
-      max-width: 680px;
-      margin: 0 auto;
-      text-align: center;
-      padding: 80px 0;
-    }
-    .cta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      color: var(--green);
+    /* ── Frecuencias ── */
+    #frecuencias { background: var(--bg); }
+    .freq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-top: 48px; }
+    .freq-card { background: var(--card); padding: 36px 28px; position: relative; overflow: hidden; }
+    .freq-card.primary { background: #0e1520; }
+    .freq-card.primary::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--amber); }
+    .freq-type { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--text-mute); text-transform: uppercase; margin-bottom: 16px; }
+    .freq-number { font-family: var(--mono); font-size: clamp(26px, 3.5vw, 38px); font-weight: 500; color: var(--amber); letter-spacing: -0.01em; margin-bottom: 4px; }
+    .freq-unit { font-family: var(--mono); font-size: 13px; color: var(--text-mute); margin-bottom: 20px; }
+    .freq-label { font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .freq-desc { font-size: 13px; color: var(--text-dim); }
+    .freq-legal {
+      display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px;
+      color: var(--green); letter-spacing: 0.08em; margin-top: 16px; padding: 4px 10px;
       border: 1px solid rgba(16,200,112,0.3);
-      padding: 6px 14px;
-      margin-bottom: 28px;
-      text-transform: uppercase;
     }
-    .cta-title {
-      font-family: var(--sans);
-      font-size: clamp(28px, 4vw, 48px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: #f0f2f8;
-      margin-bottom: 20px;
-      line-height: 1.1;
+    .freq-legal::before { content: '✓'; font-size: 12px; }
+
+    /* ── Montaje ── */
+    #montaje { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .montaje-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-top: 56px; }
+    .montaje-card { background: var(--card); padding: 40px 36px; }
+    .montaje-card:hover { background: #161a26; }
+    .montaje-icon { font-size: 36px; margin-bottom: 20px; display: block; }
+    .montaje-title { font-family: var(--sans); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .montaje-desc { font-size: 15px; color: var(--text-dim); line-height: 1.75; margin-bottom: 20px; }
+    .montaje-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .montaje-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text-mute); border: 1px solid var(--border2); padding: 4px 10px; }
+
+    /* ── Mapa conceptual SVG ── */
+    .mapa-svg-wrap { margin-top: 48px; border: 1px solid var(--border); overflow: hidden; }
+
+    /* ── FAQ ── */
+    #faq { background: var(--bg); }
+    .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-top: 56px; }
+    .faq-item { background: var(--card); padding: 32px 28px; transition: background 0.2s; }
+    .faq-item:hover { background: #161a26; }
+    .faq-q { font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: flex-start; gap: 10px; }
+    .faq-q::before {
+      content: '?'; font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--amber);
+      border: 1px solid rgba(240,160,32,0.4); width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
     }
-    .cta-body {
-      font-size: 17px;
-      font-weight: 300;
-      color: var(--text-dim);
-      line-height: 1.7;
-      margin-bottom: 40px;
+    .faq-a { font-size: 14px; color: var(--text-dim); line-height: 1.75; padding-left: 30px; }
+    .faq-a a { color: var(--amber); text-decoration: none; }
+    .faq-a a:hover { text-decoration: underline; }
+
+    /* ── Waitlist ── */
+    #waitlist { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .waitlist-inner { max-width: 560px; margin: 0 auto; text-align: center; }
+    .waitlist-inner .section-label { justify-content: center; }
+    .waitlist-inner .section-label::before { display: none; }
+    .waitlist-inner .section-body { max-width: 100%; margin: 0 auto 40px; text-align: center; }
+    .waitlist-form { display: flex; flex-direction: column; gap: 12px; }
+    .waitlist-row { display: flex; gap: 12px; }
+    .waitlist-form input, .waitlist-form select {
+      flex: 1; background: var(--card); border: 1px solid var(--border2);
+      color: var(--text); font-family: var(--body); font-size: 14px; padding: 13px 16px;
+      outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none;
     }
-    .cta-actions {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
+    .waitlist-form input::placeholder { color: var(--text-mute); }
+    .waitlist-form input:focus, .waitlist-form select:focus { border-color: var(--amber); }
+    .waitlist-form select { color: var(--text-dim); cursor: pointer; }
+    .waitlist-form select option { background: var(--card); }
+    .waitlist-submit {
+      width: 100%; background: var(--amber); color: #000; font-family: var(--sans);
+      font-weight: 700; font-size: 14px; letter-spacing: 0.06em; padding: 15px 28px;
+      border: none; cursor: pointer; text-transform: uppercase; transition: background 0.2s, transform 0.1s; margin-top: 4px;
     }
-    .cta-email {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text-dim);
-      letter-spacing: 0.04em;
-      margin-top: 24px;
-      display: block;
+    .waitlist-submit:hover { background: #ffc030; transform: translateY(-1px); }
+    .waitlist-note { font-family: var(--mono); font-size: 11px; color: var(--text-mute); letter-spacing: 0.06em; margin-top: 16px; }
+    .waitlist-success { display: none; background: rgba(16,200,112,0.07); border: 1px solid rgba(16,200,112,0.25); padding: 28px; text-align: center; }
+    .waitlist-success .ws-icon { font-size: 28px; margin-bottom: 12px; }
+    .waitlist-success .ws-title { font-family: var(--sans); font-weight: 600; color: var(--green); margin-bottom: 6px; }
+    .waitlist-success .ws-body { font-size: 14px; color: var(--text-dim); }
+
+    /* ── Specs (minimalizada) ── */
+    #specs { background: var(--bg); }
+    .specs-accordion { margin-top: 32px; border: 1px solid var(--border); }
+    .specs-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; cursor: pointer; font-family: var(--sans); font-size: 14px;
+      color: var(--text-dim); user-select: none;
     }
+    .specs-toggle:hover { color: var(--text); }
+    .specs-toggle-icon { font-family: var(--mono); font-size: 18px; color: var(--amber); transition: transform 0.2s; }
+    .specs-toggle.open .specs-toggle-icon { transform: rotate(45deg); }
+    .specs-table-wrap { display: none; padding: 0 20px 20px; }
+    .specs-table-wrap.open { display: block; }
+    .specs-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+    .specs-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+    .specs-table tr:last-child td { border-bottom: none; }
+    .specs-table td:first-child { color: var(--text-mute); width: 40%; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+    .specs-table td:last-child { color: var(--text); }
+
+    /* ── CTA ── */
+    #contacto { background: var(--card); border-top: 1px solid var(--border); }
+    .cta-inner { max-width: 680px; margin: 0 auto; text-align: center; }
+    .cta-badge {
+      display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono);
+      font-size: 11px; letter-spacing: 0.1em; color: var(--text-mute);
+      border: 1px solid var(--border2); padding: 6px 16px; margin-bottom: 32px; text-transform: uppercase;
+    }
+    .cta-title { font-family: var(--sans); font-size: clamp(28px, 4vw, 48px); font-weight: 700; letter-spacing: -0.02em; color: #f0f2f8; margin-bottom: 20px; }
+    .cta-body { font-size: 17px; font-weight: 300; color: var(--text-dim); line-height: 1.75; margin-bottom: 40px; }
+    .cta-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+    .cta-email { font-family: var(--mono); font-size: 12px; color: var(--text-mute); display: block; }
     .cta-email a { color: var(--amber); text-decoration: none; }
     .cta-email a:hover { text-decoration: underline; }
 
-    /* ── Footer ───────────────────────────────────────────────────────────── */
-    footer {
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-    }
+    /* ── Footer ── */
+    footer { background: var(--bg); border-top: 1px solid var(--border); padding: 32px 0; }
     .footer-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      flex-wrap: wrap;
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
     }
-    .footer-logo {
-      font-family: var(--sans);
-      font-weight: 700;
-      font-size: 15px;
-      color: var(--text-dim);
-    }
-    .footer-logo span { color: var(--amber); }
-    .footer-meta {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-mute);
-      letter-spacing: 0.06em;
-    }
-    .footer-links {
-      display: flex;
-      gap: 24px;
-    }
-    .footer-links a {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-mute);
-      text-decoration: none;
-      letter-spacing: 0.06em;
-      transition: color 0.2s;
-    }
+    .footer-meta { font-family: var(--mono); font-size: 11px; color: var(--text-mute); letter-spacing: 0.06em; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-family: var(--mono); font-size: 11px; color: var(--text-mute); text-decoration: none; letter-spacing: 0.06em; transition: color 0.2s; }
     .footer-links a:hover { color: var(--text-dim); }
 
-    /* ── Responsive ───────────────────────────────────────────────────────── */
+    /* ── WhatsApp flotante ── */
+    .wa-fab {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #25d366; box-shadow: 0 4px 20px rgba(37,211,102,0.45);
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .wa-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(37,211,102,0.6); }
+    .wa-fab svg { width: 30px; height: 30px; }
+    .wa-fab::after {
+      content: 'Consultá por WhatsApp';
+      position: absolute; right: 68px; bottom: 50%; transform: translateY(50%);
+      background: rgba(13,15,22,0.95); color: var(--text);
+      font-family: var(--sans); font-size: 12px; font-weight: 500;
+      white-space: nowrap; padding: 6px 12px; border-radius: 4px;
+      border: 1px solid var(--border2); pointer-events: none;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .wa-fab:hover::after { opacity: 1; }
+
+    /* ── CTCSS / Grupos privados ── */
+    #grupos-privados { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .ctcss-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-top: 48px; }
+    .ctcss-card { background: var(--card); padding: 36px 32px; }
+    .ctcss-card:hover { background: #161a26; }
+    .ctcss-icon { font-size: 32px; margin-bottom: 16px; display: block; }
+    .ctcss-title { font-family: var(--sans); font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+    .ctcss-body { font-size: 14px; color: var(--text-dim); line-height: 1.75; }
+    .ctcss-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+      color: var(--green); border: 1px solid rgba(16,200,112,0.3);
+      padding: 4px 10px; margin-top: 14px;
+    }
+
+    /* ── Balizas / Emergencia ── */
+    #balizas { background: var(--bg); }
+    .balizas-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; margin-top: 56px;
+    }
+    .balizas-visual { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .balizas-img-main {
+      border-radius: 24px; border: 1.5px solid var(--border2);
+      box-shadow: 0 0 48px rgba(220,38,38,0.12), 0 0 24px rgba(16,200,112,0.08);
+      width: 100%; max-width: 280px; display: block;
+    }
+    .balizas-img-map {
+      border-radius: 16px; border: 1.5px solid var(--border2);
+      box-shadow: 0 0 32px rgba(240,160,32,0.12);
+      width: 100%; max-width: 280px; display: block;
+    }
+    .balizas-cards { display: flex; flex-direction: column; gap: 1px; background: var(--border); }
+    .baliza-card { background: var(--card); padding: 28px 28px; transition: background 0.2s; }
+    .baliza-card:hover { background: #161a26; }
+    .baliza-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+    .baliza-btn {
+      font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+      padding: 5px 12px; text-transform: uppercase; flex-shrink: 0;
+    }
+    .baliza-btn.rojo  { background: rgba(220,38,38,0.14);  color: #f87171; border: 1px solid rgba(220,38,38,0.45); }
+    .baliza-btn.amber { background: rgba(240,160,32,0.10); color: var(--amber); border: 1px solid rgba(240,160,32,0.4); }
+    .baliza-btn.green { background: rgba(16,200,112,0.08); color: var(--green); border: 1px solid rgba(16,200,112,0.35); }
+    .baliza-card-title { font-family: var(--sans); font-size: 16px; font-weight: 700; color: var(--text); }
+    .baliza-card-body  { font-size: 14px; color: var(--text-dim); line-height: 1.75; }
+    .balizas-nav-note {
+      margin-top: 24px; padding: 16px 20px;
+      background: rgba(16,200,112,0.05); border: 1px solid rgba(16,200,112,0.2);
+      font-size: 14px; color: var(--text-dim); line-height: 1.65;
+    }
+    .balizas-nav-note strong { color: var(--green); }
+
+    /* ── Responsive ── */
     @media (max-width: 900px) {
       .hero-inner { grid-template-columns: 1fr; gap: 48px; }
       .hero-visual { display: none; }
-      .que-es-grid { grid-template-columns: 1fr; gap: 48px; }
-      .app-grid { grid-template-columns: 1fr; gap: 48px; }
-      .features-grid { grid-template-columns: 1fr 1fr; }
-      .kit-components { grid-template-columns: 1fr 1fr; }
-      .kit-header { grid-template-columns: 1fr; }
+      .salida-steps { grid-template-columns: 1fr 1fr; }
+      .beneficios-grid { grid-template-columns: 1fr; gap: 48px; }
+      .cf-grid { grid-template-columns: 1fr; }
+      .montaje-grid { grid-template-columns: 1fr; }
       .freq-grid { grid-template-columns: 1fr; }
-      .vehicle-types { grid-template-columns: 1fr; }
-      .acc-grid { grid-template-columns: 1fr; }
-      .hero-specs { display: none; }
+      .faq-grid { grid-template-columns: 1fr; }
+      .ctcss-grid { grid-template-columns: 1fr; }
+      .balizas-grid { grid-template-columns: 1fr; gap: 48px; }
     }
     @media (max-width: 640px) {
       section { padding: 64px 0; }
-      .features-grid { grid-template-columns: 1fr; }
-      .kit-components { grid-template-columns: 1fr; }
+      .salida-steps { grid-template-columns: 1fr; }
       .nav-links { display: none; }
-      .phone-mockup { display: none; }
+      .waitlist-row { flex-direction: column; }
     }
   </style>
 </head>
@@ -1084,18 +517,18 @@
   <nav>
     <div class="nav-inner">
       <a href="#" class="nav-logo">
-        <img src="assets/baqueano-logo.png" alt="Baqueano" />
+        <img src="assets/baqueano-logo.png" alt="Baqueano" class="nav-logo-svg">
         <span class="nav-logo-text"><span>Baqueano</span></span>
       </a>
       <ul class="nav-links">
-        <li><a href="#que-es">Producto</a></li>
-        <li><a href="#kit">Kit</a></li>
-        <li><a href="#app">App</a></li>
+        <li><a href="#salida">Experiencia</a></li>
+        <li><a href="#beneficios">Beneficios</a></li>
         <li><a href="#frecuencias">Frecuencias</a></li>
-        <li><a href="#accesorios">Accesorios</a></li>
+        <li><a href="#balizas">Emergencia</a></li>
+        <li><a href="#faq">FAQ</a></li>
         <li><a href="#specs">Specs</a></li>
       </ul>
-      <a href="#contacto" class="nav-cta">Consultá</a>
+      <a href="#waitlist" class="nav-cta">Anotarse</a>
     </div>
   </nav>
 
@@ -1105,36 +538,115 @@
     <div class="hero-grid"></div>
     <div class="hero-inner">
       <div class="hero-text">
-        <div class="hero-badge reveal">VHF · Argentina · Beta</div>
+        <div class="hero-badge reveal">VHF · Sin cobertura · Argentina · Beta</div>
         <div class="hero-logo-wrap reveal reveal-delay-1">
-          <img src="assets/baqueano-logo.png" alt="Baqueano" class="hero-logo-img" />
+          <img src="assets/baqueano-logo.png" alt="Baqueano" class="hero-logo-svg">
         </div>
         <h1 class="hero-title reveal reveal-delay-2">
-          Tu grupo.<br />
-          Tu frecuencia.<br />
-          <em>Sin límites.</em>
+          Tu grupo,<br/>siempre<br/><em>conectado.</em>
         </h1>
         <p class="hero-sub reveal reveal-delay-3">
-          Baqueano es un kit de comunicación VHF de fabricación propia para grupos moto y 4×4.
-          Hardware compacto, app Android integrada y adaptación directa a tu vehículo.
+          Radio VHF + app Android. Coordiná tu grupo donde no hay señal — motos, 4×4, trekking, campo. Sin celular, sin internet, sin licencia.
         </p>
         <div class="hero-actions reveal reveal-delay-4">
-          <a href="#kit" class="btn-primary">
-            <span>Ver el kit</span>
+          <a href="#salida" class="btn-primary">
+            <span>Cómo funciona</span>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
-          <a href="#contacto" class="btn-secondary">Quiero uno →</a>
+          <a href="#waitlist" class="btn-secondary">Quiero uno →</a>
         </div>
       </div>
       <div class="hero-visual reveal reveal-delay-2">
         <div class="hero-device-wrap">
           <div class="hero-glow"></div>
-          <img src="assets/hero_device.png" alt="Baqueano — dispositivo VHF" class="hero-device-img" />
-          <div class="hero-specs">
-            <div class="spec-pill">VHF · SA818-V</div>
-            <div class="spec-pill">ESP32 · WiFi</div>
-            <div class="spec-pill">USB-C</div>
-          </div>
+          <!-- SVG conceptual del dispositivo + red + motos -->
+          <svg class="hero-svg" viewBox="0 0 520 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="520" height="380" fill="#0d0f16"/>
+            <!-- Grid lines -->
+            <g stroke="#1c2030" stroke-width="0.5" opacity="0.5">
+              <line x1="0" y1="60" x2="520" y2="60"/>
+              <line x1="0" y1="120" x2="520" y2="120"/>
+              <line x1="0" y1="180" x2="520" y2="180"/>
+              <line x1="0" y1="240" x2="520" y2="240"/>
+              <line x1="0" y1="300" x2="520" y2="300"/>
+              <line x1="0" y1="340" x2="520" y2="340"/>
+              <line x1="80" y1="0" x2="80" y2="380"/>
+              <line x1="160" y1="0" x2="160" y2="380"/>
+              <line x1="240" y1="0" x2="240" y2="380"/>
+              <line x1="320" y1="0" x2="320" y2="380"/>
+              <line x1="400" y1="0" x2="400" y2="380"/>
+              <line x1="480" y1="0" x2="480" y2="380"/>
+            </g>
+            <!-- Dispositivo central -->
+            <rect x="195" y="120" width="130" height="80" rx="6" fill="#111520" stroke="#252b3e" stroke-width="1.5"/>
+            <rect x="208" y="132" width="104" height="28" rx="3" fill="#0a0d12" stroke="#1c2030"/>
+            <text x="260" y="151" text-anchor="middle" font-family="monospace" font-size="10" fill="#f0a020">Baqueano HT</text>
+            <text x="260" y="172" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b7585">ESP32 + SA818-V</text>
+            <rect x="220" y="175" width="80" height="16" rx="2" fill="#0f1525" stroke="#1c2030"/>
+            <text x="260" y="186" text-anchor="middle" font-family="monospace" font-size="8" fill="#10c870">● 139.970 MHz TX/RX</text>
+            <!-- Antena -->
+            <line x1="260" y1="120" x2="260" y2="80" stroke="#f0a020" stroke-width="2" stroke-linecap="round"/>
+            <line x1="240" y1="88" x2="280" y2="88" stroke="#f0a020" stroke-width="1" opacity="0.5"/>
+            <!-- WiFi waves -->
+            <g opacity="0.6">
+              <path d="M220 108 Q260 88 300 108" stroke="#f0a020" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M200 118 Q260 90 320 118" stroke="#f0a020" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.4"/>
+            </g>
+            <!-- Moto 1 — izquierda -->
+            <g transform="translate(60,190)">
+              <circle cx="0" cy="0" r="18" fill="#0d0f16" stroke="#252b3e" stroke-width="1"/>
+              <text x="0" y="4" text-anchor="middle" font-size="16">🏍</text>
+              <circle cx="0" cy="0" r="18" fill="none" stroke="#10c870" stroke-width="1" opacity="0.5" stroke-dasharray="4 4">
+                <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="8s" repeatCount="indefinite"/>
+              </circle>
+              <text x="0" y="30" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b7585">MOTO-1</text>
+              <text x="0" y="41" text-anchor="middle" font-family="monospace" font-size="8" fill="#10c870">● 0.0km</text>
+            </g>
+            <!-- Moto 2 — derecha arriba -->
+            <g transform="translate(440,150)">
+              <circle cx="0" cy="0" r="18" fill="#0d0f16" stroke="#252b3e" stroke-width="1"/>
+              <text x="0" y="4" text-anchor="middle" font-size="16">🏍</text>
+              <circle cx="0" cy="0" r="18" fill="none" stroke="#10c870" stroke-width="1" opacity="0.5" stroke-dasharray="4 4">
+                <animateTransform attributeName="transform" type="rotate" from="360 0 0" to="0 0 0" dur="6s" repeatCount="indefinite"/>
+              </circle>
+              <text x="0" y="30" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b7585">MOTO-2</text>
+              <text x="0" y="41" text-anchor="middle" font-family="monospace" font-size="8" fill="#f0a020">📢 TX</text>
+            </g>
+            <!-- 4x4 — derecha abajo -->
+            <g transform="translate(420,280)">
+              <circle cx="0" cy="0" r="18" fill="#0d0f16" stroke="#252b3e" stroke-width="1"/>
+              <text x="0" y="4" text-anchor="middle" font-size="16">🚙</text>
+              <text x="0" y="30" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b7585">4X4-1</text>
+              <text x="0" y="41" text-anchor="middle" font-family="monospace" font-size="8" fill="#10c870">● 3.2km</text>
+            </g>
+            <!-- Líneas de señal RF -->
+            <line x1="195" y1="160" x2="78" y2="190" stroke="#10c870" stroke-width="1" stroke-dasharray="6 4" opacity="0.4"/>
+            <line x1="325" y1="155" x2="422" y2="150" stroke="#10c870" stroke-width="1" stroke-dasharray="6 4" opacity="0.4"/>
+            <line x1="320" y1="190" x2="402" y2="275" stroke="#10c870" stroke-width="1" stroke-dasharray="6 4" opacity="0.3"/>
+            <!-- Celular del usuario -->
+            <g transform="translate(80,290)">
+              <rect x="-22" y="-36" width="44" height="72" rx="6" fill="#0a0d12" stroke="#232840" stroke-width="1.5"/>
+              <rect x="-16" y="-30" width="32" height="56" rx="3" fill="#0c0f1a"/>
+              <text x="0" y="-15" text-anchor="middle" font-family="monospace" font-size="7" fill="#f0a020">PTT</text>
+              <!-- mini mapa on phone -->
+              <g>
+                <rect x="-14" y="-8" width="28" height="22" rx="1" fill="#0a1020"/>
+                <circle cx="-4" cy="2" r="2.5" fill="#10c870"/>
+                <circle cx="6" cy="-2" r="2" fill="#f0a020"/>
+                <circle cx="2" cy="9" r="1.5" fill="#10c870"/>
+              </g>
+              <rect x="-10" y="17" width="20" height="7" rx="2" fill="#f0a020" opacity="0.2" stroke="#f0a020" stroke-width="0.5"/>
+              <text x="0" y="23" text-anchor="middle" font-family="monospace" font-size="5" fill="#f0a020">PTT</text>
+              <text x="0" y="46" text-anchor="middle" font-family="monospace" font-size="8" fill="#6b7585">Android</text>
+            </g>
+            <!-- WiFi link: phone to device -->
+            <line x1="102" y1="268" x2="195" y2="185" stroke="#f0a020" stroke-width="1" stroke-dasharray="5 3" opacity="0.5"/>
+            <!-- Label WiFi -->
+            <text x="145" y="218" font-family="monospace" font-size="9" fill="#f0a020" opacity="0.7" transform="rotate(-28,145,218)">WiFi</text>
+            <!-- Label RF -->
+            <text x="148" y="180" font-family="monospace" font-size="8" fill="#10c870" opacity="0.6">VHF RF</text>
+          </svg>
         </div>
       </div>
     </div>
@@ -1144,146 +656,159 @@
     </div>
   </section>
 
-  <!-- QUÉ ES -->
-  <section id="que-es">
+  <!-- UNA SALIDA GRUPAL — escenario narrativo -->
+  <section id="salida">
     <div class="container">
-      <div class="que-es-grid">
-        <div>
-          <div class="section-label reveal">Sistema</div>
-          <h2 class="section-title reveal reveal-delay-1">Un radio VHF que<br/>habla con tu celular.</h2>
-          <p class="section-body reveal reveal-delay-2">
-            Baqueano combina un módulo de radio VHF profesional (SA818-V), un microcontrolador ESP32
-            y una app Android propia. El dispositivo crea su propia red WiFi: tu teléfono se conecta y
-            tenés PTT, mapa en tiempo real y ajuste de frecuencia desde la pantalla.
-          </p>
-          <p class="section-body reveal reveal-delay-3" style="margin-top:16px;">
-            Sin Bluetooth. Sin internet. Sin suscripciones.<br/>
-            Solo radio VHF de alcance real en frecuencias habilitadas por ENACOM.
-          </p>
-        </div>
-        <div class="que-es-diagram reveal reveal-delay-2">
-          <div class="diagram-title">DIAGRAMA DE SISTEMA</div>
-          <div class="diagram-nodes">
-            <div class="diagram-node">
-              <div class="node-icon active">📡</div>
-              <div>
-                <div class="node-text-label">Radio VHF — SA818-V</div>
-                <div class="node-text-sub">TX/RX · 1–5W · 134–174 MHz</div>
-              </div>
-              <div class="node-conn active"></div>
-            </div>
-            <div class="diagram-node">
-              <div class="node-icon active">⚙️</div>
-              <div>
-                <div class="node-text-label">ESP32-WROOM-32</div>
-                <div class="node-text-sub">Controlador · KISS bridge · SoftAP</div>
-              </div>
-              <div class="node-conn active"></div>
-            </div>
-            <div class="diagram-node">
-              <div class="node-icon active">📶</div>
-              <div>
-                <div class="node-text-label">WiFi 2.4GHz (SoftAP)</div>
-                <div class="node-text-sub">SSID: Baqueano-HT · UDP:4210</div>
-              </div>
-              <div class="node-conn"></div>
-            </div>
-            <div class="diagram-node">
-              <div class="node-icon">📱</div>
-              <div>
-                <div class="node-text-label">App Android</div>
-                <div class="node-text-sub">PTT · Mapa OSM · Canales</div>
-              </div>
-            </div>
-          </div>
-          <div class="signal-flow">
-            <div class="signal-dot"></div>
-            <span>SEÑAL ACTIVA — 139.970 MHz</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- KIT -->
-  <section id="kit">
-    <div class="container">
-      <div class="kit-header">
-        <div>
-          <div class="section-label reveal">Contenido</div>
-          <h2 class="section-title reveal reveal-delay-1">El kit completo.</h2>
-        </div>
-        <p class="section-body reveal reveal-delay-1" style="max-width:340px; font-size:15px;">
-          Hardware + firmware + app + guía de instalación.
-          Todo lo que necesitás para equipar tu moto o 4×4.
+      <div class="salida-header">
+        <div class="section-label reveal">Una salida grupal</div>
+        <h2 class="section-title reveal reveal-delay-1">Sin señal. Con grupo.<br/>Igual coordinados.</h2>
+        <p class="section-body reveal reveal-delay-2">
+          Motos, 4×4, senderismo, trabajo en campo — en todos los casos, el problema es el mismo: sin cobertura, no hay comunicación. Baqueano lo resuelve.
         </p>
       </div>
-
-      <div class="kit-image-wrap reveal">
-        <img src="assets/kit_overview.png" alt="Baqueano — Vista del kit completo" />
-        <div class="kit-image-overlay"></div>
+      <div class="salida-steps">
+        <div class="salida-step reveal">
+          <div class="salida-step-num">01</div>
+          <span class="salida-icon">🔌</span>
+          <div class="salida-step-title">Enchufás y listo</div>
+          <p class="salida-step-body">Conectás el Baqueano a la batería de 12V de tu moto o 4×4. Se enciende en segundos. <span class="salida-highlight">No hay configuración.</span> Ya está en el canal grupal.</p>
+        </div>
+        <div class="salida-step reveal reveal-delay-1">
+          <div class="salida-step-num">02</div>
+          <span class="salida-icon">📱</span>
+          <div class="salida-step-title">Tu teléfono se conecta</div>
+          <p class="salida-step-body">La app Android detecta la red WiFi del dispositivo y se conecta. Ves el <span class="salida-highlight">mapa offline con todos los integrantes</span> del grupo en tiempo real.</p>
+        </div>
+        <div class="salida-step reveal reveal-delay-2">
+          <div class="salida-step-num">03</div>
+          <span class="salida-icon">🎙</span>
+          <div class="salida-step-title">PTT, hablás</div>
+          <p class="salida-step-body">Presionás el botón PTT en el manillar. Todos en el grupo te escuchan por radio VHF. <span class="salida-highlight">Sin datos, sin cobertura, sin latencia.</span> Voz real.</p>
+        </div>
+        <div class="salida-step reveal reveal-delay-3">
+          <div class="salida-step-num">04</div>
+          <span class="salida-icon">🗺</span>
+          <div class="salida-step-title">El grupo siempre visible</div>
+          <p class="salida-step-body">Aunque alguien se quede atrás o tome otra ruta, lo ves en el mapa. <span class="salida-highlight">Nadie se pierde.</span> Los alias identifican a cada uno al instante.</p>
+        </div>
       </div>
+      <!-- Captura real: chat VHF de coordinación -->
+      <div class="reveal" style="margin-top:48px;text-align:center;">
+        <p class="section-label" style="margin-bottom:16px;">Chat de coordinación real</p>
+        <img src="assets/Screenshot_20260628_190515.png" alt="Chat VHF — reagrupamiento y mensajes del grupo"
+          style="max-width:260px;width:80%;border-radius:24px;border:1.5px solid var(--border2);box-shadow:0 0 32px rgba(16,200,112,0.1);display:inline-block;">
+      </div>
+    </div>
+  </section>
 
-      <div class="kit-components">
-        <div class="kit-comp reveal">
-          <div class="comp-num">01</div>
-          <div class="comp-name">Unidad Baqueano</div>
-          <div class="comp-desc">PCB 38.1×82.55mm en carcasa de aluminio. ESP32 + SA818-V. Puerto USB-C. Jack 3.5mm PTT. Dos antenas externas.</div>
+  <!-- BENEFICIOS + MOCKUP -->
+  <section id="beneficios">
+    <div class="container">
+      <div class="beneficios-grid">
+        <div>
+          <div class="section-label reveal">Para tu grupo</div>
+          <h2 class="section-title reveal reveal-delay-1">Lo que cambia<br/>desde el día uno.</h2>
+          <ul class="beneficios-list">
+            <li class="beneficio-item reveal">
+              <div class="bene-icon amber">📡</div>
+              <div class="bene-text">
+                <strong>Radio VHF de alcance real</strong>
+                Kilómetros de rango en campo abierto. No compartilas con celular. No depende de torres.
+              </div>
+            </li>
+            <li class="beneficio-item reveal reveal-delay-1">
+              <div class="bene-icon green">🗺</div>
+              <div class="bene-text">
+                <strong>Mapa del grupo en tu mano</strong>
+                Tiles OpenStreetMap descargados antes de salir. Ves a todos los integrantes aunque no haya señal.
+              </div>
+            </li>
+            <li class="beneficio-item reveal reveal-delay-2">
+              <div class="bene-icon amber">🤙</div>
+              <div class="bene-text">
+                <strong>PTT manos libres en el manillar</strong>
+                Botón externo en el manillar vía jack 3.5mm. Transmitís sin soltar el puño.
+              </div>
+            </li>
+            <li class="beneficio-item reveal reveal-delay-3">
+              <div class="bene-icon green">✅</div>
+              <div class="bene-text">
+                <strong>Sin licencia, sin trámites</strong>
+                Opera en los 3 canales habilitados por ENACOM para grupos vehiculares. Legal de fábrica.
+              </div>
+            </li>
+            <li class="beneficio-item reveal reveal-delay-4">
+              <div class="bene-icon amber">🔋</div>
+              <div class="bene-text">
+                <strong>Sin suscripciones ni internet</strong>
+                Todo funciona offline. El dispositivo crea su propia red WiFi local. Sin datos, sin costo mensual.
+              </div>
+            </li>
+          </ul>
         </div>
-        <div class="kit-comp reveal reveal-delay-1">
-          <div class="comp-num">02</div>
-          <div class="comp-name">App Android</div>
-          <div class="comp-desc">PTT por pantalla, mapa offline OSMDroid, historial de transmisiones, alias de miembros y selector de canal.</div>
-        </div>
-        <div class="kit-comp reveal reveal-delay-2">
-          <div class="comp-num">03</div>
-          <div class="comp-name">Antena VHF SMA</div>
-          <div class="comp-desc">Antena flexible de banda VHF incluida. Compatible con antenas magnéticas externas vía conector SMA hembra.</div>
-        </div>
-        <div class="kit-comp reveal reveal-delay-3">
-          <div class="comp-num">04</div>
-          <div class="comp-name">Guía de instalación</div>
-          <div class="comp-desc">Diagrama de montaje, conexión de alimentación (12V o USB) y primeros pasos con la app. Open-source: GPL-3.0.</div>
+        <div class="bene-visual reveal reveal-delay-2">
+          <div class="phone-mockup" style="gap:16px;align-items:flex-start;flex-wrap:wrap;">
+            <img src="assets/Screenshot_20260628_190338.png" alt="PTT activo — canal GRUPO" style="width:48%;max-width:200px;border-radius:20px;border:1.5px solid var(--border2);box-shadow:0 0 24px rgba(16,200,112,0.12);">
+            <img src="assets/Screenshot_20260628_190713.png" alt="Mapa del grupo en tiempo real" style="width:48%;max-width:200px;border-radius:20px;border:1.5px solid var(--border2);box-shadow:0 0 24px rgba(240,160,32,0.10);">
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- FEATURES -->
-  <section id="features">
+  <!-- GRUPOS PRIVADOS / CTCSS -->
+  <section id="grupos-privados">
     <div class="container">
-      <div class="section-label reveal">Características</div>
-      <h2 class="section-title reveal reveal-delay-1">Diseñado para el campo.</h2>
-      <div class="features-grid">
-        <div class="feature-card reveal">
-          <div class="feature-icon amber">📡</div>
-          <div class="feature-name">Radio VHF real</div>
-          <div class="feature-desc">Módulo SA818-V de banda estrecha. Potencia ajustable 1W / 5W. Rango de hasta varios kilómetros en campo abierto. Nada de simulaciones de radio por datos.</div>
+      <div class="section-label reveal">Modo grupo privado</div>
+      <h2 class="section-title reveal reveal-delay-1">Varios grupos en el<br/>mismo canal. Sin mezclarse.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        ¿Cómo hacés si hay otro grupo de motos usando la misma frecuencia? Activás el modo grupo privado: cada grupo elige un tono de identificación y los radios solo abren el audio cuando reconocen el propio. Mismo canal, distintos grupos, sin cruzarse.
+      </p>
+      <div class="ctcss-grid">
+        <div class="ctcss-card reveal">
+          <span class="ctcss-icon">🔇</span>
+          <div class="ctcss-title">Tu grupo escucha solo a tu grupo</div>
+          <p class="ctcss-body">
+            Cada transmisión lleva un tono inaudible de identificación. Si no coincide con el de tu grupo, el radio permanece en silencio — aunque la señal esté llegando. Sin interferencias, sin confusión, sin escuchar a desconocidos.
+          </p>
+          <div class="ctcss-badge">38 tonos disponibles</div>
         </div>
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon green">📶</div>
-          <div class="feature-name">WiFi propio</div>
-          <div class="feature-desc">El dispositivo crea su propia red WiFi (SoftAP). Sin internet, sin roaming, sin datos móviles. Tu celular se conecta directo al HT.</div>
+        <div class="ctcss-card reveal reveal-delay-1">
+          <span class="ctcss-icon">🌾</span>
+          <div class="ctcss-title">Ideal para eventos y trabajo rural</div>
+          <p class="ctcss-body">
+            En un enduro con 200 motos, en una caravana de tres equipos distintos, o coordinando personal en una estancia grande: cada grupo elige su tono y opera de forma independiente en la misma frecuencia. Sin hardware extra, sin configuración compleja.
+          </p>
+          <div class="ctcss-badge">Configurado desde la app</div>
         </div>
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon amber">🗺️</div>
-          <div class="feature-name">Mapa offline</div>
-          <div class="feature-desc">Tiles OSM descargables desde la app. Funciona sin señal. Ves a todos los miembros del grupo en tiempo real sobre el mapa.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CÓMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-label reveal">El sistema</div>
+      <h2 class="section-title reveal reveal-delay-1">Tres piezas.<br/>Una sola conexión.</h2>
+      <p class="section-body reveal reveal-delay-2">No necesitás entender la tecnología para usarlo — pero si querés, acá está.</p>
+      <div class="cf-grid">
+        <div class="cf-step reveal">
+          <div class="cf-step-num">PASO 1</div>
+          <span class="cf-icon">📡</span>
+          <div class="cf-title">Radio VHF transmite y recibe</div>
+          <p class="cf-body">El módulo SA818-V en el dispositivo hace el trabajo de radio real: transmite audio por VHF a los otros equipos del grupo. Potencia 1–5W, alcance de kilómetros.</p>
         </div>
-        <div class="feature-card reveal">
-          <div class="feature-icon green">⚡</div>
-          <div class="feature-name">Bajo consumo</div>
-          <div class="feature-desc">Alimentado por USB-C (5V) o directo desde la batería del vehículo (12V con regulador incluido). Diseñado para uso prolongado en ruta.</div>
+        <div class="cf-step reveal reveal-delay-1">
+          <div class="cf-step-num">PASO 2</div>
+          <span class="cf-icon">📶</span>
+          <div class="cf-title">El dispositivo crea su WiFi</div>
+          <p class="cf-body">Un microcontrolador ESP32 traduce la señal de radio a audio digital y la manda por su propia red WiFi local. Sin internet. Tu celular se conecta a esa red.</p>
         </div>
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon amber">🔒</div>
-          <div class="feature-name">Frecuencias legales</div>
-          <div class="feature-desc">Preconfigurado en los canales habilitados por Res. 5/2015 de ENACOM para grupos vehiculares. Sin necesidad de licencia individual.</div>
-        </div>
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon green">🔧</div>
-          <div class="feature-name">Open source</div>
-          <div class="feature-desc">Firmware, esquemáticos y app publicados bajo GPL-3.0 en GitHub. Fork activo de kv4p HT, adaptado para Argentina.</div>
+        <div class="cf-step reveal reveal-delay-2">
+          <div class="cf-step-num">PASO 3</div>
+          <span class="cf-icon">📱</span>
+          <div class="cf-title">La app muestra todo</div>
+          <p class="cf-body">La app Android recibe el audio, muestra el mapa offline con los integrantes del grupo y te da el botón PTT. Voz, mapa y control en una pantalla.</p>
         </div>
       </div>
     </div>
@@ -1292,11 +817,10 @@
   <!-- FRECUENCIAS -->
   <section id="frecuencias">
     <div class="container">
-      <div class="section-label reveal">Canales legales</div>
-      <h2 class="section-title reveal reveal-delay-1">Preconfigurado.<br/>Habilitado. Listo.</h2>
+      <div class="section-label reveal">Sin trámites</div>
+      <h2 class="section-title reveal reveal-delay-1">Legal por diseño.</h2>
       <p class="section-body reveal reveal-delay-2">
-        Resolución ENACOM 5/2015. Canales asignados para grupos vehiculares en Argentina.
-        Sin gestión de frecuencias, sin trámites.
+        Res. 5/2015 — ENACOM. Tres canales VHF habilitados para grupos vehiculares en Argentina. Sin gestión de espectro, sin habilitaciones individuales.
       </p>
       <div class="freq-grid">
         <div class="freq-card primary reveal">
@@ -1304,7 +828,7 @@
           <div class="freq-number">139.970</div>
           <div class="freq-unit">MHz</div>
           <div class="freq-label">GRUPO</div>
-          <div class="freq-desc">Canal de uso general para comunicación del grupo en movimiento.</div>
+          <div class="freq-desc">Coordinación general del grupo en movimiento.</div>
           <div class="freq-legal">RES 5/2015 · ENACOM</div>
         </div>
         <div class="freq-card reveal reveal-delay-1">
@@ -1312,7 +836,7 @@
           <div class="freq-number">138.510</div>
           <div class="freq-unit">MHz</div>
           <div class="freq-label">ALTERNATIVO</div>
-          <div class="freq-desc">Canal secundario para comunicación cuando el principal está ocupado.</div>
+          <div class="freq-desc">Canal secundario cuando el principal está congestionado.</div>
           <div class="freq-legal">RES 5/2015 · ENACOM</div>
         </div>
         <div class="freq-card reveal reveal-delay-2">
@@ -1320,336 +844,212 @@
           <div class="freq-number">140.970</div>
           <div class="freq-unit">MHz</div>
           <div class="freq-label">EMERGENCIA</div>
-          <div class="freq-desc">Canal dedicado para situaciones de emergencia. Siempre activo en background.</div>
+          <div class="freq-desc">Reservado para emergencias. Siempre monitoreado.</div>
           <div class="freq-legal">RES 5/2015 · ENACOM</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- APP -->
-  <section id="app">
+  <!-- CASOS DE USO -->
+  <section id="montaje">
     <div class="container">
-      <div class="app-grid">
+      <div class="section-label reveal">Casos de uso</div>
+      <h2 class="section-title reveal reveal-delay-1">Funciona en cualquier<br/>terreno sin señal.</h2>
+      <p class="section-body reveal reveal-delay-2">Un solo kit. Cuatro escenarios donde la cobertura celular no llega y la comunicación no puede fallar.</p>
+      <div class="montaje-grid" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="montaje-card reveal">
+          <span class="montaje-icon">🏍</span>
+          <div class="montaje-title">Grupos de motos</div>
+          <p class="montaje-desc">La unidad va bajo el asiento o en el portaequipajes, alimentada de la batería de 12V. El PTT externo se instala en el manillar: hablás sin soltar el puño. El grupo se ve en el mapa en tiempo real.</p>
+          <div class="montaje-tags">
+            <span class="montaje-tag">PTT MANILLAR</span>
+            <span class="montaje-tag">BAJO ASIENTO</span>
+            <span class="montaje-tag">ANT. MAGNÉTICA</span>
+          </div>
+        </div>
+        <div class="montaje-card reveal reveal-delay-1">
+          <span class="montaje-icon">🚙</span>
+          <div class="montaje-title">4×4 y Offroad</div>
+          <p class="montoje-desc">Montaje en consola o bajo tablero. Antena exterior por pigtail SMA al techo o toldo. Todos los pasajeros escuchan por el teléfono. Perfecto para caravanas largas donde los vehículos se separan.</p>
+          <div class="montaje-tags">
+            <span class="montaje-tag">CONSOLA / TABLERO</span>
+            <span class="montaje-tag">PIGTAIL SMA</span>
+            <span class="montaje-tag">ANT. TECHO</span>
+          </div>
+        </div>
+        <div class="montaje-card reveal">
+          <span class="montaje-icon">🥾</span>
+          <div class="montaje-title">Trekking y Senderismo</div>
+          <p class="montaje-desc">El dispositivo va en la mochila alimentado por powerbank USB-C. La app en el celular muestra dónde está cada integrante del grupo. Coordinación real en sierra, montaña o selva sin señal.</p>
+          <div class="montaje-tags">
+            <span class="montaje-tag">POWERBANK USB-C</span>
+            <span class="montaje-tag">MOCHILA</span>
+            <span class="montaje-tag">GRUPO A PIE</span>
+          </div>
+        </div>
+        <div class="montaje-card reveal reveal-delay-1">
+          <span class="montaje-icon">🌾</span>
+          <div class="montaje-title">Trabajo Rural y Campo</div>
+          <p class="montaje-desc">Coordinación entre personal disperso en campo, estancia o zona agrícola sin cobertura. Montado en el vehículo o fijo en un punto con alimentación 12V. Alcance de kilómetros sin infraestructura.</p>
+          <div class="montaje-tags">
+            <span class="montaje-tag">12V FIJO O MÓVIL</span>
+            <span class="montaje-tag">SIN INFRAESTRUCTURA</span>
+            <span class="montaje-tag">LARGO ALCANCE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BALIZAS Y EMERGENCIA -->
+  <section id="balizas">
+    <div class="container">
+      <div class="section-label reveal">Seguridad del grupo</div>
+      <h2 class="section-title reveal reveal-delay-1">Emergencia, detención,<br/>reagrupamiento — un botón.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        Cuando el grupo se dispersa o algo sale mal, la voz no alcanza. Baqueano tiene tres acciones de un toque que mandan tu posición GPS exacta a todos — sin hablar, sin dictar coordenadas, sin margen de error.
+      </p>
+      <div class="balizas-grid">
+        <div class="balizas-visual reveal reveal-delay-1">
+          <img src="assets/Screenshot_20260628_190515.png"
+               alt="Chat VHF con coordenadas GPS y botón IR A UBICACIÓN"
+               class="balizas-img-main">
+          <img src="assets/Screenshot_20260628_190655.png"
+               alt="Mapa con posición GPS del grupo"
+               class="balizas-img-map">
+        </div>
         <div>
-          <div class="section-label reveal">Aplicación Android</div>
-          <h2 class="section-title reveal reveal-delay-1">La radio en la pantalla de tu celular.</h2>
-          <p class="section-body reveal reveal-delay-2">
-            La app Baqueano se conecta al dispositivo por WiFi y te da control total:
-            PTT por pantalla, ubicación del grupo en mapa offline y cambio de canal al instante.
-          </p>
-          <ul class="app-features reveal reveal-delay-3">
-            <li class="app-feature">
-              <div class="af-icon">🎙</div>
-              <div class="af-text">
-                <strong>PTT táctil</strong>
-                Botón de transmisión en pantalla. Mantené presionado para hablar, soltá para escuchar.
+          <div class="balizas-cards reveal reveal-delay-2">
+            <div class="baliza-card">
+              <div class="baliza-card-header">
+                <span class="baliza-btn rojo">EMERGENCIA</span>
+                <div class="baliza-card-title">Tu posición llega al grupo en segundos</div>
               </div>
-            </li>
-            <li class="app-feature">
-              <div class="af-icon">🗺</div>
-              <div class="af-text">
-                <strong>Mapa offline</strong>
-                Tiles OSM descargables desde la misma app. Ubicación de todos los miembros en tiempo real.
-              </div>
-            </li>
-            <li class="app-feature">
-              <div class="af-icon">📻</div>
-              <div class="af-text">
-                <strong>Selector de canal</strong>
-                Cambiá entre los tres canales legales con un toque. Indicador visual de actividad de RF.
-              </div>
-            </li>
-            <li class="app-feature">
-              <div class="af-icon">🔖</div>
-              <div class="af-text">
-                <strong>Alias de grupos</strong>
-                Asigná nombres a cada callsign. Cada integrante aparece identificado en el mapa.
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="phone-mockup reveal reveal-delay-2">
-          <div class="phone-frame">
-            <div class="phone-notch"></div>
-            <div class="phone-screen">
-              <div class="ps-topbar">
-                <span class="ps-callsign">LU3HT-1</span>
-                <span class="ps-freq">139.970 MHz</span>
-              </div>
-              <div class="ps-map">
-                <div class="map-dot" style="top:40%;left:45%"></div>
-                <div class="map-dot map-dot-2" style="top:55%;left:58%"></div>
-                <div class="map-dot" style="top:35%;left:62%"></div>
-              </div>
-              <div class="ps-members">
-                <div class="ps-member active">
-                  <div class="pm-avatar">M1</div>
-                  <span class="pm-name active">MOTO-1</span>
-                  <span class="pm-dist">0.0km</span>
-                </div>
-                <div class="ps-member">
-                  <div class="pm-avatar" style="border-color:#f0a020;color:#f0a020;">M2</div>
-                  <span class="pm-name">MOTO-2</span>
-                  <span class="pm-dist">1.4km</span>
-                </div>
-                <div class="ps-member">
-                  <div class="pm-avatar">M3</div>
-                  <span class="pm-name">MOTO-3</span>
-                  <span class="pm-dist">2.1km</span>
-                </div>
-              </div>
-              <div class="ptt-btn">PTT</div>
+              <p class="baliza-card-body">
+                Presionás el botón rojo en la pantalla PTT y todos los integrantes reciben tus coordenadas GPS exactas en el chat VHF. Cualquiera puede tocar <strong style="color:var(--green)">IR A UBICACIÓN</strong> y la navegación los lleva hasta vos — aunque estés en campo abierto sin señal.
+              </p>
             </div>
+            <div class="baliza-card">
+              <div class="baliza-card-header">
+                <span class="baliza-btn amber">DETENCIÓN</span>
+                <div class="baliza-card-title">Moto pinchada. Problema mecánico. Esperá tranquilo.</div>
+              </div>
+              <p class="baliza-card-body">
+                Si tenés que parar — pinchazo, problema en el motor, lo que sea — un toque avisa al grupo dónde estás y que estás esperando. Nadie sigue sin saber que te quedaste atrás.
+              </p>
+            </div>
+            <div class="baliza-card">
+              <div class="baliza-card-header">
+                <span class="baliza-btn green">REAGRUPAR</span>
+                <div class="baliza-card-title">El grupo se dividió. Punto de encuentro en el mapa.</div>
+              </div>
+              <p class="baliza-card-body">
+                Compartís un punto de reagrupamiento con un toque. Todos lo ven en el mapa y la app los navega hasta ahí. Sin coordenadas verbales, sin confusión de nombres de lugares.
+              </p>
+            </div>
+          </div>
+          <div class="balizas-nav-note reveal reveal-delay-3">
+            El chat VHF muestra las coordenadas de cada acción. Cualquier integrante toca <strong>IR A UBICACIÓN</strong> y su app abre la navegación — funciona completamente offline con los mapas descargados.
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- VEHÍCULOS -->
-  <section id="vehiculos">
+  <!-- FAQ -->
+  <section id="faq">
     <div class="container">
-      <div class="section-label reveal">Adaptación</div>
-      <h2 class="section-title reveal reveal-delay-1">Se monta en lo que<br/>ya tenés.</h2>
-      <p class="section-body reveal reveal-delay-2">
-        El kit es compacto y versátil. Se adapta a motos, 4×4 y pick-ups con el mismo hardware.
-        El punto de montaje cambia; la comunicación, no.
-      </p>
-      <div class="vehicle-types">
-        <div class="vehicle-card reveal">
-          <div class="vehicle-icon-large">🏍</div>
-          <div>
-            <div class="vehicle-title">Motocicletas</div>
-            <div class="vehicle-desc">
-              Montaje bajo asiento o en portaequipajes. Alimentación desde la batería de 12V.
-              Antena VHF flexible o magnética en tanque/cola. El comando PTT de manillar
-              se conecta al jack 3.5mm y te permite transmitir sin soltar el manubrio.
-            </div>
-            <div class="mount-points">
-              <span class="mount-tag">BAJO ASIENTO</span>
-              <span class="mount-tag">PORTAEQUIPAJES</span>
-              <span class="mount-tag">PTT MANILLAR</span>
-              <span class="mount-tag">ANT. MAGNÉTICA</span>
-            </div>
-          </div>
+      <div class="section-label reveal">Preguntas frecuentes</div>
+      <h2 class="section-title reveal reveal-delay-1">Lo que todo el mundo pregunta.</h2>
+      <div class="faq-grid">
+        <div class="faq-item reveal">
+          <div class="faq-q">¿Necesito licencia de radio para usarlo?</div>
+          <p class="faq-a">No. Opera en los canales VHF definidos por la Res. 5/2015 del MTTT para grupos vehiculares. Son de uso libre. El dispositivo no puede salirse de esos canales.</p>
         </div>
-        <div class="vehicle-card reveal reveal-delay-1">
-          <div class="vehicle-icon-large">🚙</div>
-          <div>
-            <div class="vehicle-title">4×4 y Pick-ups</div>
-            <div class="vehicle-desc">
-              Montaje en consola central o bajo tablero. Antena VHF exterior vía pigtail SMA.
-              Alimentación desde el encendedor de 12V o directo a batería.
-              El pigtail SMA de 5m permite ubicar el HT y la antena en posiciones óptimas.
-            </div>
-            <div class="mount-points">
-              <span class="mount-tag">CONSOLA</span>
-              <span class="mount-tag">BAJO TABLERO</span>
-              <span class="mount-tag">PIGTAIL SMA 5M</span>
-              <span class="mount-tag">ANT. EXTERIOR</span>
-            </div>
-          </div>
+        <div class="faq-item reveal reveal-delay-1">
+          <div class="faq-q">¿Funciona donde no hay señal de celular?</div>
+          <p class="faq-a">Sí, para eso está. El dispositivo crea su propia red WiFi local. Tu teléfono se conecta directamente a él. Sin internet, sin cobertura, sin datos móviles.</p>
+        </div>
+        <div class="faq-item reveal reveal-delay-2">
+          <div class="faq-q">¿Cuántos integrantes puede tener el grupo?</div>
+          <p class="faq-a">Ilimitados. Cada vehículo tiene su Baqueano. Todos se comunican por radio VHF. En la app ves a todos los que estén en el mismo canal con sus posiciones en el mapa.</p>
+        </div>
+        <div class="faq-item reveal reveal-delay-3">
+          <div class="faq-q">¿Qué pasa si alguien no tiene Baqueano?</div>
+          <p class="faq-a">Escucha y habla por radio igual — si tiene un handy VHF en la misma frecuencia. El mapa solo funciona para quienes tienen el kit completo con la app.</p>
+        </div>
+        <div class="faq-item reveal reveal-delay-4">
+          <div class="faq-q">¿Necesita conexión para los mapas?</div>
+          <p class="faq-a">No. Los mapas OSM se descargan desde la app antes de salir (con WiFi o datos). Una vez descargados, funcionan completamente offline en campo.</p>
+        </div>
+        <div class="faq-item reveal reveal-delay-5">
+          <div class="faq-q">¿Sirve para trekking o trabajo en campo, no solo vehículos?</div>
+          <p class="faq-a">Sí. El dispositivo se alimenta por USB-C (funciona con cualquier powerbank). En mochila o mochila lateral, da comunicación grupal en sierra, montaña, estancia o campo sin necesidad de vehículo ni cobertura.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ACCESORIOS -->
-  <section id="accesorios">
+  <!-- LISTA DE ESPERA -->
+  <section id="waitlist">
     <div class="container">
-      <div class="section-label reveal">Accesorios</div>
-      <h2 class="section-title reveal reveal-delay-1">Completá tu instalación.</h2>
-      <p class="section-body reveal reveal-delay-2">
-        Accesorios diseñados para el kit Baqueano. Compatibles con la unidad base
-        y disponibles por separado.
-      </p>
-      <div class="acc-grid">
-        <div class="acc-card reveal">
-          <div class="acc-placeholder">
-            <div class="placeholder-icon">📡</div>
-            <div class="placeholder-text">Imagen próximamente<br/>Pigtail SMA VHF</div>
-          </div>
-          <div class="acc-name">Pigtail SMA — VHF</div>
-          <div class="acc-desc">
-            Cable de extensión SMA macho a hembra para separar la unidad HT del punto
-            de montaje de la antena. Ideal para instalaciones en 4×4 donde la antena
-            va en el techo o toldo.
-          </div>
-          <div class="acc-specs">
-            <div class="acc-spec">
-              <span class="acc-spec-key">LONGITUD</span>
-              <span>5m / 3m</span>
-            </div>
-            <div class="acc-spec">
-              <span class="acc-spec-key">CONECTOR</span>
-              <span>SMA macho – SMA hembra</span>
-            </div>
-            <div class="acc-spec">
-              <span class="acc-spec-key">BANDA</span>
-              <span>VHF 134–174 MHz</span>
-            </div>
-          </div>
+      <div class="waitlist-inner">
+        <div class="section-label reveal">Beta abierta</div>
+        <h2 class="section-title reveal reveal-delay-1">Unidades limitadas.<br/>Sumate ahora.</h2>
+        <p class="section-body reveal reveal-delay-2">
+          Primera tanda de producción. Te avisamos cuando haya stock — sin spam, solo cuando haya algo real para contarte.
+        </p>
+
+        <div class="waitlist-success" id="waitlist-success">
+          <div class="ws-icon">✓</div>
+          <div class="ws-title">¡Estás en la lista!</div>
+          <p class="ws-body">Te avisamos cuando tengamos unidades disponibles. Gracias por el aguante.</p>
         </div>
-        <div class="acc-card reveal reveal-delay-1">
-          <div class="acc-placeholder">
-            <div class="placeholder-icon">🎮</div>
-            <div class="placeholder-text">Imagen próximamente<br/>Comando PTT manillar</div>
+
+        <form class="waitlist-form reveal reveal-delay-3" id="waitlist-form"
+              action="https://formspree.io/f/REEMPLAZAR_CON_ID"
+              method="POST">
+          <div class="waitlist-row">
+            <input type="text" name="nombre" placeholder="Tu nombre" required />
+            <input type="email" name="email" placeholder="tu@email.com" required />
           </div>
-          <div class="acc-name">Comando PTT — Manillar</div>
-          <div class="acc-desc">
-            Control de transmisión para montaje en manillar de moto. Se conecta al jack
-            3.5mm del HT y te permite transmitir sin soltar el manubrio. Imprescindible
-            para uso en movimiento.
+          <div class="waitlist-row">
+            <select name="tipo_grupo">
+              <option value="" disabled selected>Tipo de grupo</option>
+              <option value="moto">Moto</option>
+              <option value="4x4">4×4 / Offroad</option>
+              <option value="mixto">Mixto moto + 4×4</option>
+              <option value="trekking">Trekking / Senderismo</option>
+              <option value="rural">Trabajo rural / Campo</option>
+              <option value="otro">Otro</option>
+            </select>
+            <select name="cant_equipos">
+              <option value="" disabled selected>¿Cuántos equipos?</option>
+              <option value="1-2">1 a 2</option>
+              <option value="3-5">3 a 5</option>
+              <option value="6-10">6 a 10</option>
+              <option value="10+">Más de 10</option>
+            </select>
           </div>
-          <div class="acc-specs">
-            <div class="acc-spec">
-              <span class="acc-spec-key">MONTAJE</span>
-              <span>Manillar 22mm / 25mm</span>
-            </div>
-            <div class="acc-spec">
-              <span class="acc-spec-key">CONECTOR</span>
-              <span>Jack 3.5mm TRRS</span>
-            </div>
-            <div class="acc-spec">
-              <span class="acc-spec-key">CABLE</span>
-              <span>120cm espiral</span>
-            </div>
-          </div>
-        </div>
+          <input type="hidden" name="_subject" value="Baqueano — nuevo anotado en lista de espera" />
+          <button type="submit" class="waitlist-submit">Anotarme →</button>
+        </form>
+        <p class="waitlist-note reveal reveal-delay-4">Sin spam · Podés darte de baja cuando quieras</p>
       </div>
     </div>
   </section>
 
-  <!-- SPECS -->
+  <!-- SPECS — minimalizada, colapsable -->
   <section id="specs">
     <div class="container">
-      <div class="section-label reveal">Especificaciones técnicas</div>
-      <h2 class="section-title reveal reveal-delay-1">Los números que importan.</h2>
-      <table class="specs-table reveal reveal-delay-2">
-        <thead>
-          <tr><td>PARÁMETRO</td><td>VALOR</td></tr>
-        </thead>
-        <tbody>
-          <tr><td>Módulo de radio</td><td>SA818-V · VHF narrowband</td></tr>
-          <tr><td>Rango de frecuencia</td><td>134 — 174 MHz</td></tr>
-          <tr><td>Potencia TX</td><td>1W (Low) / 5W (High)</td></tr>
-          <tr><td>Modulación</td><td>FM — 12.5kHz / 25kHz</td></tr>
-          <tr><td>Controlador</td><td>ESP32-WROOM-32</td></tr>
-          <tr><td>Conectividad app</td><td>WiFi 2.4GHz SoftAP · UDP:4210</td></tr>
-          <tr><td>SSID</td><td>Baqueano-HT</td></tr>
-          <tr><td>Protocolo audio</td><td>KISS framing · raw PCM 8kHz</td></tr>
-          <tr><td>Alimentación</td><td>USB-C 5V / 12V con regulador</td></tr>
-          <tr><td>Dimensiones PCB</td><td>38.1 × 82.55 mm</td></tr>
-          <tr><td>Carcasa</td><td>Aluminio anodizado (jaula de Faraday)</td></tr>
-          <tr><td>Conectores</td><td>USB-C · SMA-F VHF · SMA-F WiFi · Jack 3.5mm</td></tr>
-          <tr><td>App Android</td><td>Kotlin + Compose · paquete ar.motorfar.app</td></tr>
-          <tr><td>Mapas</td><td>OSMDroid 6.1.18 — tiles offline</td></tr>
-          <tr><td>Licencia</td><td>GPL-3.0 (fork de kv4p HT)</td></tr>
-          <tr><td>Frecuencias legales</td><td>Res. 5/2015 ENACOM</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- CTA / CONTACTO -->
-  <section id="contacto">
-    <div class="cta-inner">
-      <div class="cta-badge reveal">
-        <span>🔴</span> Beta abierta — unidades limitadas
-      </div>
-      <h2 class="cta-title reveal reveal-delay-1">
-        ¿Querés equipar tu grupo?
-      </h2>
-      <p class="cta-body reveal reveal-delay-2">
-        Baqueano está en fase beta. Si tenés un grupo moto o 4×4 en Argentina
-        y querés ser de los primeros en probarlo, escribinos.
-        También podés revisar el código fuente en GitHub.
-      </p>
-      <div class="cta-actions reveal reveal-delay-3">
-        <a href="mailto:lukaz1979@gmail.com?subject=Baqueano%20-%20Consulta" class="btn-primary">
-          Escribinos por el kit
-        </a>
-        <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener" class="btn-secondary">
-          Ver en GitHub →
-        </a>
-      </div>
-      <span class="cta-email reveal reveal-delay-4">
-        o directo a <a href="mailto:lukaz1979@gmail.com">lukaz1979@gmail.com</a>
-      </span>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-logo"><img src="assets/baqueano-logo.png" alt="Baqueano" style="height:32px;filter:drop-shadow(0 0 6px rgba(240,160,32,0.3))"></div>
-      <div class="footer-links">
-        <a href="https://github.com/lukaz2004/MotoRFAR" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/lukaz2004/MotoRFAR/blob/main/KV4PHT/docs/PRIVACY-POLICY.md" target="_blank" rel="noopener">Privacidad</a>
-        <a href="https://github.com/lukaz2004/MotoRFAR/releases/tag/v1.0-beta1" target="_blank" rel="noopener">v1.0-beta1</a>
-      </div>
-      <div class="footer-meta">GPL-3.0 · Argentina · 2026 · Basado en <a href="https://github.com/VanceVagell/kv4p-ht" target="_blank" rel="noopener" style="color:inherit;opacity:0.6;">kv4p HT</a> de Vance Vagell (KV4P)</div>
-    </div>
-  </footer>
-
-  <script>
-    // ── Scroll reveal ────────────────────────────────────────────────────────
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-    // Trigger hero elements immediately
-    setTimeout(() => {
-      document.querySelectorAll('#hero .reveal').forEach(el => el.classList.add('visible'));
-    }, 100);
-
-    // ── Nav scroll behavior ──────────────────────────────────────────────────
-    const nav = document.querySelector('nav');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 60) {
-        nav.style.borderBottomColor = 'rgba(240,160,32,0.2)';
-      } else {
-        nav.style.borderBottomColor = 'var(--border)';
-      }
-    }, { passive: true });
-
-    // ── Animated frequency counter ────────────────────────────────────────
-    function animateCounter(el, target, duration = 1200) {
-      const start = performance.now();
-      const from = 0;
-      function update(now) {
-        const elapsed = now - start;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        el.textContent = (from + (target - from) * eased).toFixed(3);
-        if (progress < 1) requestAnimationFrame(update);
-      }
-      requestAnimationFrame(update);
-    }
-
-    const freqObserver = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting && !e.target.dataset.animated) {
-          e.target.dataset.animated = '1';
-          const target = parseFloat(e.target.textContent);
-          animateCounter(e.target, target, 1000);
-        }
-      });
-    }, { threshold: 0.5 });
-
-    document.querySelectorAll('.freq-number').forEach(el => freqObserver.observe(el));
-
-    // ── Signal dot animation stagger ─────────────────────────────────────
-    document.querySelectorAll('.signal-dot').forEach((dot, i) => {
-      dot.style.animationDelay = `${i * 0.3}s`;
-    });
-  </script>
-</body>
-</html>
+      <div class="section-label reveal">Especificaciones</div>
+      <h2 class="section-title reveal reveal-delay-1">Los detalles, para quien los necesita.</h2>
+      <div class="specs-accordion reveal reveal-delay-2">
+        <div class="specs-toggle" id="specs-toggle">
+          <span>Ver especificaciones técnicas completas</span>
+          <span class="specs-toggle-icon">+</span>
+        </div>
+        <div class="specs-table-wrap" id="specs-table">
+          <table class="specs-table">
+       
