@@ -530,9 +530,9 @@ class MainActivity : ComponentActivity() {
         beaconManager.start(serviceScope)
         startMovementUpdates()
         // Only start Man-Down detection if the user has explicitly enabled it
-        serviceScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            val manDownEnabled = viewModel.getAppDb().appSettingDao()
-                .getByName(ar.motorfar.app.data.AppSetting.SETTING_MAN_DOWN)
+        serviceScope.launch(Dispatchers.IO) {
+            val manDownEnabled = RadioServiceAccessor.getAppDb(viewModel).appSettingDao()
+                .getByName(AppSetting.SETTING_MAN_DOWN)
                 ?.value?.toBoolean() ?: false
             if (manDownEnabled) {
                 withContext(Dispatchers.Main) {

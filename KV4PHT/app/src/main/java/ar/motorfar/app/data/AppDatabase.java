@@ -13,6 +13,7 @@ package ar.motorfar.app.data;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
@@ -28,10 +29,9 @@ import java.util.concurrent.Executors;
  * Al primer inicio carga automáticamente los canales habilitados en Argentina (ENACOM).
  */
 @Database(
-    version = 6,
-    entities = {AppSetting.class, ChannelMemory.class, APRSMessage.class}
+    version = 7,
+    entities = {AppSetting.class, ChannelMemory.class, APRSMessage.class, RoutePoint.class}
 )
-@SuppressWarnings("java:S6548")
 public abstract class AppDatabase extends RoomDatabase {
 
     private static final String TAG = "AppDatabase";
@@ -39,6 +39,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract AppSettingDao appSettingDao();
     public abstract ChannelMemoryDao channelMemoryDao();
     public abstract APRSMessageDao aprsMessageDao();
+    public abstract RoutePointDao routePointDao();
 
     // Migraciones
     public static final Migration MIGRATION_1_2 = new MigrationFrom1To2();
@@ -46,6 +47,12 @@ public abstract class AppDatabase extends RoomDatabase {
     public static final Migration MIGRATION_3_4 = new MigrationFrom3To4();
     public static final Migration MIGRATION_4_5 = new MigrationFrom4To5();
     public static final Migration MIGRATION_5_6 = new MigrationFrom5To6();
+    public static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull androidx.sqlite.db.SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE IF NOT EXISTS `route_points` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `alias` TEXT NOT NULL)");
+        }
+    };
 
     @SuppressWarnings({"java:S3077", "java:S3008"})
     private static volatile AppDatabase INSTANCE;
@@ -73,7 +80,8 @@ public abstract class AppDatabase extends RoomDatabase {
                 MIGRATION_2_3,
                 MIGRATION_3_4,
                 MIGRATION_4_5,
-                MIGRATION_5_6
+                MIGRATION_5_6,
+                MIGRATION_6_7
             )
             // Sin fallbackToDestructiveMigration: si falta una migración, la app
             // lanzará IllegalStateException en lugar de borrar datos silenciosamente.

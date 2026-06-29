@@ -42,6 +42,10 @@ import java.util.concurrent.TimeUnit;
 
 public class AddEditMemoryActivity extends AppCompatActivity {
 
+    // Request codes (previously defined in MainActivityLegacy, now local)
+    public static final int REQUEST_ADD_MEMORY = 1;
+    public static final int REQUEST_EDIT_MEMORY = 2;
+
     // -----------------------------------------------------------------------
     // Frecuencias habilitadas en Argentina — ENACOM (uso libre sin licencia)
     // -----------------------------------------------------------------------
@@ -93,7 +97,7 @@ public class AddEditMemoryActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            isAdd = (extras.getInt("requestCode") == MainActivityLegacy.REQUEST_ADD_MEMORY);
+            isAdd = (extras.getInt("requestCode") == REQUEST_ADD_MEMORY);
             isVhfRadio = extras.getBoolean("isVhfRadio");
 
             if (!isAdd) {
