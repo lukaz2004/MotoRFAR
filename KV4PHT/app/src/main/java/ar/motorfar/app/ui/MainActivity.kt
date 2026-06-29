@@ -596,7 +596,7 @@ class MainActivity : ComponentActivity() {
             timestamp = System.currentTimeMillis(),
             latitude  = lat,
             longitude = lon,
-            alias     = "MOTO"
+            alias     = userAlias
         )
         _routePoints.update { it + point }
         executor.execute {
@@ -670,7 +670,7 @@ class MainActivity : ComponentActivity() {
         
         // Carga puntos de ruta guardados
         executor.execute {
-            val points = db.routePointDao().getPointsForAlias("MOTO")
+            val points = db.routePointDao().getPointsForAlias(userAlias)
             _routePoints.value = points
         }
 
