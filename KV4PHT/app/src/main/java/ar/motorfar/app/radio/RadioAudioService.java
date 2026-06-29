@@ -73,7 +73,7 @@ import ar.motorfar.app.javAX25.ax25.Packet;
 import ar.motorfar.app.radio.Protocol.KissParser;
 import ar.motorfar.app.radio.Protocol.RcvCommand;
 import ar.motorfar.app.radio.Protocol.WindowUpdate;
-import ar.motorfar.app.ui.MainActivityLegacy;
+import ar.motorfar.app.ui.MainActivity;
 import ar.motorfar.app.ui.ToneHelper;
 import lombok.Getter;
 import lombok.Setter;
@@ -206,9 +206,16 @@ public class RadioAudioService extends Service {
     // === Android Components ===
     private final IBinder binder = new RadioBinder();
     private static final RadioAudioServiceCallbacks NO_OP_CALLBACKS = new RadioAudioServiceCallbacks() {};
-    @Setter
-    @Getter
-    private @NonNull RadioAudioServiceCallbacks callbacks = NO_OP_CALLBACKS;
+    private java.lang.ref.WeakReference<RadioAudioServiceCallbacks> callbacksRef = new java.lang.ref.WeakReference<>(NO_OP_CALLBACKS);
+
+    public void setCallbacks(@NonNull RadioAudioServiceCallbacks callbacks) {
+        this.callbacksRef = new java.lang.ref.WeakReference<>(callbacks);
+    }
+
+    public @NonNull RadioAudioServiceCallbacks getCallbacks() {
+        RadioAudioServiceCallbacks cb = callbacksRef.get();
+        return cb != null ? cb : NO_OP_CALLBACKS;
+    }
     private final Handler handler = new Handler(Looper.getMainLooper());
     private static final long CONNECT_RETRY_PERIOD_MS = 500L;
     private final ConnectionController connectionController =
@@ -445,7 +452,13 @@ public class RadioAudioService extends Service {
         Notification notification = buildForegroundNotification();
 
         try {
-            startForeground(SERVICE_ID, notification);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(SERVICE_ID, notification,
+                        android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION |
+                        android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            } else {
+                startForeground(SERVICE_ID, notification);
+            }
         } catch (SecurityException e) {
             Log.e(TAG, "Unable to start foreground radio service.", e);
             stopSelf();
@@ -458,7 +471,7 @@ public class RadioAudioService extends Service {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private Notification buildForegroundNotification() {
-        Intent openApp = new Intent(this, MainActivityLegacy.class);
+        Intent openApp = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(
                 this, 0, openApp, PendingIntent.FLAG_IMMUTABLE);
 
@@ -501,7 +514,7 @@ public class RadioAudioService extends Service {
     }
 
     private PendingIntent buildPendingIntent() {
-        Intent open = new Intent(this, MainActivityLegacy.class);
+        Intent open = new Intent(this, MainActivity.class);
         return PendingIntent.getActivity(this, 0, open,
                 PendingIntent.FLAG_IMMUTABLE);
     }
@@ -620,7 +633,7 @@ public class RadioAudioService extends Service {
         }
         activeFrequencyStr = frequencyStr;
         activeMemoryId = -1; // Reset active memory ID since we're tuning to a frequency, not a memory.
-        callbacks.tunedToFreq(activeFrequencyStr);
+        getCallbacks().tunedToFreq(activeFrequencyStr);
         radioModule.beginUpdate();
         try {
             radioModule.setMemoryId(-1);
@@ -685,7 +698,7 @@ public class RadioAudioService extends Service {
             radioModule.endUpdate();
         }
         updateForegroundNotification(memory.name + " (" + memory.frequency + " MHz)");
-        callbacks.scannedToMemory(memory.memoryId);
+        getCallbacks().scannedToMemory(memory.memoryId);
     }
 
     private String getTxFreq(String txFreq, int offset, int khz) {
@@ -767,7 +780,7 @@ public class RadioAudioService extends Service {
         audioTrack.setVolume(0.0f);
         audioTrackVolume = 0.0f;
         audioTrack.setAuxEffectSendLevel(0.0f);
-        callbacks.audioTrackCreated();
+        getCallbacks().audioTrackCreated();
     }
 
     private void setTxRunAwayTimer() {
@@ -792,12 +805,12 @@ public class RadioAudioService extends Service {
         }
         if (mode == RadioMode.RX && isTxAllowed()) {
             setMode(RadioMode.TX);
-            callbacks.sMeterUpdate(0);
+            getCallbacks().sMeterUpdate(0);
             setTxRunAwayTimer();
             radioModule.pttDown();
             audioTrackVolume = 0.0f;
             Optional.ofNullable(audioTrack).ifPresent(t -> t.setVolume(0.0f));
-            callbacks.txStarted();
+            getCallbacks().txStarted();
         } else {
             Log.w(TAG, "Attempted to start PTT when not allowed", new Throwable());
         }
@@ -809,7 +822,7 @@ public class RadioAudioService extends Service {
             audioTrackVolume = 0.0f;
             Optional.ofNullable(audioTrack).ifPresent(t -> t.setVolume(0.0f));
             radioModule.pttUp();
-            callbacks.txEnded();
+            getCallbacks().txEnded();
         }
     }
 
@@ -887,7 +900,7 @@ public class RadioAudioService extends Service {
             .findFirst();
         if (device.isPresent()) {
             Log.d(TAG, connectLog("attemptUsbConnect(): found ESP32 device"));
-            callbacks.hideSnackBar();
+            getCallbacks().hideSnackBar();
             setupSerialConnection();
             return;
         }
@@ -960,7 +973,7 @@ public class RadioAudioService extends Service {
 
     /**
      * Sets up the USB serial connection to the ESP32, and starts listening for data.
-     * If no ESP32 is found, it will call radioMissing() on the callbacks.
+     * If no ESP32 is found, it will call radioMissing() on the getCallbacks().
      */
     public void setupSerialConnection() {
         Log.d(TAG, connectLog("setupSerialConnection(): begin"));
@@ -1047,14 +1060,14 @@ public class RadioAudioService extends Service {
         if (wakeLock != null && !wakeLock.isHeld()) {
             wakeLock.acquire();
         }
-        callbacks.radioConnected();
+        getCallbacks().radioConnected();
     }
 
     private void startProtocolHandshake() {
         int handshakeId = ++handshakeSeq;
         activeHandshakeId = handshakeId;
         waitingForHello = true;
-        callbacks.radioModuleHandshake();
+        getCallbacks().radioModuleHandshake();
         Log.i(TAG, handshakeLog(handshakeId, "start(): waiting for HELLO(version)"));
         scheduleHelloTimeout(handshakeId);
     }
@@ -1068,7 +1081,7 @@ public class RadioAudioService extends Service {
             waitingForHello = false;
             Log.w(TAG, handshakeLog(handshakeId, "waitForHello(): timed out after " + HELLO_TIMEOUT_MS + "ms"));
             setMode(RadioMode.BAD_FIRMWARE);
-            callbacks.missingFirmware();
+            getCallbacks().missingFirmware();
             connectionController.markAttemptFinished();
         };
         handler.postDelayed(helloTimeoutRunnable, HELLO_TIMEOUT_MS);
@@ -1099,7 +1112,7 @@ public class RadioAudioService extends Service {
     private void validateHello(int handshakeId, Optional<Protocol.Hello> hello) {
         if (!hello.isPresent()) {
             Log.e(TAG, handshakeLog(handshakeId, "HELLO missing valid Hello payload; firmware upgrade required"));
-            callbacks.outdatedFirmware(0);
+            getCallbacks().outdatedFirmware(0);
             setMode(RadioMode.BAD_FIRMWARE);
             connectionController.markAttemptFinished();
             return;
@@ -1109,7 +1122,7 @@ public class RadioAudioService extends Service {
         Protocol.FirmwareVersion version = helloPayload.getVersion();
         Log.d(TAG, handshakeLog(handshakeId, "hello=" + helloPayload));
         if (version.getVer() < FirmwareUtils.PACKAGED_FIRMWARE_VER) {
-            callbacks.outdatedFirmware(version.getVer());
+            getCallbacks().outdatedFirmware(version.getVer());
             setMode(RadioMode.BAD_FIRMWARE);
             connectionController.markAttemptFinished();
             return;
@@ -1119,7 +1132,7 @@ public class RadioAudioService extends Service {
         if (Protocol.RadioStatus.RADIO_STATUS_NOT_FOUND.equals(version.getRadioModuleStatus())) {
             Log.w(TAG, handshakeLog(handshakeId, "radio module not found"));
             setMode(RadioMode.BAD_FIRMWARE);
-            callbacks.radioModuleNotFound();
+            getCallbacks().radioModuleNotFound();
             connectionController.markAttemptFinished();
             return;
         }
@@ -1150,7 +1163,7 @@ public class RadioAudioService extends Service {
         updateForegroundNotification("Sin radio · Conectate a " + WifiTransport.AP_SSID);
         if (!radioMissingNotified) {
             radioMissingNotified = true;
-            callbacks.radioMissing(); // Notify UI only on transition into missing state
+            getCallbacks().radioMissing(); // Notify UI only on transition into missing state
         }
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release(); // Don't keep screen on
@@ -1192,12 +1205,12 @@ public class RadioAudioService extends Service {
 
     private void clearRadioTypeAndLimits() {
         radioModule.clearFirmwareVersion();
-        callbacks.setRadioType(RadioModuleType.UNKNOWN);
+        getCallbacks().setRadioType(RadioModuleType.UNKNOWN);
     }
 
     public void handleHello(Protocol.Hello hello) {
         radioModule.seedFirmwareVersion(hello.getVersion());
-        callbacks.setRadioType(getRadioType());
+        getCallbacks().setRadioType(getRadioType());
         updateTxLimitsForBand();
     }
 
@@ -1314,7 +1327,7 @@ public class RadioAudioService extends Service {
                 } finally {
                     radioModule.endUpdate();
                 }
-                callbacks.scannedToMemory(candidate.memoryId);
+                getCallbacks().scannedToMemory(candidate.memoryId);
                 return;
             }
             // Otherwise, move on to the next memory in the list.
@@ -1426,7 +1439,7 @@ public class RadioAudioService extends Service {
             activeMemoryId = state.getMemoryId();
         }
         handleDeviceState(state);
-        callbacks.initialDeviceStateReceived();
+        getCallbacks().initialDeviceStateReceived();
     }
 
     void markRadioTransportReady() {
@@ -1435,12 +1448,12 @@ public class RadioAudioService extends Service {
 
     private void handleDeviceState(Protocol.DeviceState state) {
         radioModule.updateDeviceState(state);
-        callbacks.moduleTxStateChanged(radioModule.isDeviceTxActive());
+        getCallbacks().moduleTxStateChanged(radioModule.isDeviceTxActive());
         if (radioModule.isAppliedStateInSync() && radioModule.getTxFrequency() > 0) {
             updateTxAllowed(radioModule.getTxFrequency());
         }
         if (getMode() == RadioMode.RX || getMode() == RadioMode.SCAN) {
-            callbacks.sMeterUpdate(radioModule.getSMeter9Value());
+            getCallbacks().sMeterUpdate(radioModule.getSMeter9Value());
         }
         checkScanDueToSquelch();
         if (radioModule.didPhysPttChange()) {
@@ -1448,11 +1461,11 @@ public class RadioAudioService extends Service {
             if (physPttDown) {
                 if (getMode() == RadioMode.RX && isTxAllowed()) {
                     startPtt();
-                    callbacks.forcedPttStart();
+                    getCallbacks().forcedPttStart();
                 }
             } else if (getMode() == RadioMode.TX) {
                 endPtt();
-                callbacks.forcedPttEnd();
+                getCallbacks().forcedPttEnd();
             }
         }
     }
@@ -1519,7 +1532,7 @@ public class RadioAudioService extends Service {
                 String target = msg.getTargetCallsign().trim().toUpperCase();
                 // Handle messages addressed to the current callsign
                 if (!msg.isAck() && target.equals(callsign.toUpperCase())) {
-                    callbacks.showNotification(
+                    getCallbacks().showNotification(
                         MESSAGE_NOTIFICATION_CHANNEL_ID,
                         MESSAGE_NOTIFICATION_TO_YOU_ID,
                         aprsPacket.getSourceCall() + " messaged you",
@@ -1530,7 +1543,7 @@ public class RadioAudioService extends Service {
                 }
             }
             // Notify callbacks about the received packet
-            callbacks.packetReceived(aprsPacket);
+            getCallbacks().packetReceived(aprsPacket);
         } catch (Exception e) {
             Log.d(TAG, "Unable to parse an APRS packet, skipping.");
         }
@@ -1539,7 +1552,7 @@ public class RadioAudioService extends Service {
     /**
      * Sends a position beacon via APRS.
      * This method can only be called when the radio is in RX mode.
-     * If Google Play Services are not available, it will call unknownLocation() on the callbacks.
+     * If Google Play Services are not available, it will call unknownLocation() on the getCallbacks().
      */
     @RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
     public void sendPositionBeacon() {
@@ -1562,9 +1575,16 @@ public class RadioAudioService extends Service {
             return;
         }
 
+        // Check permissions before accessing FusedLocationProviderClient to avoid SecurityException
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Can't get GPS position: permission ACCESS_FINE_LOCATION not granted.");
+            getCallbacks().unknownLocation();
+            return;
+        }
+
         if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getBaseContext()) != ConnectionResult.SUCCESS) {
             Log.d(TAG, "Can't get GPS position: missing Google Play Services.");
-            callbacks.unknownLocation();
+            getCallbacks().unknownLocation();
             return;
         }
         FusedLocationProviderClient locationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -1574,14 +1594,14 @@ public class RadioAudioService extends Service {
                 if (location != null) {
                     performPositionBeacon(location.getLatitude(), location.getLongitude());
                 } else {
-                    callbacks.unknownLocation();
+                    getCallbacks().unknownLocation();
                 }
-            }).addOnFailureListener(e -> callbacks.unknownLocation());
+            }).addOnFailureListener(e -> getCallbacks().unknownLocation());
     }
 
     private void performPositionBeacon(final double latitude, final double longitude) {
         if ("Current".equals(aprsBeaconFrequency)) {
-            callbacks.startingAprsBeacon(activeFrequencyStr);
+            getCallbacks().startingAprsBeacon(activeFrequencyStr);
             sendPositionBeacon(latitude, longitude, false);
             return;
         }
@@ -1591,7 +1611,7 @@ public class RadioAudioService extends Service {
         final int originalMemoryId = activeMemoryId;
         final String originalFrequencyStr = activeFrequencyStr;
 
-        callbacks.startingAprsBeacon(aprsBeaconFrequency);
+        getCallbacks().startingAprsBeacon(aprsBeaconFrequency);
 
         if (wasScanning) {
             setScanning(false, false);
@@ -1642,7 +1662,7 @@ public class RadioAudioService extends Service {
             final APRSPacket aprsPacket = new APRSPacket(callsign, "BEACON", DEFAULT_DIGIPEATERS, posField.getRawBytes());
             aprsPacket.getPayload().addAprsData(APRSTypes.T_POSITION, posField);
             txAX25Packet(new Packet(aprsPacket.toAX25Frame()));
-            callbacks.sentAprsBeacon(myPos.getLatitude(), myPos.getLongitude(), activeFrequencyStr, wasSwitch);
+            getCallbacks().sentAprsBeacon(myPos.getLatitude(), myPos.getLongitude(), activeFrequencyStr, wasSwitch);
         } catch (Exception e) {
             Log.w(TAG, "Exception while trying to beacon APRS location.", e);
         }
@@ -1686,7 +1706,7 @@ public class RadioAudioService extends Service {
             txAX25Packet(ax25Packet);
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Error: sending APRS packet", e);
-            callbacks.chatError(e.getMessage());
+            getCallbacks().chatError(e.getMessage());
             return -1;
         }
         return messageNumber - 1;
