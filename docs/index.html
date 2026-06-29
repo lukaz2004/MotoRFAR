@@ -536,6 +536,7 @@
         <li><a href="#beneficios">Beneficios</a></li>
         <li><a href="#frecuencias">Frecuencias</a></li>
         <li><a href="#balizas">Emergencia</a></li>
+        <li><a href="#man-down">Man-Down</a></li>
         <li><a href="#faq">FAQ</a></li>
         <li><a href="#specs">Specs</a></li>
       </ul>
@@ -755,6 +756,20 @@
                 Todo funciona offline. El dispositivo crea su propia red WiFi local. Sin datos, sin costo mensual.
               </div>
             </li>
+            <li class="beneficio-item reveal reveal-delay-4">
+              <div class="bene-icon rojo" style="border-color:rgba(220,38,38,0.4);background:rgba(220,38,38,0.06);">🛡</div>
+              <div class="bene-text">
+                <strong>Detección automática de caídas</strong>
+                Si detecta un golpe fuerte seguido de quietud, manda tu posición GPS al grupo. Activable desde la app.
+              </div>
+            </li>
+            <li class="beneficio-item reveal reveal-delay-4">
+              <div class="bene-icon green">🛣</div>
+              <div class="bene-text">
+                <strong>Registro de ruta</strong>
+                La app guarda el recorrido completo de cada salida. Podés revisar el track después aunque no haya habido señal.
+              </div>
+            </li>
           </ul>
         </div>
         <div class="bene-visual reveal reveal-delay-2">
@@ -968,6 +983,58 @@
     </div>
   </section>
 
+  <!-- MAN DOWN -->
+  <section id="man-down" style="background: linear-gradient(180deg, var(--bg) 0%, #1a0a0a 50%, var(--bg) 100%);">
+    <div class="container">
+      <div class="section-label reveal" style="color:#f87171;">Seguridad activa</div>
+      <h2 class="section-title reveal reveal-delay-1">Si caés, el grupo<br/>lo sabe solo.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        La app detecta cuando hay un golpe fuerte seguido de inmovilidad — una caída, un accidente. Sin que toques nada, manda tu posición GPS exacta a todo el grupo por VHF. Activás esta función desde Ajustes cuando querés usarla.
+      </p>
+      <div class="balizas-grid" style="margin-top:56px;">
+        <div class="balizas-visual reveal reveal-delay-1">
+          <img src="assets/Screenshot_20260628_190338.png"
+               alt="App Baqueano — PTT y acciones de emergencia"
+               class="balizas-img-main">
+        </div>
+        <div>
+          <div class="balizas-cards reveal reveal-delay-2">
+            <div class="baliza-card">
+              <div class="baliza-card-header">
+                <span class="baliza-btn rojo">GOLPE DETECTADO</span>
+                <div class="baliza-card-title">El acelerómetro siente el impacto</div>
+              </div>
+              <p class="baliza-card-body">
+                El sensor del celular detecta la fuerza del golpe en menos de un segundo — sin GPS, sin internet, sin que tengas que hacer nada.
+              </p>
+            </div>
+            <div class="baliza-card">
+              <div class="baliza-card-header">
+                <span class="baliza-btn amber">CUENTA REGRESIVA</span>
+                <div class="baliza-card-title">30 segundos para cancelar si estás bien</div>
+              </div>
+              <p class="baliza-card-body">
+                Antes de transmitir, la app espera 30 segundos y muestra una pantalla para cancelar. Si estás bien y fue una falsa alarma, la detenés. Si no respondés, asume lo peor.
+              </p>
+            </div>
+            <div class="baliza-card">
+              <div class="baliza-card-header">
+                <span class="baliza-btn green">ALERTA AUTOMÁTICA</span>
+                <div class="baliza-card-title">Tu posición llega al grupo por VHF</div>
+              </div>
+              <p class="baliza-card-body">
+                Si no cancelaste, Baqueano transmite tus coordenadas GPS exactas por el canal de emergencia. Cualquier integrante con la app toca <strong style="color:var(--green)">IR A UBICACIÓN</strong> y la navegación lo lleva hasta vos.
+              </p>
+            </div>
+          </div>
+          <div class="balizas-nav-note reveal reveal-delay-3">
+            Activás la detección de caídas desde <strong>Ajustes → Detección Man-Down</strong>. Desactivada por defecto para que vos decidás cuándo usarla.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FAQ -->
   <section id="faq">
     <div class="container">
@@ -997,6 +1064,14 @@
         <div class="faq-item reveal reveal-delay-5">
           <div class="faq-q">¿Sirve para trekking o trabajo en campo, no solo vehículos?</div>
           <p class="faq-a">Sí. El dispositivo se alimenta por USB-C (funciona con cualquier powerbank). En mochila o mochila lateral, da comunicación grupal en sierra, montaña, estancia o campo sin necesidad de vehículo ni cobertura.</p>
+        </div>
+        <div class="faq-item reveal reveal-delay-5">
+          <div class="faq-q">¿Qué es Man-Down y cómo funciona?</div>
+          <p class="faq-a">Es la detección automática de caídas. Si el acelerómetro del celular detecta un impacto fuerte seguido de inmovilidad, la app da 30 segundos para cancelar y — si no respondés — manda tu posición GPS al grupo por el canal de emergencia VHF. Se activa desde Ajustes, viene desactivada por defecto.</p>
+        </div>
+        <div class="faq-item reveal reveal-delay-5">
+          <div class="faq-q">¿Se guarda el recorrido de cada salida?</div>
+          <p class="faq-a">Sí. La app registra automáticamente el track GPS de cada salida mientras estás conectado. Podés revisarlo después aunque hayas estado todo el tiempo sin señal.</p>
         </div>
       </div>
     </div>
