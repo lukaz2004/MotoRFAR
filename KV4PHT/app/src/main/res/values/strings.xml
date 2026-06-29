@@ -113,6 +113,7 @@
     <string name="closed_captions">Subtítulos automáticos</string>
     <string name="system_setting">Ajuste del sistema</string>
     <string name="disable_animations">Desactivar animaciones</string>
+    <string name="man_down_detection">Detección Man-Down (caídas)</string>
     <string name="your_callsign">Tu alias en el grupo</string>
     <string name="advanced">Avanzado</string>
     <string name="versions">Versiones</string>
@@ -156,4 +157,14 @@
     <string name="freq_144_8000" translatable="false">144.8000</string>
     <string name="freq_145_1750" translatable="false">145.1750</string>
     <string name="freq_145_8250" translatable="false">145.8250</string>
+
+    <!-- Modo Ruta y Alertas -->
+    <string name="route_mode_off_auto">MODO RUTA · desactivado (vehículo detenido)</string>
+    <string name="route_mode_on">MODO RUTA ACTIVO · pantalla siempre encendida</string>
+    <string name="offline_maps_soon">Descarga de mapas offline — próximamente</string>
+    <string name="listen_only_on">MODO SOLO ESCUCHA · TX deshabilitada</string>
+    <string name="listen_only_off">MODO NORMAL · TX habilitada</string>
+    <string name="listen_only_blocked">MODO SOLO ESCUCHA · soltá el modo escucha para transmitir</string>
+    <string name="waypoint_sent">WAYPOINT · posición enviada al grupo</string>
+    <string name="waypoint_no_radio">Sin radio · waypoint no transmitido</string>
 </resources>

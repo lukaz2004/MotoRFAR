@@ -189,6 +189,7 @@ public class SettingsActivity extends AppCompatActivity {
                 setTextIfPresent(settings, AppSetting.SETTING_CALLSIGN, R.id.callsignTextInputEditText);
                 setSwitchIfPresent(settings, AppSetting.SETTING_STICKY_PTT, R.id.stickyPTTSwitch);
                 setSwitchIfPresent(settings, AppSetting.SETTING_DISABLE_ANIMATIONS, R.id.noAnimationsSwitch);
+                setSwitchIfPresent(settings, AppSetting.SETTING_MAN_DOWN, R.id.manDownSwitch);
                 setSwitchIfPresent(settings, AppSetting.SETTING_APRS_BEACON_POSITION, R.id.aprsPositionSwitch);
                 if (settings.containsKey(AppSetting.SETTING_APRS_BEACON_FREQUENCY)) {
                     setDropdownIfPresent(settings, AppSetting.SETTING_APRS_BEACON_FREQUENCY, R.id.aprsBeaconFreqTextView);
@@ -295,6 +296,7 @@ public class SettingsActivity extends AppCompatActivity {
         attachTextView(R.id.micGainBoostTextView, this::setMicGainBoost);
         attachSwitch(R.id.stickyPTTSwitch, this::setStickyPTT);
         attachSwitch(R.id.noAnimationsSwitch, this::setNoAnimations);
+        attachSwitch(R.id.manDownSwitch, this::setManDownEnabled);
         attachSwitch(R.id.aprsPositionSwitch, this::setAprsBeaconPosition);
         attachTextView(R.id.aprsBeaconFreqTextView, this::setAprsBeaconFrequency);
     }
@@ -348,5 +350,9 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setNoAnimations(boolean enabled) {
         saveAppSettingAsync(AppSetting.SETTING_DISABLE_ANIMATIONS, Boolean.toString(enabled));
+    }
+
+    private void setManDownEnabled(boolean enabled) {
+        saveAppSettingAsync(AppSetting.SETTING_MAN_DOWN, Boolean.toString(enabled));
     }
 }

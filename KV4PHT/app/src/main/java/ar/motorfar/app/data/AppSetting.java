@@ -46,6 +46,7 @@ public class AppSetting {
     public static final String SETTING_SMART_BEACON = "smart_beacon";
     public static final String SETTING_MAP_ZOOM = "map_zoom";
     public static final String SETTING_MAP_ROTATE = "map_rotate";
+    public static final String SETTING_MAN_DOWN = "man_down_enabled";
 
     public AppSetting(@NonNull String name, String value) {
         this.name = name;

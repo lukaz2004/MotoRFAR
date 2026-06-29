@@ -213,6 +213,16 @@
                     android:textColor="@color/primary"
                     android:layout_marginTop="8dp"/>
 
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/manDownSwitch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="@dimen/touch_target_min"
+                    android:text="@string/man_down_detection"
+                    android:textSize="18sp"
+                    android:textColor="@color/primary"
+                    android:layout_marginTop="8dp"/>
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

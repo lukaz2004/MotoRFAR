@@ -69,6 +69,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import ar.motorfar.app.ui.OnboardingHelper
 import ar.motorfar.app.ui.onboarding.OnboardingActivity
 import android.view.WindowManager
@@ -103,7 +107,7 @@ class MainActivity : ComponentActivity() {
             _uiState.update { it.copy(isRouteActive = false) }
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             android.widget.Toast.makeText(
-                this, "MODO RUTA · desactivado (vehículo detenido)", android.widget.Toast.LENGTH_SHORT
+                this, getString(R.string.route_mode_off_auto), android.widget.Toast.LENGTH_SHORT
             ).show()
         }
     }
@@ -115,6 +119,12 @@ class MainActivity : ComponentActivity() {
 
     // Punto al que centrar el mapa al tocar "ir a ubicación" en una alerta del chat
     private val _mapFocus = MutableStateFlow<Pair<Double, Double>?>(null)
+    private val _routePoints = MutableStateFlow<List<ar.motorfar.app.data.RoutePoint>>(emptyList())
+
+    private var fallDetectionManager: FallDetectionManager? = null
+    private var countdownJob: Job? = null
+    private val countdownTimeSec = 30
+    private val _countdownValue = MutableStateFlow<Int?>(null)
 
     private var pendingAlertType: AlertHelper.AlertType? = null
 
@@ -139,6 +149,12 @@ class MainActivity : ComponentActivity() {
             currentHeadingDeg = loc.bearing.toDouble()
             _uiState.update { it.copy(headingDeg = loc.bearing) }
         }
+
+        // Registro de ruta: guarda punto si te moviste > 20m del último
+        if (uiState.value.isRouteActive) {
+            saveRoutePoint(loc.latitude, loc.longitude)
+        }
+
         // Modo Ruta: si la velocidad baja de 3 km/h, programa la auto-desactivación
         if (uiState.value.isRouteActive) {
             if (currentSpeedKmh < 3.0) {
@@ -173,15 +189,25 @@ class MainActivity : ComponentActivity() {
     // ── ServiceConnection ─────────────────────────────────────────────
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            radioService = (binder as RadioAudioService.RadioBinder).service
+            val service = (binder as RadioAudioService.RadioBinder).service
+            radioService = service
             radioServiceBound = true
-            radioService?.let { RadioServiceAccessor.setCallbacks(it, serviceCallbacks) }
+            RadioServiceAccessor.setCallbacks(service, serviceCallbacks)
+            service.start() // CRITICAL: Start the service connection controller
             _uiState.update { it.copy(isConnected = true) }
         }
         override fun onServiceDisconnected(name: ComponentName?) {
             radioService = null
             radioServiceBound = false
             _uiState.update { it.copy(isConnected = false) }
+        }
+    }
+
+    private val serviceShutdownReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (RadioAudioService.ACTION_SERVICE_STOPPING == intent?.action) {
+                finish()
+            }
         }
     }
 
@@ -276,6 +302,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Inicializa detector de caídas
+        fallDetectionManager = FallDetectionManager(this) {
+            if (countdownJob == null) {
+                startFallCountdown()
+            }
+        }
+
+        // Registra el receiver para cerrar la app si el servicio se detiene
+        val filter = android.content.IntentFilter(RadioAudioService.ACTION_SERVICE_STOPPING)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(serviceShutdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(serviceShutdownReceiver, filter)
+        }
+
         // Aplica el tema guardado ANTES de componer (evita el flash del default)
         _uiState.update { it.copy(theme = ar.motorfar.app.ui.compose.theme.ThemePreference.get(this)) }
 
@@ -299,6 +340,13 @@ class MainActivity : ComponentActivity() {
 
         observeChannelMemories()
 
+        // Sync local countdown state with UI state
+        serviceScope.launch {
+            _countdownValue.collect { value ->
+                _uiState.update { it.copy(fallCountdown = value) }
+            }
+        }
+
         // DEMO: miembros de grupo simulados para visualizar el mapa sin hardware.
         // (solo en debug — quitar/condicionar para producción)
         if (ar.motorfar.app.BuildConfig.DEBUG) {
@@ -310,6 +358,8 @@ class MainActivity : ComponentActivity() {
             val groupMembers by _groupMembers.collectAsState()
             val chatMessages by _chatMessages.collectAsState()
             val mapFocus by _mapFocus.collectAsState()
+            val routePoints by _routePoints.collectAsState()
+
             MotoRFARTheme(state.theme) {
                 val colors = LocalMotoRFARColors.current
                 val navController = rememberNavController()
@@ -414,6 +464,7 @@ class MainActivity : ComponentActivity() {
                             }
                             MapScreen(
                                 groupMembers    = groupMembers,
+                                routePoints     = routePoints,
                                 locationGranted = state.locationGranted,
                                 headingDeg      = state.headingDeg,
                                 focusTarget     = mapFocus,
@@ -443,7 +494,7 @@ class MainActivity : ComponentActivity() {
                                 onDownloadMaps           = {
                                     android.widget.Toast.makeText(
                                         this@MainActivity,
-                                        "Descarga de mapas offline — próximamente",
+                                        getString(R.string.offline_maps_soon),
                                         android.widget.Toast.LENGTH_SHORT
                                     ).show()
                                 },
@@ -478,12 +529,24 @@ class MainActivity : ComponentActivity() {
         startAndBindService()
         beaconManager.start(serviceScope)
         startMovementUpdates()
+        // Only start Man-Down detection if the user has explicitly enabled it
+        serviceScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val manDownEnabled = viewModel.getAppDb().appSettingDao()
+                .getByName(ar.motorfar.app.data.AppSetting.SETTING_MAN_DOWN)
+                ?.value?.toBoolean() ?: false
+            if (manDownEnabled) {
+                withContext(Dispatchers.Main) {
+                    fallDetectionManager?.start()
+                }
+            }
+        }
     }
 
     override fun onStop() {
         super.onStop()
         beaconManager.stop()
         stopMovementUpdates()
+        fallDetectionManager?.stop()
         if (radioServiceBound) {
             unbindService(serviceConnection)
             radioServiceBound = false
@@ -515,9 +578,78 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterReceiver(serviceShutdownReceiver)
         serviceScope.cancel()
         executor.shutdownNow()
         routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
+    }
+
+    private fun saveRoutePoint(lat: Double, lon: Double) {
+        val lastPoint = _routePoints.value.lastOrNull()
+        if (lastPoint != null) {
+            val results = FloatArray(1)
+            android.location.Location.distanceBetween(lastPoint.latitude, lastPoint.longitude, lat, lon, results)
+            if (results[0] < 20f) return // Solo guardar si nos movimos > 20m
+        }
+
+        val point = ar.motorfar.app.data.RoutePoint(
+            timestamp = System.currentTimeMillis(),
+            latitude  = lat,
+            longitude = lon,
+            alias     = "MOTO"
+        )
+        _routePoints.update { it + point }
+        executor.execute {
+            RadioServiceAccessor.getAppDb(viewModel).routePointDao().insert(point)
+        }
+    }
+
+    // ── Fall Detection ───────────────────────────────────────────────
+    private fun startFallCountdown() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        
+        countdownJob = serviceScope.launch {
+            // Solicita foco de audio exclusivo para sonar sobre la música
+            val focusRequest = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                    .setAudioAttributes(android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build())
+                    .build()
+            } else null
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && focusRequest != null) {
+                audioManager.requestAudioFocus(focusRequest)
+            }
+
+            for (i in countdownTimeSec downTo 0) {
+                _countdownValue.value = i
+                val progress = (countdownTimeSec - i).toFloat() / countdownTimeSec
+                ToneHelper.playCountdownBeep(progress, alertVolume / 100f)
+                
+                // El intervalo entre beeps se acorta (de 1s a 250ms)
+                val sleepTime = (1000 - (progress * 750)).toLong()
+                delay(sleepTime)
+            }
+
+            // Si llega a 0, dispara la emergencia
+            _countdownValue.value = null
+            transmitGroupAlert(AlertHelper.AlertType.EMERGENCY)
+            countdownJob = null
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && focusRequest != null) {
+                audioManager.abandonAudioFocusRequest(focusRequest)
+            }
+        }
+    }
+
+    private fun cancelFallCountdown() {
+        countdownJob?.cancel()
+        countdownJob = null
+        _countdownValue.value = null
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        audioManager.abandonAudioFocus(null)
     }
 
     // ── Service binding ───────────────────────────────────────────────
@@ -532,8 +664,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun loadSettings() {
-        val settings = RadioServiceAccessor.getAppDb(viewModel).appSettingDao().getAll()
+        val db = RadioServiceAccessor.getAppDb(viewModel)
+        val settings = db.appSettingDao().getAll()
             .associateBy(AppSetting::name, AppSetting::value)
+        
+        // Carga puntos de ruta guardados
+        executor.execute {
+            val points = db.routePointDao().getPointsForAlias("MOTO")
+            _routePoints.value = points
+        }
+
         callsign           = settings.getOrDefault(AppSetting.SETTING_CALLSIGN, "")
         activeFrequencyStr = settings.getOrDefault("activeFrequencyStr", "139.9700")
         userAlias          = settings.getOrDefault(AppSetting.SETTING_USER_ALIAS, "MOTO")
@@ -581,6 +721,7 @@ class MainActivity : ComponentActivity() {
             MainUiAction.PttPressed    -> {
                 // En modo escucha el PTT no transmite (guard de seguridad)
                 if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
+                vibrate()
                 ToneHelper.playPttDown(vol)
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
@@ -605,13 +746,19 @@ class MainActivity : ComponentActivity() {
             }
             is MainUiAction.ChannelSelected -> tuneToChannel(action.freq)
             // EMERGENCIA siempre disponible, incluso en modo escucha (seguridad)
-            MainUiAction.EmergencyAlert -> { ToneHelper.playEmergencyBeep(vol); requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY) }
+            MainUiAction.EmergencyAlert -> { 
+                vibrate()
+                ToneHelper.playEmergencyBeep(vol)
+                requestLocationAndTransmit(AlertHelper.AlertType.EMERGENCY) 
+            }
             MainUiAction.StopAlert     -> {
                 if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
+                vibrate()
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.STOP)
             }
             MainUiAction.RegroupAlert  -> {
                 if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
+                vibrate()
                 ToneHelper.playAlertBeep(vol); showAlertDialog(AlertHelper.AlertType.REGROUP)
             }
             MainUiAction.ToggleListenOnly -> toggleListenOnly()
@@ -627,7 +774,7 @@ class MainActivity : ComponentActivity() {
                     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     stationaryStartMs = 0L
                     android.widget.Toast.makeText(
-                        this, "MODO RUTA ACTIVO · pantalla siempre encendida", android.widget.Toast.LENGTH_SHORT
+                        this, getString(R.string.route_mode_on), android.widget.Toast.LENGTH_SHORT
                     ).show()
                 } else {
                     window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -638,19 +785,49 @@ class MainActivity : ComponentActivity() {
             }
             MainUiAction.SendWaypoint -> {
                 if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
-                val svc = radioService
-                if (svc != null && uiState.value.isConnected) {
-                    svc.sendPositionBeacon()
-                    ToneHelper.playPttUp(vol)
-                    android.widget.Toast.makeText(
-                        this, "WAYPOINT · posición enviada al grupo", android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                
+                val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                
+                if (hasPerm) {
+                    performSendWaypoint()
                 } else {
-                    android.widget.Toast.makeText(
-                        this, "Sin radio · waypoint no transmitido", android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                    // Reutilizamos el launcher de permisos para GPS
+                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                 }
             }
+            MainUiAction.CancelFallCountdown -> cancelFallCountdown()
+        }
+    }
+
+    private fun performSendWaypoint() {
+        val vol = alertVolume / 100f
+        val svc = radioService
+        if (svc != null && uiState.value.isConnected) {
+            svc.sendPositionBeacon()
+            
+            // También guardamos nuestro waypoint en la base de datos local
+            getLastKnownLocation()?.let { saveRoutePoint(it.latitude, it.longitude) }
+
+            ToneHelper.playPttUp(vol)
+            android.widget.Toast.makeText(
+                this, getString(R.string.waypoint_sent), android.widget.Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            android.widget.Toast.makeText(
+                this, getString(R.string.waypoint_no_radio), android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun vibrate() {
+        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            vibrator.vibrate(android.os.VibrationEffect.createOneShot(100, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(100)
         }
     }
 
@@ -661,7 +838,7 @@ class MainActivity : ComponentActivity() {
         // Aviso del estado al que se pasa, para que el cambio sea inequívoco
         android.widget.Toast.makeText(
             this,
-            if (listenOnly) "MODO SOLO ESCUCHA · TX deshabilitada" else "MODO NORMAL · TX habilitada",
+            if (listenOnly) getString(R.string.listen_only_on) else getString(R.string.listen_only_off),
             android.widget.Toast.LENGTH_SHORT
         ).show()
         executor.execute {
@@ -677,7 +854,7 @@ class MainActivity : ComponentActivity() {
     private fun notifyListenOnlyBlocked() {
         android.widget.Toast.makeText(
             this,
-            "MODO SOLO ESCUCHA · soltá el modo escucha para transmitir",
+            getString(R.string.listen_only_blocked),
             android.widget.Toast.LENGTH_SHORT
         ).show()
     }
