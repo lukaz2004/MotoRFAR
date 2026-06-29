@@ -18,6 +18,21 @@
 
 ---
 
+## ESTADO AL 2026-06-28
+
+### Cambios de la sesión 2026-06-28
+- ✅ **Web:** baqueano.netlify.app EN VIVO — hero animado, capturas reales de la app, logo
+- ✅ **App (Gemini fixes, commit 6082bfc):** 3 bugs corregidos:
+  - `RadioAudioService.java` línea 209: carácter `b` suelto → eliminado
+  - `RadioAudioService.java`: `MainActivityLegacy` (borrada) → `MainActivity`
+  - `FallDetectionManager.kt`: `SENSOR_DELAY_NORMAL` → `SENSOR_DELAY_GAME` (20ms)
+  - TxWhitelist verificado ✅
+- ✅ **App (commit dd06575):** Toggle Man-Down en Ajustes — desactivado por defecto (evita falsas alarmas en baches)
+- ⬜ **Email profesional:** info@baqueano.com → ver `_PROYECTO/GUIA_EMAIL_CHATBOT.md`
+- ⬜ **WhatsApp chatbot:** ManyChat → ver `_PROYECTO/GUIA_EMAIL_CHATBOT.md`
+
+---
+
 ## ESTADO AL 2026-06-27
 
 | Etapa | Estado | Bloqueante |
