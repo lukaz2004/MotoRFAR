@@ -31,13 +31,14 @@ construir, solo la idea registrada.
   acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
   infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,
   ya transmite posición por VHF) en vez de ser algo nuevo desde cero.
-- ⬜ **Man-Down: countdown variable según fuerza G del golpe** (propuesto 2026-07-05).
-  Golpe fuerte → cuenta corta (más urgente); golpe leve → cuenta larga (más
-  chance de cancelar). Requiere: `FallDetectionManager` guarde el pico de
-  aceleración y lo pase en el callback (`onFallDetected: (peakG: Float) -> Unit`
-  en vez de `() -> Unit`), y `countdownTimeSec` deje de ser fijo. Se agrupa con
-  el pendiente ya existente de calibración de Man-Down (prueba en dispositivo
-  físico) — no tiene sentido calibrar umbrales dos veces por separado.
+- ✅ **Man-Down: countdown variable según fuerza G del golpe** (hecho 2026-07-05).
+  `FallDetectionManager` pasa el pico de aceleración al callback; `countdownSecondsFor()`
+  en `MainActivity.kt` mapea: >60 m/s² (~6G) → 8s, 40-60 (~4-6G) → 15s, 25-40
+  (~2.5-4G, original) → 30s. Build verificado. Umbrales de corte (60/40) son
+  punto de partida — se calibran junto con el resto de Man-Down en dispositivo
+  físico (mismo pendiente de siempre, no se probó en moto real todavía).
+  ⬜ Nota menor: el copy de la web sigue diciendo "30 segundos" fijo en la
+  sección Man-Down — ya no es siempre así, ajustar cuando se retome la web.
 - ⬜ **Web — copy de CTCSS ("Tu grupo escucha solo a tu grupo")**: la frase "Sin
   interferencias" sobrevende, mismo problema que el ya corregido "200 motos" de
   la card de al lado — CTCSS filtra lo que escuchás, no separa el RF real (ver
