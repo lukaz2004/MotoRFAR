@@ -1,0 +1,861 @@
+{
+    "$schema": "https://schemas.kicad.org/erc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-07-04T22:46:06",
+    "ignored_checks": [
+        {
+            "description": "Global label only appears once in the schematic",
+            "key": "single_global_label"
+        },
+        {
+            "description": "Four connection points are joined together",
+            "key": "four_way_junction"
+        },
+        {
+            "description": "SPICE model issue",
+            "key": "simulation_model_issue"
+        },
+        {
+            "description": "Assigned footprint doesn't match footprint filters",
+            "key": "footprint_filter"
+        }
+    ],
+    "included_severities": [
+        "error"
+    ],
+    "kicad_version": "10.0.3",
+    "sheets": [
+        {
+            "path": "/",
+            "uuid_path": "/8d95c9c7-5cc4-4882-841b-38628c0aab26",
+            "violations": [
+                {
+                    "description": "La etiqueta jerárquica 'Enable/~{Reset}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Enable/~{Reset}'",
+                            "pos": {
+                                "x": 0.29845,
+                                "y": 1.23825
+                            },
+                            "uuid": "54c64808-f720-4a4a-9af0-ebbab3891665"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol #PWR043 Pin 1 [Power input, Line]",
+                            "pos": {
+                                "x": 0.4445,
+                                "y": 0.31115
+                            },
+                            "uuid": "b7e409fa-c625-4ee6-9a10-3bbe948f264a"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'ADC Bias' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'ADC Bias'",
+                            "pos": {
+                                "x": 0.75565,
+                                "y": 1.8669
+                            },
+                            "uuid": "43e09c3d-1a17-4f64-9e6a-96b48adec1df"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 5 [VIO, Power input, Line]",
+                            "pos": {
+                                "x": 0.78105,
+                                "y": 0.26035
+                            },
+                            "uuid": "8517ce8e-f4e1-4771-a2e6-e79d9f2708fc"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'USB Tx' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'USB Tx'",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.31115
+                            },
+                            "uuid": "5ca0114d-16f0-4fbd-9aa7-966581cc9b0b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'USB Rx' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'USB Rx'",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.33655
+                            },
+                            "uuid": "a11c09f8-5e7a-4d5d-bdf5-41cd78322157"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica '~{RTS}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica '~{RTS}'",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.36195
+                            },
+                            "uuid": "11cab6a2-7516-4f07-930b-28c2e7a549fc"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica '~{DTR}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica '~{DTR}'",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.43815
+                            },
+                            "uuid": "e42a4065-c593-42ec-912e-430f294c000b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 17 [SUSPEND, Output, Line]",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.53975
+                            },
+                            "uuid": "e14b6660-2e42-4f42-93b3-39bdb037f489"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 15 [~{SUSPEND}, Output, Line]",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.56515
+                            },
+                            "uuid": "b1a954ec-a1c7-4d3c-840a-03ac1715db5e"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 14 [~{TXT}/GPIO.0, Bidirectional, Line]",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.61595
+                            },
+                            "uuid": "4433d68a-55fb-491f-9dd0-d5299049cd64"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 13 [~{RXT}/GPIO.1, Bidirectional, Line]",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.64135
+                            },
+                            "uuid": "fd0cab65-8b32-42b1-911b-bada2563d5e9"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 12 [RS485/GPIO.2, Bidirectional, Line]",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.66675
+                            },
+                            "uuid": "77281972-d237-45b1-89d8-c0951f61995b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol U4 Pin 11 [~{WAKEUP}/GPIO.3, Bidirectional, Line]",
+                            "pos": {
+                                "x": 0.88265,
+                                "y": 0.69215
+                            },
+                            "uuid": "e4d29236-d88b-48ff-81eb-7db7dd5d27c1"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO0/~{Program}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO0/~{Program}'",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.016
+                            },
+                            "uuid": "e193dd0e-dec0-4c8c-af35-0989295f6b63"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "No se ha definido la clase de red Strapping Pin",
+                    "items": [
+                        {
+                            "description": "Etiqueta directiva [Clase de red Strapping Pin]",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.016
+                            },
+                            "uuid": "a150d528-fab7-4068-ab3c-43eee1e159db"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "undefined_netclass"
+                },
+                {
+                    "description": "Label not connected",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO2'",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0414
+                            },
+                            "uuid": "34cbee12-63ce-4264-92f2-293635256c64"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "label_dangling"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO2' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO2'",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0414
+                            },
+                            "uuid": "34cbee12-63ce-4264-92f2-293635256c64"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "No se ha definido la clase de red Strapping Pin",
+                    "items": [
+                        {
+                            "description": "Etiqueta directiva [Clase de red Strapping Pin]",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0414
+                            },
+                            "uuid": "6256c778-e776-4098-9f9c-324b39a3265c"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "undefined_netclass"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO12' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO12'",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0668
+                            },
+                            "uuid": "21c24a13-19e1-409e-aa02-f687a2b68d10"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "No se ha definido la clase de red Strapping Pin",
+                    "items": [
+                        {
+                            "description": "Etiqueta directiva [Clase de red Strapping Pin]",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0668
+                            },
+                            "uuid": "db4c2830-03c4-4563-96a4-e39a223b9e54"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "undefined_netclass"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO15' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO15'",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0922
+                            },
+                            "uuid": "b51e5668-fa07-4adc-8c59-410716f1d1ab"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "No se ha definido la clase de red Strapping Pin",
+                    "items": [
+                        {
+                            "description": "Etiqueta directiva [Clase de red Strapping Pin]",
+                            "pos": {
+                                "x": 0.889,
+                                "y": 1.0922
+                            },
+                            "uuid": "cad61932-68f3-43dd-8f3e-fe353c5ff3e2"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "undefined_netclass"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio Power Hi-Z Hi/~{Low}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio Power Hi-Z Hi/~{Low}'",
+                            "pos": {
+                                "x": 0.9398,
+                                "y": 1.47955
+                            },
+                            "uuid": "a0fd901f-7de1-46e0-95ff-4d2a9cccf8f8"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica '~{DTR}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica '~{DTR}'",
+                            "pos": {
+                                "x": 1.04775,
+                                "y": 0.4826
+                            },
+                            "uuid": "407ada4d-3ebd-44c5-9c9c-1cfb3cae6b16"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica '~{RTS}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica '~{RTS}'",
+                            "pos": {
+                                "x": 1.04775,
+                                "y": 0.6096
+                            },
+                            "uuid": "25f38ad4-6090-4677-8119-bc585c1c1484"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Enable/~{Reset}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Enable/~{Reset}'",
+                            "pos": {
+                                "x": 1.23825,
+                                "y": 0.4318
+                            },
+                            "uuid": "92d202bf-5f30-4525-8940-20a57934cf1d"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO0/~{Program}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO0/~{Program}'",
+                            "pos": {
+                                "x": 1.23825,
+                                "y": 0.6604
+                            },
+                            "uuid": "4bf5dab3-93a1-4796-ad6d-72e120921d7b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO0/~{Program}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO0/~{Program}'",
+                            "pos": {
+                                "x": 1.27,
+                                "y": 1.2573
+                            },
+                            "uuid": "5c70a6e1-65e2-4990-96cb-10eb7f7823fd"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Enable/~{Reset}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Enable/~{Reset}'",
+                            "pos": {
+                                "x": 1.27635,
+                                "y": 1.0033
+                            },
+                            "uuid": "0238d140-1a46-4c62-a977-375d556638c8"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'PTT Button Left' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'PTT Button Left'",
+                            "pos": {
+                                "x": 1.41605,
+                                "y": 1.46685
+                            },
+                            "uuid": "679ae451-830c-4ed1-a859-45ab6ac196cc"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Pin not connected",
+                    "items": [
+                        {
+                            "description": "Symbol #PWR027 Pin 1 [Power input, Line]",
+                            "pos": {
+                                "x": 1.4859,
+                                "y": 1.5367
+                            },
+                            "uuid": "562d0777-ca94-45f7-881c-937f24151f44"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio Mic In' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio Mic In'",
+                            "pos": {
+                                "x": 1.6129,
+                                "y": 0.22225
+                            },
+                            "uuid": "f201528a-6c96-4b84-ac90-f2d25ec92362"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio AF Out' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio AF Out'",
+                            "pos": {
+                                "x": 1.8669,
+                                "y": 0.22225
+                            },
+                            "uuid": "aa5c7b16-9d5c-4744-bf0a-370e3680b723"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'SAO SDA' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'SAO SDA'",
+                            "pos": {
+                                "x": 1.8669,
+                                "y": 1.1557
+                            },
+                            "uuid": "78746a23-e296-4f2c-a953-4ea19dc484a8"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO32' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO32'",
+                            "pos": {
+                                "x": 1.9812,
+                                "y": 1.1811
+                            },
+                            "uuid": "7dcc1463-1422-47eb-8fa0-102de3f2bbcd"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO27' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO27'",
+                            "pos": {
+                                "x": 2.1082,
+                                "y": 1.1811
+                            },
+                            "uuid": "47dbbe75-07f5-47c8-b4da-a26507bce88e"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'NeoPixel DI' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'NeoPixel DI'",
+                            "pos": {
+                                "x": 2.1971,
+                                "y": 1.4986
+                            },
+                            "uuid": "c36e8634-a595-4872-8562-bd4e1dcf8bd7"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'SAO SCK' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'SAO SCK'",
+                            "pos": {
+                                "x": 2.2225,
+                                "y": 1.1557
+                            },
+                            "uuid": "7a21e17d-2f08-4507-9521-34830a3f1e01"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio Mic In' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio Mic In'",
+                            "pos": {
+                                "x": 2.2479,
+                                "y": 0.4699
+                            },
+                            "uuid": "ac6f3d54-1d2e-4573-962b-31a09e4fe0ee"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio ~{PTT}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio ~{PTT}'",
+                            "pos": {
+                                "x": 2.2479,
+                                "y": 0.5207
+                            },
+                            "uuid": "d1390c9d-78b1-4b65-a6ac-53a7ebb01727"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio ~{Power Down}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio ~{Power Down}'",
+                            "pos": {
+                                "x": 2.2479,
+                                "y": 0.5461
+                            },
+                            "uuid": "d29b05d7-1cd6-4958-9ece-f5ecc0caf472"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio Power Hi-Z Hi/~{Low}' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio Power Hi-Z Hi/~{Low}'",
+                            "pos": {
+                                "x": 2.2479,
+                                "y": 0.5969
+                            },
+                            "uuid": "b6c05562-089e-4b40-93ba-0c32d1227892"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol D1 Pin 4 [VDD, Power input, Line]",
+                            "pos": {
+                                "x": 2.30505,
+                                "y": 1.4224
+                            },
+                            "uuid": "4d080718-aa52-45c3-9289-f0ff0e12fe6b"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "Input Power pin not driven by any Output Power pins",
+                    "items": [
+                        {
+                            "description": "Symbol D1 Pin 2 [VSS, Power input, Line]",
+                            "pos": {
+                                "x": 2.30505,
+                                "y": 1.5748
+                            },
+                            "uuid": "008df839-8790-460a-913f-72505ce43971"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "power_pin_not_driven"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'NeoPixel DO' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'NeoPixel DO'",
+                            "pos": {
+                                "x": 2.5019,
+                                "y": 1.13665
+                            },
+                            "uuid": "bafb4107-ccea-433e-bfcd-1f0fce21e1f6"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO32' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO32'",
+                            "pos": {
+                                "x": 2.5019,
+                                "y": 1.18745
+                            },
+                            "uuid": "47f36a80-9106-4570-a4ff-e709def466bc"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio Rx' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio Rx'",
+                            "pos": {
+                                "x": 2.5527,
+                                "y": 0.5207
+                            },
+                            "uuid": "1571b39b-af59-4bad-89c0-352d08fe1435"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'Radio Tx' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'Radio Tx'",
+                            "pos": {
+                                "x": 2.5527,
+                                "y": 0.5461
+                            },
+                            "uuid": "e5e3ec8d-4def-4050-90de-2e4377ca6ce7"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'NeoPixel DO' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'NeoPixel DO'",
+                            "pos": {
+                                "x": 2.59715,
+                                "y": 1.4986
+                            },
+                            "uuid": "588939b2-fdfa-49d8-8072-1927336bb9a6"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO12' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO12'",
+                            "pos": {
+                                "x": 2.6289,
+                                "y": 1.11125
+                            },
+                            "uuid": "11c3b8ff-a2ed-49c9-a3ab-2f5bd5ec324f"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO14' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO14'",
+                            "pos": {
+                                "x": 2.6289,
+                                "y": 1.13665
+                            },
+                            "uuid": "49ac6cd0-a275-4cb4-878e-bbaeede04b34"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO15' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO15'",
+                            "pos": {
+                                "x": 2.6289,
+                                "y": 1.16205
+                            },
+                            "uuid": "7fb7dc48-e759-4a8b-92a0-5e130b22a2a5"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO35' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO35'",
+                            "pos": {
+                                "x": 2.6289,
+                                "y": 1.18745
+                            },
+                            "uuid": "b7d2cfac-967e-4d50-8a76-fb1ed7c57b3a"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                },
+                {
+                    "description": "La etiqueta jerárquica 'GPIO15' en la hoja raíz no puede conectarse a una hoja padre inexistente",
+                    "items": [
+                        {
+                            "description": "Etiqueta jerárquica 'GPIO15'",
+                            "pos": {
+                                "x": 2.66065,
+                                "y": 0.9017
+                            },
+                            "uuid": "b0470cfa-28db-4de9-b02b-b8823a057596"
+                        }
+                    ],
+                    "severity": "error",
+                    "type": "pin_not_connected"
+                }
+            ]
+        }
+    ],
+    "source": "kv4p-ht.kicad_sch"
+}
