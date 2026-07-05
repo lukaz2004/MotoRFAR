@@ -125,7 +125,13 @@ class MainActivity : ComponentActivity() {
 
     private var fallDetectionManager: FallDetectionManager? = null
     private var countdownJob: Job? = null
-    private val countdownTimeSec = 30
+    // Cuenta regresiva de Man-Down: más corta cuanto más fuerte el golpe
+    // (más urgente avisar); más larga si es leve (más chance de cancelar a mano).
+    private fun countdownSecondsFor(peakAcceleration: Float): Int = when {
+        peakAcceleration > 60f -> 8  // Golpe muy fuerte, ~>6G
+        peakAcceleration > 40f -> 15 // Golpe fuerte, ~4-6G
+        else -> 30                  // Golpe moderado, ~2.5-4G (valor original)
+    }
     private val _countdownValue = MutableStateFlow<Int?>(null)
     private var fallAudioFocusRequest: android.media.AudioFocusRequest? = null
 
@@ -306,9 +312,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         // Inicializa detector de caídas
-        fallDetectionManager = FallDetectionManager(this) {
+        fallDetectionManager = FallDetectionManager(this) { peakAcceleration ->
             if (countdownJob == null) {
-                startFallCountdown()
+                startFallCountdown(countdownSecondsFor(peakAcceleration))
             }
         }
 
@@ -625,9 +631,9 @@ class MainActivity : ComponentActivity() {
     }
 
     // ── Fall Detection ───────────────────────────────────────────────
-    private fun startFallCountdown() {
+    private fun startFallCountdown(countdownTimeSec: Int) {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-        
+
         countdownJob = serviceScope.launch {
             // Solicita foco de audio exclusivo para sonar sobre la música
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {

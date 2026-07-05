@@ -13,18 +13,19 @@ import kotlin.math.sqrt
  */
 class FallDetectionManager(
     context: Context,
-    private val onFallDetected: () -> Unit
+    private val onFallDetected: (peakAcceleration: Float) -> Unit
 ) : SensorEventListener {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-    
+
     private var lastImpactTime = 0L
     private val IMPACT_THRESHOLD = 25f // Aprox 2.5G
     private val QUIET_THRESHOLD = 1.5f // Movimiento mínimo
     private val WAIT_AFTER_IMPACT_MS = 2000L // Esperar 2s para ver si quedó quieto
-    
+
     private var isMonitoringQuiet = false
+    private var peakAcceleration = 0f // Pico del golpe, para escalar la cuenta regresiva
 
     fun start() {
         accelerometer?.let {
@@ -48,16 +49,20 @@ class FallDetectionManager(
         if (acceleration > IMPACT_THRESHOLD) {
             lastImpactTime = System.currentTimeMillis()
             isMonitoringQuiet = true
+            if (acceleration > peakAcceleration) peakAcceleration = acceleration
         } else if (isMonitoringQuiet) {
             val now = System.currentTimeMillis()
             if (now - lastImpactTime > WAIT_AFTER_IMPACT_MS) {
                 // Si después del impacto la aceleración es baja (quieto)
                 if (acceleration < QUIET_THRESHOLD) {
                     isMonitoringQuiet = false
-                    onFallDetected()
+                    val peak = peakAcceleration
+                    peakAcceleration = 0f
+                    onFallDetected(peak)
                 } else {
                     // Si se mueve, cancelamos el monitoreo de caída
                     isMonitoringQuiet = false
+                    peakAcceleration = 0f
                 }
             }
         }
