@@ -3,446 +3,430 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MotoRFAR HT — Radio VHF para grupos de motos</title>
+  <title>Baqueano — Radio VHF para grupos de motos</title>
   <meta name="description" content="Walkie-talkie VHF digital para grupos de motociclistas y 4x4 en Argentina. Sin licencia, sin internet, sin costo mensual. Open source." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Share+Tech&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --green: #00ff41;
       --green-dim: #00cc33;
-      --green-faint: #003310;
-      --green-glow: rgba(0, 255, 65, 0.15);
-      --bg: #050505;
-      --bg-card: #0a0a0a;
-      --bg-card2: #0f0f0f;
-      --border: #1a3a1a;
-      --text: #c0e0c0;
+      --green-faint: rgba(0,255,65,0.06);
+      --green-glow: rgba(0,255,65,0.12);
+      --green-glow2: rgba(0,255,65,0.28);
+      --bg: #050a06;
+      --bg2: #07100a;
+      --bg-card: #091209;
+      --bg-card2: #0c160c;
+      --border: rgba(0,255,65,0.1);
+      --border-dim: rgba(0,255,65,0.06);
+      --text: #b8d4b8;
       --text-dim: #5a7a5a;
+      --text-bright: #d8f0d8;
       --mono: 'Share Tech Mono', 'Courier New', monospace;
-      --sans: 'Share Tech', 'Courier New', monospace;
+      --sans: 'Rajdhani', sans-serif;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--mono);
-      font-size: 15px;
+      font-family: var(--sans);
+      font-size: 16px;
       line-height: 1.7;
       overflow-x: hidden;
     }
 
-    /* ── scanline overlay ── */
-    body::before {
+    /* scanline sutil */
+    body::after {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.07) 2px,
-        rgba(0,0,0,0.07) 4px
+        0deg, transparent, transparent 3px,
+        rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px
       );
-      pointer-events: none;
-      z-index: 9999;
+      pointer-events: none; z-index: 9999;
     }
 
     a { color: var(--green); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a:hover { color: #66ff88; }
 
     /* ── NAV ── */
     nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(5,5,5,0.95);
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(5,10,6,0.88);
       border-bottom: 1px solid var(--border);
-      padding: 0.6rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      backdrop-filter: blur(4px);
+      padding: 0.75rem 2rem;
+      display: flex; align-items: center; gap: 1.5rem;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
-    nav .logo {
-      color: var(--green);
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.6rem;
+      color: var(--green); font-family: var(--mono);
+      font-size: 0.95rem; letter-spacing: 0.12em;
       white-space: nowrap;
     }
-    nav .logo span { color: var(--text-dim); font-weight: 400; }
+    .nav-logo img { height: 26px; width: auto; }
     nav ul {
-      list-style: none;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.2rem 1.2rem;
-      margin-left: auto;
+      list-style: none; display: flex; flex-wrap: wrap;
+      gap: 0.2rem 1.5rem; margin-left: auto;
     }
     nav ul a {
-      color: var(--text-dim);
-      font-size: 0.82rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      color: var(--text-dim); font-family: var(--sans);
+      font-size: 0.82rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      transition: color 0.25s var(--ease);
     }
-    nav ul a:hover { color: var(--green); text-decoration: none; }
+    nav ul a:hover { color: var(--green); }
 
-    /* ── SECTIONS ── */
-    section { padding: 5rem 1.5rem; max-width: 900px; margin: 0 auto; }
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: 0.08s; }
+    .d2 { transition-delay: 0.18s; }
+    .d3 { transition-delay: 0.28s; }
+    .d4 { transition-delay: 0.38s; }
+    .d5 { transition-delay: 0.48s; }
+
+    /* ── LAYOUT ── */
+    section { padding: 5rem 2rem; max-width: 960px; margin: 0 auto; }
 
     .label {
-      font-size: 0.72rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      margin-bottom: 0.8rem;
-    }
-    .label::before { content: '// '; color: var(--green-dim); }
-
-    h1, h2 {
       font-family: var(--mono);
-      color: var(--green);
-      line-height: 1.15;
+      font-size: 0.68rem; letter-spacing: 0.28em;
+      text-transform: uppercase; color: var(--green-dim);
+      margin-bottom: 0.9rem;
     }
+    .label::before { content: '// '; opacity: 0.55; }
+
+    h1, h2 { font-family: var(--mono); color: var(--green); line-height: 1.15; }
+    h2 { font-size: 2rem; margin-bottom: 1.5rem; }
 
     /* ── HERO ── */
     #hero {
-      min-height: 92vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-top: 4rem;
-      padding-bottom: 4rem;
+      min-height: 96vh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding-top: 5rem; padding-bottom: 5rem;
       border-bottom: 1px solid var(--border);
-      position: relative;
+      position: relative; overflow: hidden;
+    }
+
+    /* gradiente radial de fondo */
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 50%, rgba(0,80,20,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 80% 20%, rgba(0,40,10,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    #hero-canvas {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      width: 100%; height: 200px;
+      opacity: 0.4; pointer-events: none;
     }
 
     #hero .callsign {
-      font-size: 0.8rem;
-      letter-spacing: 0.3em;
-      color: var(--text-dim);
-      margin-bottom: 1.2rem;
+      font-family: var(--mono);
+      font-size: 0.72rem; letter-spacing: 0.32em;
+      color: var(--text-dim); margin-bottom: 1.4rem;
       text-transform: uppercase;
+      display: flex; align-items: center; gap: 0.6rem;
+      position: relative;
     }
-    #hero .callsign::before {
-      content: '▶ ';
-      color: var(--green);
-      animation: blink 1.2s step-end infinite;
+    .cursor-blink {
+      display: inline-block; width: 8px; height: 13px;
+      background: var(--green);
+      animation: blink 1.1s step-end infinite;
+      vertical-align: middle;
     }
-
     @keyframes blink { 50% { opacity: 0; } }
 
     #hero h1 {
-      font-size: clamp(2.4rem, 8vw, 5rem);
-      letter-spacing: 0.04em;
-      text-shadow: 0 0 40px rgba(0,255,65,0.4), 0 0 80px rgba(0,255,65,0.15);
-      margin-bottom: 0.5rem;
+      font-size: clamp(3rem, 9vw, 6.5rem);
+      letter-spacing: 0.03em;
+      text-shadow:
+        0 0 25px rgba(0,255,65,0.55),
+        0 0 70px rgba(0,255,65,0.22),
+        0 0 140px rgba(0,255,65,0.08);
+      margin-bottom: 0.6rem;
+      position: relative; min-height: 1em;
     }
+    #hero h1::after {
+      content: '_';
+      animation: blink 0.8s step-end infinite;
+      opacity: 0; /* hidden after typing done */
+    }
+    #hero h1.typing::after { opacity: 1; }
 
     #hero .tagline {
-      font-size: clamp(1rem, 3vw, 1.35rem);
-      color: var(--text);
-      margin-bottom: 2.5rem;
-      max-width: 600px;
+      font-family: var(--sans);
+      font-size: clamp(1.05rem, 2.5vw, 1.45rem);
+      font-weight: 300; color: var(--text);
+      margin-bottom: 3rem; max-width: 580px; line-height: 1.5;
+      position: relative;
     }
 
-    .badge-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      margin-bottom: 3rem;
-    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 3.5rem; position: relative; }
     .badge {
       border: 1px solid var(--border);
-      padding: 0.25rem 0.7rem;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-dim);
+      padding: 0.28rem 0.8rem;
+      font-family: var(--mono); font-size: 0.68rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim);
+      transition: all 0.25s var(--ease); cursor: default;
     }
-    .badge.highlight {
-      border-color: var(--green-dim);
-      color: var(--green);
+    .badge:hover, .badge.highlight {
+      border-color: var(--green-dim); color: var(--green);
       background: var(--green-faint);
     }
 
     .freq-preview {
-      font-size: 0.85rem;
-      color: var(--text-dim);
+      font-family: var(--mono); font-size: 0.9rem; color: var(--text-dim);
       border-left: 2px solid var(--green-dim);
-      padding-left: 1rem;
-      line-height: 2;
+      padding-left: 1.2rem; line-height: 2.3;
+      position: relative;
     }
     .freq-preview strong { color: var(--green); font-weight: 400; }
 
     /* ── QUÉ ES ── */
-    #que-es { border-bottom: 1px solid var(--border); }
-    #que-es h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    #que-es { border-bottom: 1px solid var(--border-dim); }
+    #que-es p { color: var(--text); font-size: 1rem; max-width: 720px; }
 
     .feature-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      margin-top: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); margin-top: 2.5rem;
     }
     .feature-item {
+      background: var(--bg-card); padding: 1.8rem;
+      transition: background 0.3s var(--ease);
+      position: relative; overflow: hidden;
+    }
+    .feature-item::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(0,255,65,0.09), transparent 65%);
+      opacity: 0; transition: opacity 0.35s var(--ease);
+    }
+    .feature-item:hover { background: var(--bg-card2); }
+    .feature-item:hover::before { opacity: 1; }
+    .feature-item .icon { font-size: 1.8rem; margin-bottom: 0.9rem; display: block; }
+    .feature-item .fi-title {
+      font-family: var(--mono); color: var(--green);
+      font-size: 0.78rem; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 0.5rem;
+    }
+    .feature-item p { color: var(--text-dim); font-size: 0.88rem; line-height: 1.6; }
+
+    /* ── MEDIA ── */
+    #media { border-bottom: 1px solid var(--border-dim); }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem; margin-bottom: 1.5rem;
+    }
+    @media (max-width: 640px) {
+      .media-grid { grid-template-columns: 1fr; }
+    }
+    .media-slot {
+      border: 1px solid var(--border);
       background: var(--bg-card);
-      padding: 1.5rem;
+      aspect-ratio: 16/9;
+      position: relative; overflow: hidden;
+      transition: border-color 0.3s var(--ease);
     }
-    .feature-item .icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.6rem;
+    .media-slot:hover { border-color: var(--green-dim); }
+    .media-slot img {
+      width: 100%; height: 100%; object-fit: cover;
       display: block;
+      transition: transform 0.55s var(--ease), filter 0.3s var(--ease);
+      filter: saturate(0.75) brightness(0.88);
     }
-    .feature-item .title {
-      color: var(--green);
-      font-size: 0.9rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-bottom: 0.4rem;
+    .media-slot:hover img { transform: scale(1.05); filter: saturate(1) brightness(1); }
+    .media-slot .cap {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(5,10,6,0.92));
+      padding: 1.2rem 0.9rem 0.7rem;
+      font-family: var(--mono); font-size: 0.68rem;
+      letter-spacing: 0.12em; color: var(--text-dim);
+      opacity: 0; transition: opacity 0.3s var(--ease);
     }
-    .feature-item p {
-      color: var(--text-dim);
-      font-size: 0.82rem;
-      line-height: 1.6;
+    .media-slot:hover .cap { opacity: 1; }
+    .media-placeholder {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; height: 100%;
+    }
+    .media-placeholder span {
+      font-family: var(--mono); font-size: 0.68rem;
+      color: var(--text-dim); letter-spacing: 0.18em;
+      opacity: 0.6;
+    }
+
+    .video-slot {
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow: hidden;
+      transition: border-color 0.3s var(--ease);
+      max-width: 720px;
+    }
+    .video-slot:hover { border-color: var(--green-dim); }
+    .video-slot video, .video-slot iframe {
+      width: 100%; display: block;
+      aspect-ratio: 16/9; border: 0;
+    }
+    .video-slot .video-placeholder {
+      aspect-ratio: 16/9;
+      display: flex; align-items: center; justify-content: center;
     }
 
     /* ── CANALES ── */
-    #canales { border-bottom: 1px solid var(--border); }
-    #canales h2 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-    #canales .sub {
-      color: var(--text-dim);
-      font-size: 0.82rem;
-      margin-bottom: 2rem;
-    }
+    #canales { border-bottom: 1px solid var(--border-dim); }
+    #canales .sub { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 2rem; }
 
     .table-wrap { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-    }
-    thead tr {
-      border-bottom: 1px solid var(--green-dim);
-    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid rgba(0,255,65,0.25); }
     thead th {
-      text-align: left;
-      padding: 0.6rem 1rem;
-      color: var(--text-dim);
-      font-size: 0.72rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      font-weight: 400;
+      text-align: left; padding: 0.8rem 1rem;
+      color: var(--text-dim); font-family: var(--mono);
+      font-size: 0.66rem; letter-spacing: 0.2em;
+      text-transform: uppercase; font-weight: 400;
     }
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-    tbody tr:hover { background: var(--green-glow); }
-    tbody td {
-      padding: 0.9rem 1rem;
-      vertical-align: middle;
-    }
-    .freq-num {
-      color: var(--green);
-      font-size: 1.05rem;
-      letter-spacing: 0.05em;
-    }
-    .ch-name { color: var(--text); }
-    .ch-name small { display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 0.15rem; }
+    tbody tr { border-bottom: 1px solid var(--border-dim); transition: background 0.2s; }
+    tbody tr:hover { background: var(--green-faint); }
+    tbody td { padding: 1rem; vertical-align: middle; }
+    .freq-num { color: var(--green); font-family: var(--mono); font-size: 1.08rem; letter-spacing: 0.04em; }
+    .ch-name { color: var(--text); font-family: var(--sans); }
+    .ch-name small { display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 0.12rem; }
     .ch-badge {
-      display: inline-block;
-      border: 1px solid currentColor;
-      padding: 0.1rem 0.5rem;
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      display: inline-block; border: 1px solid currentColor;
+      padding: 0.12rem 0.55rem; font-family: var(--mono);
+      font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
     }
     .ch-badge.principal { color: var(--green); border-color: var(--green-dim); background: var(--green-faint); }
-    .ch-badge.alt { color: #88aaff; border-color: #334488; background: #050510; }
-    .ch-badge.emerg { color: #ffaa33; border-color: #553300; background: #0f0800; }
+    .ch-badge.alt       { color: #88aaff; border-color: rgba(136,170,255,0.25); background: rgba(20,30,80,0.3); }
+    .ch-badge.emerg     { color: #ffaa33; border-color: rgba(255,170,51,0.25);  background: rgba(40,20,0,0.3); }
 
     .legal-note {
-      margin-top: 1.5rem;
-      font-size: 0.78rem;
-      color: var(--text-dim);
-      border-left: 2px solid var(--border);
-      padding-left: 1rem;
+      margin-top: 1.5rem; font-family: var(--mono); font-size: 0.74rem;
+      color: var(--text-dim); border-left: 2px solid var(--border);
+      padding-left: 1rem; line-height: 1.9;
     }
     .legal-note a { color: var(--text-dim); }
     .legal-note a:hover { color: var(--green); }
 
     /* ── CÓMO FUNCIONA ── */
-    #como-funciona { border-bottom: 1px solid var(--border); }
-    #como-funciona h2 { font-size: 1.8rem; margin-bottom: 2rem; }
+    #como-funciona { border-bottom: 1px solid var(--border-dim); }
 
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      position: relative;
-    }
+    .steps { display: flex; flex-direction: column; position: relative; }
     .steps::before {
-      content: '';
-      position: absolute;
-      left: 1.15rem;
-      top: 0.5rem;
-      bottom: 0.5rem;
-      width: 1px;
-      background: var(--border);
+      content: ''; position: absolute; left: 1.2rem; top: 0; bottom: 0; width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(0,204,51,0.35) 8%, rgba(0,204,51,0.35) 92%, transparent);
     }
-    .step {
-      display: flex;
-      gap: 1.5rem;
-      align-items: flex-start;
-      padding: 1.2rem 0;
-      position: relative;
-    }
+    .step { display: flex; gap: 2rem; align-items: flex-start; padding: 1.5rem 0; position: relative; }
     .step-num {
-      flex-shrink: 0;
-      width: 2.3rem;
-      height: 2.3rem;
-      border: 1px solid var(--green-dim);
-      background: var(--bg);
-      color: var(--green);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      position: relative;
-      z-index: 1;
+      flex-shrink: 0; width: 2.4rem; height: 2.4rem;
+      border: 1px solid var(--green-dim); background: var(--bg);
+      color: var(--green); display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 0.78rem;
+      position: relative; z-index: 1;
+      transition: background 0.3s var(--ease), box-shadow 0.3s var(--ease);
     }
-    .step-content .title {
-      color: var(--text);
-      font-size: 0.95rem;
-      margin-bottom: 0.25rem;
+    .step:hover .step-num {
+      background: var(--green-faint);
+      box-shadow: 0 0 18px var(--green-glow2);
     }
-    .step-content p {
-      color: var(--text-dim);
-      font-size: 0.82rem;
+    .step-content .stitle {
+      color: var(--text-bright); font-family: var(--sans);
+      font-size: 1.05rem; font-weight: 600; margin-bottom: 0.3rem;
     }
+    .step-content p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
     .step-content code {
-      background: var(--bg-card2);
-      border: 1px solid var(--border);
-      padding: 0.1rem 0.4rem;
-      color: var(--green);
-      font-size: 0.8rem;
+      background: var(--bg-card2); border: 1px solid var(--border);
+      padding: 0.1rem 0.4rem; color: var(--green);
+      font-family: var(--mono); font-size: 0.82rem;
     }
 
     /* ── ESTADO ── */
-    #estado { border-bottom: 1px solid var(--border); }
-    #estado h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    #estado { border-bottom: 1px solid var(--border-dim); }
 
     .status-box {
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      padding: 1.5rem 2rem;
-      position: relative;
-      overflow: hidden;
+      border: 1px solid var(--border); background: var(--bg-card);
+      padding: 2rem 2.5rem; position: relative; overflow: hidden;
     }
     .status-box::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
+      content: ''; position: absolute; top: 0; left: 0;
       width: 3px; height: 100%;
-      background: var(--green-dim);
+      background: linear-gradient(to bottom, var(--green), var(--green-dim));
     }
-    .status-line {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      margin-bottom: 0.8rem;
-    }
+    .status-line { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
     .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
+      width: 9px; height: 9px; border-radius: 50%;
       background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse 2s ease-in-out infinite;
-      flex-shrink: 0;
+      box-shadow: 0 0 10px var(--green), 0 0 22px rgba(0,255,65,0.35);
+      animation: pulse 2.5s ease-in-out infinite; flex-shrink: 0;
     }
     @keyframes pulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
-      50% { opacity: 0.5; box-shadow: 0 0 3px var(--green); }
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--green), 0 0 22px rgba(0,255,65,0.35); }
+      50%       { opacity: 0.45; box-shadow: 0 0 4px var(--green); }
     }
-    .status-text {
-      color: var(--green);
-      font-size: 1rem;
-      letter-spacing: 0.05em;
-    }
-    .status-detail {
-      color: var(--text-dim);
-      font-size: 0.82rem;
-      line-height: 1.8;
-    }
+    .status-text { color: var(--green); font-family: var(--mono); font-size: 0.92rem; letter-spacing: 0.06em; }
+    .status-detail { color: var(--text-dim); font-size: 0.88rem; line-height: 1.8; margin-bottom: 2rem; }
 
-    .progress-table {
-      width: 100%;
-      margin-top: 1.5rem;
-      border-collapse: collapse;
-      font-size: 0.82rem;
-    }
-    .progress-table td { padding: 0.4rem 0; }
-    .progress-table td:first-child { color: var(--text-dim); width: 55%; }
-    .done { color: var(--green); }
-    .wip  { color: #ffaa33; }
-    .todo { color: var(--text-dim); opacity: 0.5; }
+    .progress-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+    .progress-item { display: flex; flex-direction: column; gap: 0.35rem; }
+    .pi-label { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); }
+    .pi-status.done { color: var(--green); }
+    .pi-status.wip  { color: #ffaa33; }
+    .pi-status.todo { color: var(--text-dim); opacity: 0.45; }
+    .pbar-wrap { height: 2px; background: rgba(0,255,65,0.08); overflow: hidden; }
+    .pbar { height: 100%; width: 0%; transition: width 1.1s cubic-bezier(0.4,0,0.2,1); }
+    .pbar.done { background: linear-gradient(90deg, var(--green-dim), var(--green)); }
+    .pbar.wip  { background: linear-gradient(90deg, #cc8800, #ffaa33); }
+    .pbar.todo { background: rgba(0,255,65,0.12); }
 
     /* ── CONTACTO ── */
-    #contacto { border-bottom: 1px solid var(--border); }
-    #contacto h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
-    #contacto p { color: var(--text-dim); margin-bottom: 1rem; }
+    #contacto p { color: var(--text); margin-bottom: 1.5rem; font-size: 0.98rem; }
     .contact-block {
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      padding: 1.5rem 2rem;
-      display: inline-block;
+      border: 1px solid var(--border); background: var(--bg-card);
+      padding: 1.5rem 2rem; display: inline-block;
+      transition: border-color 0.3s var(--ease), background 0.3s var(--ease);
     }
-    .contact-block .email {
-      color: var(--green);
-      font-size: 1.05rem;
-      letter-spacing: 0.05em;
-    }
-    .contact-block small {
-      display: block;
-      color: var(--text-dim);
-      font-size: 0.78rem;
-      margin-top: 0.3rem;
-    }
+    .contact-block:hover { border-color: var(--green-dim); background: var(--bg-card2); }
+    .contact-block .email { color: var(--green); font-family: var(--mono); font-size: 1rem; letter-spacing: 0.05em; }
+    .contact-block small { display: block; color: var(--text-dim); font-size: 0.78rem; margin-top: 0.4rem; }
 
     /* ── FOOTER ── */
     footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 1.5rem;
-      max-width: 900px;
-      margin: 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.78rem;
-      color: var(--text-dim);
+      border-top: 1px solid var(--border-dim);
+      padding: 2rem; max-width: 960px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 1rem;
+      justify-content: space-between; align-items: center;
+      font-size: 0.76rem; color: var(--text-dim); font-family: var(--mono);
     }
     footer a { color: var(--text-dim); }
     footer a:hover { color: var(--green); }
-    .footer-logo { color: var(--green-dim); font-size: 0.9rem; }
+    .footer-logo { color: var(--green-dim); font-size: 0.85rem; letter-spacing: 0.12em; }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       nav ul { display: none; }
       section { padding: 3.5rem 1.2rem; }
-      #hero { min-height: 80vh; }
-      #hero h1 { font-size: 2.4rem; }
-      tbody td { padding: 0.7rem 0.6rem; }
-      thead th { padding: 0.5rem 0.6rem; }
+      #hero { min-height: 82vh; }
+      #hero h1 { font-size: 2.8rem; }
+      .status-box { padding: 1.5rem; }
       .contact-block { width: 100%; }
       footer { flex-direction: column; text-align: center; }
     }
@@ -450,11 +434,18 @@
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="logo">MotoRFAR <span>HT</span></div>
+  <div class="nav-logo">
+    <!--
+      Logo: copiá "baqueano logo.png" a la misma carpeta que este index.html
+      y descomentá la imagen de abajo.
+    -->
+    <!-- <img src="baqueano logo.png" alt="Baqueano" /> -->
+    BAQUEANO
+  </div>
   <ul>
     <li><a href="#que-es">Qué es</a></li>
+    <li><a href="#media">Galería</a></li>
     <li><a href="#canales">Canales</a></li>
     <li><a href="#como-funciona">Cómo funciona</a></li>
     <li><a href="#estado">Estado</a></li>
@@ -464,17 +455,25 @@
 
 <!-- HERO -->
 <section id="hero">
-  <p class="callsign">MotoRFAR-MTTT // VHF // AR</p>
-  <h1>MotoRFAR&nbsp;HT</h1>
-  <p class="tagline">Radio VHF para grupos de motos y 4x4 en Argentina.<br>Sin licencia. Sin internet. Sin costo mensual.</p>
-  <div class="badge-row">
+  <canvas id="hero-canvas"></canvas>
+
+  <p class="callsign">
+    BAQUEANO-MTTT <span class="cursor-blink"></span> VHF
+    <span class="cursor-blink" style="animation-delay:.5s"></span> AR
+  </p>
+  <h1 id="hero-title" class="typing"></h1>
+  <p class="tagline reveal d1">
+    Radio VHF para grupos de motos y 4x4 en Argentina.<br>
+    Sin licencia. Sin internet. Sin costo mensual.
+  </p>
+  <div class="badge-row reveal d2">
     <span class="badge highlight">Open Source</span>
     <span class="badge">GPL-3.0</span>
     <span class="badge">ESP32 + SA818-V</span>
     <span class="badge">Android</span>
     <span class="badge">Res. 5/2015 M.T.T.T.</span>
   </div>
-  <div class="freq-preview">
+  <div class="freq-preview reveal d3">
     <strong>139.970 MHz</strong> — Canal Principal<br>
     <strong>138.510 MHz</strong> — Canal Alternativo<br>
     <strong>140.970 MHz</strong> — Canal Emergencia
@@ -483,89 +482,142 @@
 
 <!-- QUÉ ES -->
 <section id="que-es">
-  <p class="label">Descripción</p>
-  <h2>¿Qué es MotoRFAR HT?</h2>
-  <p>
-    Un walkie-talkie VHF digital de bolsillo que se conecta al celular por USB y opera en los tres canales autorizados por la Resolución&nbsp;5/2015 del Ministerio de Transporte. Ideal para comunicación directa entre motos en ruta, sin depender de cobertura celular, aplicaciones de terceros ni suscripciones.
+  <p class="label reveal">Descripción</p>
+  <h2 class="reveal d1">¿Qué es Baqueano?</h2>
+  <p class="reveal d2">
+    Un walkie-talkie VHF digital de bolsillo que se conecta al celular por USB y opera en los
+    tres canales autorizados por la Resolución&nbsp;5/2015 del Ministerio de Transporte.
+    Ideal para comunicación directa entre motos en ruta, sin depender de cobertura celular,
+    aplicaciones de terceros ni suscripciones.
   </p>
   <div class="feature-grid">
-    <div class="feature-item">
+    <div class="feature-item reveal d1">
       <span class="icon">📡</span>
-      <div class="title">Radio VHF real</div>
+      <div class="fi-title">Radio VHF real</div>
       <p>Módulo SA818-V de 1&nbsp;W. Alcance útil de 3&nbsp;–&nbsp;8&nbsp;km en campo abierto según terreno.</p>
     </div>
-    <div class="feature-item">
+    <div class="feature-item reveal d2">
       <span class="icon">📱</span>
-      <div class="title">App Android</div>
+      <div class="fi-title">App Android</div>
       <p>Controla la radio desde el teléfono: canal, volumen, PTT táctil. Conexión USB-C.</p>
     </div>
-    <div class="feature-item">
+    <div class="feature-item reveal d3">
       <span class="icon">⚡</span>
-      <div class="title">Hardware ESP32</div>
-      <p>Microcontrolador ESP32-WROOM-32. PCB compacto, montable en el manubrio o chaleco.</p>
+      <div class="fi-title">Hardware ESP32</div>
+      <p>Microcontrolador ESP32-WROOM-32U. PCB compacto, montable en el manubrio o chaleco.</p>
     </div>
-    <div class="feature-item">
+    <div class="feature-item reveal d1">
       <span class="icon">🔓</span>
-      <div class="title">Sin trámites</div>
+      <div class="fi-title">Sin trámites</div>
       <p>Los tres canales son de uso libre según normativa ENACOM. No requiere licencia de radioaficionado.</p>
     </div>
-    <div class="feature-item">
+    <div class="feature-item reveal d2">
       <span class="icon">🌐</span>
-      <div class="title">Sin internet</div>
+      <div class="fi-title">Sin internet</div>
       <p>Comunicación directa radio-a-radio. Funciona donde no hay señal.</p>
     </div>
-    <div class="feature-item">
+    <div class="feature-item reveal d3">
       <span class="icon">🔧</span>
-      <div class="title">Open source</div>
+      <div class="fi-title">Open source</div>
       <p>Fork de kv4p HT. Código, firmware y PCB disponibles en GitHub bajo licencia GPL-3.0.</p>
     </div>
   </div>
 </section>
 
+<!-- GALERÍA / MEDIA -->
+<section id="media">
+  <p class="label reveal">Imágenes y video</p>
+  <h2 class="reveal d1">En acción</h2>
+
+  <!--
+    ═══════════════════════════════════════════════════════════
+    INSTRUCCIONES PARA AGREGAR FOTOS:
+    1. Copiá tus imágenes a la misma carpeta que index.html
+    2. Reemplazá cada bloque .media-slot por:
+
+      <div class="media-slot reveal d1">
+        <img src="nombre-de-tu-foto.jpg" alt="descripción" />
+        <div class="cap">// descripción corta</div>
+      </div>
+
+    INSTRUCCIONES PARA AGREGAR VIDEO:
+    Opción A — archivo .mp4 local:
+      <video src="video.mp4" controls loop muted playsinline></video>
+
+    Opción B — YouTube:
+      <iframe src="https://www.youtube.com/embed/TU_VIDEO_ID"
+        width="100%" style="aspect-ratio:16/9;border:0;" allowfullscreen></iframe>
+    ═══════════════════════════════════════════════════════════
+  -->
+
+  <div class="media-grid">
+    <div class="media-slot reveal d1">
+      <img src="img/moto-01.jpg" alt="Grupo de motociclistas en ruta con Baqueano" loading="lazy" />
+      <div class="cap">// convoy en ruta</div>
+    </div>
+    <div class="media-slot reveal d2">
+      <img src="img/moto-02.jpg" alt="Comunicación VHF entre motociclistas" loading="lazy" />
+      <div class="cap">// red de radio VHF</div>
+    </div>
+    <div class="media-slot reveal d3">
+      <img src="img/moto-03.jpg" alt="Travesía off-road con sistema Baqueano" loading="lazy" />
+      <div class="cap">// travesía off-road</div>
+    </div>
+    <div class="media-slot reveal d4">
+      <img src="img/moto-04.jpg" alt="Coordinación de grupo en ruta" loading="lazy" />
+      <div class="cap">// coordinación grupal</div>
+    </div>
+    <div class="media-slot reveal d5">
+      <img src="img/moto-05.jpg" alt="Motociclistas con equipo de comunicación" loading="lazy" />
+      <div class="cap">// equipo en campo</div>
+    </div>
+    <div class="media-slot reveal d1">
+      <img src="img/moto-06.jpg" alt="Sistema Baqueano en acción" loading="lazy" />
+      <div class="cap">// sistema en acción</div>
+    </div>
+  </div>
+
+  <div class="video-slot reveal d2">
+    <video src="baqueano-demo.mp4" controls loop muted playsinline
+           poster="img/moto-01.jpg"></video>
+  </div>
+</section>
+
 <!-- CANALES -->
 <section id="canales">
-  <p class="label">Frecuencias legales</p>
-  <h2>Canales Res. 5/2015</h2>
-  <p class="sub">Resolución 5/2015 del Ministerio de Transporte, Turismo y Telecomunicaciones — uso libre en Argentina</p>
-  <div class="table-wrap">
+  <p class="label reveal">Frecuencias legales</p>
+  <h2 class="reveal d1">Canales Res. 5/2015</h2>
+  <p class="sub reveal d2">Resolución 5/2015 del Ministerio de Transporte, Turismo y Telecomunicaciones — uso libre en Argentina</p>
+  <div class="table-wrap reveal d3">
     <table>
       <thead>
         <tr>
-          <th>Frecuencia</th>
-          <th>Canal</th>
-          <th>Uso</th>
-          <th>Estado</th>
+          <th>Frecuencia</th><th>Canal</th><th>Uso</th><th>Estado</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td><span class="freq-num">139.970 MHz</span></td>
-          <td>
-            <span class="ch-name">Principal<small>Canal 1 — uso primario de grupo</small></span>
-          </td>
+          <td><span class="ch-name">Principal<small>Canal 1 — uso primario de grupo</small></span></td>
           <td>Comunicación general, convoy, coordinación de ruta</td>
           <td><span class="ch-badge principal">Principal</span></td>
         </tr>
         <tr>
           <td><span class="freq-num">138.510 MHz</span></td>
-          <td>
-            <span class="ch-name">Alternativo<small>Canal 2 — subgrupos o canal libre</small></span>
-          </td>
+          <td><span class="ch-name">Alternativo<small>Canal 2 — subgrupos o canal libre</small></span></td>
           <td>Subgrupos, canal secundario, coordinación logística</td>
           <td><span class="ch-badge alt">Alternativo</span></td>
         </tr>
         <tr>
           <td><span class="freq-num">140.970 MHz</span></td>
-          <td>
-            <span class="ch-name">Emergencia<small>Canal 3 — reservado para urgencias</small></span>
-          </td>
+          <td><span class="ch-name">Emergencia<small>Canal 3 — reservado para urgencias</small></span></td>
           <td>Accidentes, asistencia mecánica, urgencias médicas</td>
           <td><span class="ch-badge emerg">Emergencia</span></td>
         </tr>
       </tbody>
     </table>
   </div>
-  <p class="legal-note">
+  <p class="legal-note reveal d4">
     Fuente: <a href="https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-5-2015-242846" target="_blank" rel="noopener">Resolución 5/2015 — InfoLEG</a>.
     El firmware valida que solo sea posible transmitir en estas tres frecuencias.
     No requiere licencia ni trámite ante ENACOM para usuarios finales.
@@ -574,41 +626,42 @@
 
 <!-- CÓMO FUNCIONA -->
 <section id="como-funciona">
-  <p class="label">Uso</p>
-  <h2>Cómo funciona</h2>
+  <p class="label reveal">Uso</p>
+  <h2 class="reveal d1">Cómo funciona</h2>
   <div class="steps">
-    <div class="step">
+    <div class="step reveal d1">
       <div class="step-num">01</div>
       <div class="step-content">
-        <div class="title">Instalá la app Android</div>
+        <div class="stitle">Instalá la app Android</div>
         <p>Descargá el APK desde GitHub Releases o compilalo vos mismo. Compatible con Android 8.0+.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal d2">
       <div class="step-num">02</div>
       <div class="step-content">
-        <div class="title">Conectá el hardware por USB-C</div>
-        <p>El módulo MotoRFAR HT se conecta al teléfono como dispositivo USB. La app lo detecta automáticamente.</p>
+        <div class="stitle">Conectá el hardware por USB-C</div>
+        <p>El módulo Baqueano se conecta al teléfono como dispositivo USB. La app lo detecta automáticamente.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal d3">
       <div class="step-num">03</div>
       <div class="step-content">
-        <div class="title">Elegí el canal</div>
-        <p>Seleccioná <code>139.970</code>, <code>138.510</code> o <code>140.970&nbsp;MHz</code> según el uso. El firmware solo permite estas tres frecuencias.</p>
+        <div class="stitle">Elegí el canal</div>
+        <p>Seleccioná <code>139.970</code>, <code>138.510</code> o <code>140.970&nbsp;MHz</code> según el uso.
+        El firmware solo permite estas tres frecuencias.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal d4">
       <div class="step-num">04</div>
       <div class="step-content">
-        <div class="title">PTT — Push to Talk</div>
+        <div class="stitle">PTT — Push to Talk</div>
         <p>Tocá el botón PTT en pantalla o usá el botón físico del hardware para transmitir. Soltá para escuchar.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal d5">
       <div class="step-num">05</div>
       <div class="step-content">
-        <div class="title">Listo — comunicación directa</div>
+        <div class="stitle">Listo — comunicación directa</div>
         <p>Sin internet, sin servidor, sin costo. Radio-a-radio, igual que un handy profesional.</p>
       </div>
     </div>
@@ -617,9 +670,9 @@
 
 <!-- ESTADO -->
 <section id="estado">
-  <p class="label">Estado del proyecto</p>
-  <h2>Estado actual</h2>
-  <div class="status-box">
+  <p class="label reveal">Estado del proyecto</p>
+  <h2 class="reveal d1">Estado actual</h2>
+  <div class="status-box reveal d2">
     <div class="status-line">
       <span class="dot"></span>
       <span class="status-text">BETA — Hardware en desarrollo activo</span>
@@ -628,47 +681,44 @@
       El firmware y la app Android están operativos. El diseño del PCB v2.0e está en revisión final.<br>
       Hardware de producción no disponible públicamente todavía — próximamente.
     </p>
-    <table class="progress-table">
-      <tbody>
-        <tr>
-          <td>Firmware ESP32 (whitelist TX)</td>
-          <td class="done">✓ Operativo</td>
-        </tr>
-        <tr>
-          <td>App Android</td>
-          <td class="done">✓ Funcional (beta)</td>
-        </tr>
-        <tr>
-          <td>PCB v2.0e</td>
-          <td class="wip">⟳ En revisión</td>
-        </tr>
-        <tr>
-          <td>Hardware disponible públicamente</td>
-          <td class="todo">◻ Próximamente</td>
-        </tr>
-        <tr>
-          <td>Instrucciones de fabricación (BOM + Gerbers)</td>
-          <td class="todo">◻ Próximamente</td>
-        </tr>
-      </tbody>
-    </table>
+    <ul class="progress-list" id="progress-list">
+      <li class="progress-item" data-pct="100" data-cls="done">
+        <div class="pi-label"><span>Firmware ESP32 (whitelist TX)</span><span class="pi-status done">✓ Operativo</span></div>
+        <div class="pbar-wrap"><div class="pbar done"></div></div>
+      </li>
+      <li class="progress-item" data-pct="85" data-cls="wip">
+        <div class="pi-label"><span>App Android</span><span class="pi-status wip">⟳ Beta funcional</span></div>
+        <div class="pbar-wrap"><div class="pbar wip"></div></div>
+      </li>
+      <li class="progress-item" data-pct="90" data-cls="wip">
+        <div class="pi-label"><span>PCB v2.0e</span><span class="pi-status wip">⟳ En revisión final</span></div>
+        <div class="pbar-wrap"><div class="pbar wip"></div></div>
+      </li>
+      <li class="progress-item" data-pct="8" data-cls="todo">
+        <div class="pi-label"><span>Hardware disponible públicamente</span><span class="pi-status todo">◻ Próximamente</span></div>
+        <div class="pbar-wrap"><div class="pbar todo"></div></div>
+      </li>
+      <li class="progress-item" data-pct="15" data-cls="todo">
+        <div class="pi-label"><span>Instrucciones de fabricación (BOM + Gerbers)</span><span class="pi-status todo">◻ Próximamente</span></div>
+        <div class="pbar-wrap"><div class="pbar todo"></div></div>
+      </li>
+    </ul>
   </div>
 </section>
 
 <!-- CONTACTO -->
 <section id="contacto">
-  <p class="label">Contacto</p>
-  <h2>Contacto</h2>
-  <p>Preguntas, colaboración o reporte de bugs:</p>
-  <div class="contact-block">
+  <p class="label reveal">Contacto</p>
+  <h2 class="reveal d1">Contacto</h2>
+  <p class="reveal d2">Preguntas, colaboración o reporte de bugs:</p>
+  <div class="contact-block reveal d3">
     <div class="email"><a href="mailto:lukaz1979@gmail.com">lukaz1979@gmail.com</a></div>
     <small>Respuesta en ~24–48 h. Proyecto personal, sin soporte comercial.</small>
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer>
-  <span class="footer-logo">MotoRFAR HT</span>
+  <span class="footer-logo">BAQUEANO</span>
   <span>
     Licencia <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a>
     &nbsp;·&nbsp;
@@ -677,5 +727,106 @@
   <span>Argentina · Res. 5/2015 M.T.T.T.</span>
 </footer>
 
+<script>
+// ── TYPING HERO ──
+(function(){
+  const el = document.getElementById('hero-title');
+  const txt = 'Baqueano';
+  let i = 0;
+  const type = () => {
+    if (i <= txt.length) {
+      el.textContent = txt.slice(0, i++);
+      if (i <= txt.length) setTimeout(type, i === 1 ? 250 : 70 + Math.random() * 45);
+      else el.classList.remove('typing');
+    }
+  };
+  el.classList.add('typing');
+  setTimeout(type, 600);
+})();
+
+// ── RF WAVEFORM CANVAS ──
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let t = 0, raf;
+  const dpr = window.devicePixelRatio || 1;
+
+  function resize(){
+    canvas.width  = canvas.offsetWidth  * dpr;
+    canvas.height = canvas.offsetHeight * dpr;
+    ctx.scale(dpr, dpr);
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); });
+
+  const waves = [
+    { f: 0.016, a: 32, s: 0.018, p: 0 },
+    { f: 0.038, a: 13, s: 0.032, p: 1.4 },
+    { f: 0.009, a: 44, s: 0.01,  p: 2.7 },
+  ];
+
+  function draw(){
+    const W = canvas.offsetWidth;
+    const H = canvas.offsetHeight;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(0,255,65,0.85)';
+    ctx.lineWidth   = 1.2;
+    ctx.shadowColor = '#00ff41';
+    ctx.shadowBlur  = 7;
+
+    for (let x = 0; x <= W; x += 1) {
+      let y = H * 0.5;
+      waves.forEach(w => { y += Math.sin(x * w.f + t * w.s + w.p) * w.a; });
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // second ghost wave
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(0,255,65,0.2)';
+    ctx.lineWidth   = 1;
+    ctx.shadowBlur  = 0;
+    for (let x = 0; x <= W; x += 1) {
+      let y = H * 0.5;
+      waves.forEach(w => { y += Math.sin(x * w.f + (t - 15) * w.s + w.p) * w.a; });
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    t++;
+    raf = requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── SCROLL REVEAL ──
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+})();
+
+// ── PROGRESS BARS ──
+(function(){
+  const list = document.getElementById('progress-list');
+  if (!list) return;
+  const obs = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    list.querySelectorAll('.progress-item').forEach((item, i) => {
+      const pct = item.dataset.pct;
+      const bar = item.querySelector('.pbar');
+      setTimeout(() => { bar.style.width = pct + '%'; }, i * 160);
+    });
+    obs.unobserve(list);
+  }, { threshold: 0.3 });
+  obs.observe(list);
+})();
+</script>
 </body>
 </html>
