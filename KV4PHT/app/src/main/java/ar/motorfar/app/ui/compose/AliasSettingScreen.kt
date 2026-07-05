@@ -212,7 +212,7 @@ fun AliasSettingScreen(
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text     = "Si detecta un impacto fuerte seguido de quietud, cuenta 30s y avisa al grupo. Podés cancelarlo. Puede dispararse por baches fuertes.",
+                    text     = "Si detecta un impacto fuerte seguido de quietud, cuenta 30s y avisa al grupo. Podés cancelarlo. Puede dispararse por golpes fuertes o terreno irregular (baches, pozos, caídas).",
                     color    = colors.textSecondary,
                     fontFamily = ShareTechMono,
                     fontSize = 15.sp

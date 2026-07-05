@@ -28,7 +28,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Comunicación de grupo para motociclistas"
+            android:text="Comunicación de grupo sin red, para cualquier terreno"
             android:textSize="13sp"
             android:textColor="@color/primary_deselected"
             android:layout_marginTop="4dp"
@@ -83,7 +83,7 @@
             <!-- 1 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Naturaleza de la aplicación" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="Baqueano es una herramienta de comunicación por radio de frecuencia libre diseñada para uso entre grupos de motociclistas. No es un servicio de emergencias oficial, no reemplaza al sistema de emergencias del Estado, y no garantiza cobertura, disponibilidad ni recepción de mensajes en ninguna circunstancia.\n\nPara emergencias reales que requieran intervención de servicios de salud, seguridad o rescate, llamá al 911 o al organismo de emergencias correspondiente a tu ubicación."/>
+                android:text="Baqueano es una herramienta de comunicación por radio de frecuencia libre diseñada para uso entre grupos de personas que se desplazan sin cobertura de red tradicional — en moto, 4x4, bicicleta, a pie o en cualquier otro medio. No es un servicio de emergencias oficial, no reemplaza al sistema de emergencias del Estado, y no garantiza cobertura, disponibilidad ni recepción de mensajes en ninguna circunstancia.\n\nPara emergencias reales que requieran intervención de servicios de salud, seguridad o rescate, llamá al 911 o al organismo de emergencias correspondiente a tu ubicación."/>
 
             <!-- 2 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. Marco legal y uso del espectro" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
