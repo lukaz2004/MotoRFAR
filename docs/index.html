@@ -330,6 +330,7 @@
     #montaje { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
     .montaje-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-top: 56px; }
     .montaje-card { background: var(--card); padding: 40px 36px; }
+    .montaje-photo { width: calc(100% + 72px); margin: -40px -36px 24px; height: 180px; object-fit: cover; display: block; filter: saturate(0.85) brightness(0.85); }
     .montaje-card:hover { background: #161a26; }
     .montaje-icon { font-size: 36px; margin-bottom: 20px; display: block; }
     .montaje-title { font-family: var(--sans); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
@@ -885,6 +886,7 @@
       <p class="section-body reveal reveal-delay-2">Un solo kit. Cuatro escenarios donde la cobertura celular no llega y la comunicación no puede fallar.</p>
       <div class="montaje-grid" style="grid-template-columns: repeat(2, 1fr);">
         <div class="montaje-card reveal">
+          <img class="montaje-photo" src="assets/moto-grupo.jpg" alt="Convoy de motos coordinado con Baqueano en ruta de ripio" loading="lazy" />
           <span class="montaje-icon">🏍</span>
           <div class="montaje-title">Grupos de motos</div>
           <p class="montaje-desc">La unidad va bajo el asiento o en el portaequipajes, alimentada de la batería de 12V. El PTT externo se instala en el manillar: hablás sin soltar el puño. El grupo se ve en el mapa en tiempo real.</p>
@@ -895,9 +897,10 @@
           </div>
         </div>
         <div class="montaje-card reveal reveal-delay-1">
+          <img class="montaje-photo" src="assets/4x4-grupo.jpg" alt="Caravana de 4x4 coordinada con Baqueano, señal entre vehículos" loading="lazy" />
           <span class="montaje-icon">🚙</span>
           <div class="montaje-title">4×4 y Offroad</div>
-          <p class="montoje-desc">Montaje en consola o bajo tablero. Antena exterior por pigtail SMA al techo o toldo. Todos los pasajeros escuchan por el teléfono. Perfecto para caravanas largas donde los vehículos se separan.</p>
+          <p class="montaje-desc">Montaje en consola o bajo tablero. Antena exterior por pigtail SMA al techo o toldo. Todos los pasajeros escuchan por el teléfono. Perfecto para caravanas largas donde los vehículos se separan.</p>
           <div class="montaje-tags">
             <span class="montaje-tag">CONSOLA / TABLERO</span>
             <span class="montaje-tag">PIGTAIL SMA</span>
@@ -1089,13 +1092,11 @@
 
         <div class="waitlist-success" id="waitlist-success">
           <div class="ws-icon">✓</div>
-          <div class="ws-title">¡Estás en la lista!</div>
-          <p class="ws-body">Te avisamos cuando tengamos unidades disponibles. Gracias por el aguante.</p>
+          <div class="ws-title">¡Casi listo!</div>
+          <p class="ws-body">Se abrió tu app de correo con los datos cargados — solo tenés que enviar el mail. Te avisamos cuando tengamos unidades disponibles.</p>
         </div>
 
-        <form class="waitlist-form reveal reveal-delay-3" id="waitlist-form"
-              action="https://formspree.io/f/REEMPLAZAR_CON_ID"
-              method="POST">
+        <form class="waitlist-form reveal reveal-delay-3" id="waitlist-form">
           <div class="waitlist-row">
             <input type="text" name="nombre" placeholder="Tu nombre" required />
             <input type="email" name="email" placeholder="tu@email.com" required />
@@ -1106,6 +1107,7 @@
               <option value="moto">Moto</option>
               <option value="4x4">4×4 / Offroad</option>
               <option value="mixto">Mixto moto + 4×4</option>
+              <option value="ciclismo">Ciclismo</option>
               <option value="trekking">Trekking / Senderismo</option>
               <option value="rural">Trabajo rural / Campo</option>
               <option value="otro">Otro</option>
@@ -1118,7 +1120,6 @@
               <option value="10+">Más de 10</option>
             </select>
           </div>
-          <input type="hidden" name="_subject" value="Baqueano — nuevo anotado en lista de espera" />
           <button type="submit" class="waitlist-submit">Anotarme →</button>
         </form>
         <p class="waitlist-note reveal reveal-delay-4">Sin spam · Podés darte de baja cuando quieras</p>
@@ -1214,23 +1215,25 @@
       });
     });
 
-    // Waitlist form
+    // Waitlist form — arma un mailto con los datos, sin depender de un backend externo
     const form = document.getElementById('waitlist-form');
     if (form) {
-      form.addEventListener('submit', async (e) => {
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const btn = form.querySelector('button[type=submit]');
-        btn.textContent = 'Enviando...';
-        btn.disabled = true;
-        try {
-          const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
-          if (res.ok) {
-            form.innerHTML = '<p style="color:var(--green);font-family:var(--mono);text-align:center;padding:24px 0;">✓ Anotado. Te avisamos cuando el Baqueano esté disponible.</p>';
-          } else {
-            btn.textContent = 'Reintentar';
-            btn.disabled = false;
-          }
-        } catch { btn.textContent = 'Reintentar'; btn.disabled = false; }
+        const d = new FormData(form);
+        const lineas = [
+          'Nuevo anotado en lista de espera Baqueano',
+          '',
+          'Nombre: ' + d.get('nombre'),
+          'Email: ' + d.get('email'),
+          'Tipo de grupo: ' + (d.get('tipo_grupo') || '(no indicado)'),
+          'Cantidad de equipos: ' + (d.get('cant_equipos') || '(no indicado)')
+        ].join('\n');
+        const asunto = encodeURIComponent('Baqueano — nuevo anotado en lista de espera');
+        const cuerpo = encodeURIComponent(lineas);
+        window.location.href = 'mailto:lukaz1979@gmail.com?subject=' + asunto + '&body=' + cuerpo;
+        form.style.display = 'none';
+        document.getElementById('waitlist-success').style.display = 'block';
       });
     }
   </script>
