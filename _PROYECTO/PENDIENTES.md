@@ -1,7 +1,19 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-07-05 (rescatado cierre real de HW-1 del 2026-07-04, no había quedado anotado).
+> Última edición: 2026-07-05 (rework web comercial + registro de ruta por sesión en la app).
+
+## 🗺️ Registro de ruta — arreglado 2026-07-05
+- ✅ Antes mezclaba todo el historial de un alias en una sola línea sin fin, sin
+  forma de borrarlo desde la UI. Ahora: `RoutePoint.sessionId` agrupa por salida
+  (migración Room 7→8), se carga solo la última sesión al abrir la app, y hay
+  botón de borrar (con confirmación) en la barra superior.
+- ⬜ **Exportar a GPX / compartir el track**: no se hizo (más superficie — archivo
+  + share intent). Evaluar si hace falta antes de construirlo.
+- 💡 **Propuesta sin construir**: marcar POIs propios (ej. "buen lugar para
+  acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
+  infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,
+  ya transmite posición por VHF) en vez de ser algo nuevo desde cero.
 
 ## 🔧 HW-1 — rework real 2026-07-04 (rescatado, no se había anotado en su momento)
 - ✅ Stub RF viejo de J1 borrado + traza C5→J1 re-ruteada (se rompió al borrar el stub).
