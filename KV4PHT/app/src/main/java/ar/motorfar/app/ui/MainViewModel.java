@@ -46,6 +46,8 @@ public class MainViewModel extends AndroidViewModel {
     // LiveData holding the list of APRSMessage objects
     private final MutableLiveData<List<APRSMessage>> aprsMessages = new MutableLiveData<>();
 
+    private static final java.util.concurrent.ExecutorService databaseExecutor = Executors.newFixedThreadPool(2);
+
     public MainViewModel(@NotNull Application application) {
         super(application);
         appDb = AppDatabase.getInstance(application.getApplicationContext());
@@ -58,7 +60,7 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     public void loadDataAsync(Runnable callback) {
-        Executors.newSingleThreadExecutor().execute(() -> {
+        databaseExecutor.execute(() -> {
             loadData();
             callback.run();
         });
@@ -88,7 +90,7 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     public void deleteMemoryAsync(ChannelMemory memory, Runnable callback) {
-        Executors.newSingleThreadExecutor().execute(() -> {
+        databaseExecutor.execute(() -> {
             deleteMemory(memory);
             callback.run();
         });

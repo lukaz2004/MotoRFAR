@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MotoRFAR</string>
+    <string name="app_name">Baqueano</string>
 
     <!-- PTT -->
     <string name="ptt_instruction">Mantené\npresionado\npara TX</string>
@@ -129,13 +129,13 @@
 
     <!-- Créditos -->
     <string name="credits_title">Créditos</string>
-    <string name="credits_body">MotoRFAR está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (KV4P).\n\nLicencia: GNU GPL v3\nFuente original: github.com/VanceVagell/kv4p-ht\n\nModificaciones para Argentina por el autor de esta versión.</string>
+    <string name="credits_body">Baqueano está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (KV4P).\n\nLicencia: GNU GPL v3\nFuente original: github.com/VanceVagell/kv4p-ht\n\nModificaciones para Argentina por el autor de esta versión.</string>
 
     <!-- No traducir -->
     <string name="welcome_to_display">Bienvenido a</string>
     <string name="visualization_of_current_receive_audio_volume_display" translatable="false">Visualización del volumen de recepción</string>
     <string name="visualization_of_current_transmit_audio_volume" translatable="false">Visualización del volumen de transmisión</string>
-    <string name="kv4p_ht" translatable="false">MotoRFAR</string>
+    <string name="kv4p_ht" translatable="false">Baqueano</string>
     <string name="vhf" translatable="false">VHF</string>
     <string name="uhf" translatable="false">UHF</string>
     <string name="aprs" translatable="false">APRS</string>

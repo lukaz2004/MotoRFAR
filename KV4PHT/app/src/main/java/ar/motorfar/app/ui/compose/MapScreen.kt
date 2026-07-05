@@ -46,6 +46,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
@@ -57,6 +58,7 @@ private const val INITIAL_ZOOM = 15.0
 @Composable
 fun MapScreen(
     groupMembers: List<GroupMember>,
+    routePoints: List<ar.motorfar.app.data.RoutePoint> = emptyList(),
     locationGranted: Boolean = false,
     headingDeg: Float? = null,
     focusTarget: Pair<Double, Double>? = null,
@@ -209,6 +211,17 @@ fun MapScreen(
             modifier = Modifier.fillMaxSize(),
             factory = { mapView },
             update = { mv ->
+                // Dibuja la traza de la ruta (Polyline)
+                mv.overlays.removeAll { it is Polyline }
+                if (routePoints.size > 1) {
+                    val line = Polyline(mv).apply {
+                        outlinePaint.color = accentArgb
+                        outlinePaint.strokeWidth = 5f
+                        setPoints(routePoints.map { GeoPoint(it.latitude, it.longitude) })
+                    }
+                    mv.overlays.add(line)
+                }
+
                 // Refresca marcadores de miembros del grupo con etiqueta táctica
                 mv.overlays.removeAll { it is Marker }
                 val nowMs = System.currentTimeMillis()

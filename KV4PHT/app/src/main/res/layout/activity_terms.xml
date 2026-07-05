@@ -19,7 +19,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="MotoRFAR"
+            android:text="Baqueano"
             android:textSize="34sp"
             android:textStyle="bold"
             android:textColor="@color/primary"
@@ -78,17 +78,17 @@
                 android:textSize="14sp"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="16dp"
-                android:text="Antes de usar MotoRFAR leé atentamente estos términos. Al tildar la casilla y presionar Aceptar confirmás que los leíste, los comprendiste y acordás cumplirlos en su totalidad."/>
+                android:text="Antes de usar Baqueano leé atentamente estos términos. Al tildar la casilla y presionar Aceptar confirmás que los leíste, los comprendiste y acordás cumplirlos en su totalidad."/>
 
             <!-- 1 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1. Naturaleza de la aplicación" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="MotoRFAR es una herramienta de comunicación por radio de frecuencia libre diseñada para uso entre grupos de motociclistas. No es un servicio de emergencias oficial, no reemplaza al sistema de emergencias del Estado, y no garantiza cobertura, disponibilidad ni recepción de mensajes en ninguna circunstancia.\n\nPara emergencias reales que requieran intervención de servicios de salud, seguridad o rescate, llamá al 911 o al organismo de emergencias correspondiente a tu ubicación."/>
+                android:text="Baqueano es una herramienta de comunicación por radio de frecuencia libre diseñada para uso entre grupos de motociclistas. No es un servicio de emergencias oficial, no reemplaza al sistema de emergencias del Estado, y no garantiza cobertura, disponibilidad ni recepción de mensajes en ninguna circunstancia.\n\nPara emergencias reales que requieran intervención de servicios de salud, seguridad o rescate, llamá al 911 o al organismo de emergencias correspondiente a tu ubicación."/>
 
             <!-- 2 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="2. Marco legal y uso del espectro" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="El espectro radioeléctrico en Argentina está regulado por el ENACOM bajo la Ley N° 19.798.\n\nMotoRFAR opera exclusivamente en las 3 frecuencias de uso libre de la Resolución 5/2015 (M.T.T.T.):\n  139.970 MHz — Grupo (prioritaria)\n  138.510 MHz — Alternativo (secundaria)\n  140.970 MHz — Emergencia (uso exclusivo)\n\nEstas frecuencias no requieren licencia para travesías, expediciones y motociclismo en zonas rurales.\n\nEl canal 140.970 MHz es monitoreado por entidades M.T.T.T. y organismos en todo el país.\n\nCualquier transmisión fuera de estas frecuencias es responsabilidad exclusiva del usuario."/>
+                android:text="El espectro radioeléctrico en Argentina está regulado por el ENACOM bajo la Ley N° 19.798.\n\nBaqueano opera exclusivamente en las 3 frecuencias de uso libre de la Resolución 5/2015 (M.T.T.T.):\n  139.970 MHz — Grupo (prioritaria)\n  138.510 MHz — Alternativo (secundaria)\n  140.970 MHz — Emergencia (uso exclusivo)\n\nEstas frecuencias no requieren licencia para travesías, expediciones y motociclismo en zonas rurales.\n\nEl canal 140.970 MHz es monitoreado por entidades M.T.T.T. y organismos en todo el país.\n\nCualquier transmisión fuera de estas frecuencias es responsabilidad exclusiva del usuario."/>
 
             <!-- 3 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="3. Condiciones de uso" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
@@ -98,22 +98,22 @@
             <!-- 4 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="4. Uso responsable de las alertas" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="Las funciones de alerta grupal (Emergencia, Detención y Reagrupamiento) son herramientas de coordinación entre miembros de un mismo grupo. Su uso implica la transmisión de la posición GPS del usuario junto con un mensaje de texto por la frecuencia activa.\n\nEl usuario se compromete expresamente a:\n\n• Usar las alertas únicamente cuando correspondan a la situación real que se describe.\n\n• No enviar alertas falsas, de prueba en entornos reales, ni con fines de broma o manipulación.\n\n• Comprender que cualquier persona dentro del alcance de radio puede recibir las alertas.\n\nEl envío de alertas falsas puede constituir una infracción a la Ley N° 19.798 y derivar en sanciones administrativas o penales para el usuario. El desarrollador de MotoRFAR no asume responsabilidad alguna por el contenido de las transmisiones realizadas."/>
+                android:text="Las funciones de alerta grupal (Emergencia, Detención y Reagrupamiento) son herramientas de coordinación entre miembros de un mismo grupo. Su uso implica la transmisión de la posición GPS del usuario junto con un mensaje de texto por la frecuencia activa.\n\nEl usuario se compromete expresamente a:\n\n• Usar las alertas únicamente cuando correspondan a la situación real que se describe.\n\n• No enviar alertas falsas, de prueba en entornos reales, ni con fines de broma o manipulación.\n\n• Comprender que cualquier persona dentro del alcance de radio puede recibir las alertas.\n\nEl envío de alertas falsas puede constituir una infracción a la Ley N° 19.798 y derivar en sanciones administrativas o penales para el usuario. El desarrollador de Baqueano no asume responsabilidad alguna por el contenido de las transmisiones realizadas."/>
 
             <!-- 5 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="5. Limitaciones y exención de responsabilidad" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="MotoRFAR se provee tal como está (as-is), sin garantías de ningún tipo, expresas o implícitas, incluyendo pero no limitado a:\n\n• Garantía de funcionamiento continuo o libre de errores.\n• Garantía de alcance, cobertura o recepción de mensajes.\n• Garantía de idoneidad para un propósito particular.\n\nEl desarrollador de MotoRFAR no será responsable bajo ninguna circunstancia por daños directos, indirectos, incidentales, especiales o consecuentes que surjan del uso o la imposibilidad de uso de la aplicación, incluyendo pero no limitado a: accidentes de tránsito, lesiones personales, daños materiales, pérdidas económicas, o consecuencias legales derivadas del uso indebido de las funciones de comunicación o alerta.\n\nEl usuario acepta usar la aplicación bajo su exclusiva responsabilidad."/>
+                android:text="Baqueano se provee tal como está (as-is), sin garantías de ningún tipo, expresas o implícitas, incluyendo pero no limitado a:\n\n• Garantía de funcionamiento continuo o libre de errores.\n• Garantía de alcance, cobertura o recepción de mensajes.\n• Garantía de idoneidad para un propósito particular.\n\nEl desarrollador de Baqueano no será responsable bajo ninguna circunstancia por daños directos, indirectos, incidentales, especiales o consecuentes que surjan del uso o la imposibilidad de uso de la aplicación, incluyendo pero no limitado a: accidentes de tránsito, lesiones personales, daños materiales, pérdidas económicas, o consecuencias legales derivadas del uso indebido de las funciones de comunicación o alerta.\n\nEl usuario acepta usar la aplicación bajo su exclusiva responsabilidad."/>
 
             <!-- 6 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="6. Privacidad y datos" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="MotoRFAR no recopila, almacena ni transmite datos personales a servidores externos. Toda la información (canales, configuración, historial de mensajes APRS) se almacena exclusivamente en el dispositivo del usuario.\n\nLa posición GPS del usuario se transmite por radio únicamente cuando el usuario activa explícitamente una función que la requiere (baliza APRS o alertas de grupo). Esta transmisión es audible y visible para cualquier receptor dentro del alcance de la frecuencia activa."/>
+                android:text="Baqueano no recopila, almacena ni transmite datos personales a servidores externos. Toda la información (canales, configuración, historial de mensajes APRS) se almacena exclusivamente en el dispositivo del usuario.\n\nLa posición GPS del usuario se transmite por radio únicamente cuando el usuario activa explícitamente una función que la requiere (baliza APRS o alertas de grupo). Esta transmisión es audible y visible para cualquier receptor dentro del alcance de la frecuencia activa."/>
 
             <!-- 7 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="7. Código abierto y créditos" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="@font/jost" android:textColor="@color/primary_deselected" android:textSize="14sp" android:lineSpacingMultiplier="1.5" android:layout_marginBottom="16dp"
-                android:text="MotoRFAR está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (indicativo KV4P), distribuido bajo licencia GNU General Public License v3 (GPL-3.0).\n\nFuente original: github.com/VanceVagell/kv4p-ht\n\nEsta versión modificada mantiene la misma licencia GPL-3.0, los avisos de copyright originales en el código fuente, y los créditos al proyecto y su autor."/>
+                android:text="Baqueano está basado en el proyecto de código abierto kv4p HT, desarrollado por Vance Vagell (indicativo KV4P), distribuido bajo licencia GNU General Public License v3 (GPL-3.0).\n\nFuente original: github.com/VanceVagell/kv4p-ht\n\nEsta versión modificada mantiene la misma licencia GPL-3.0, los avisos de copyright originales en el código fuente, y los créditos al proyecto y su autor."/>
 
             <!-- 8 -->
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="8. Modificaciones a estos términos" android:textSize="15sp" android:textStyle="bold" android:textColor="@color/primary" android:fontFamily="@font/jost" android:layout_marginBottom="6dp"/>
@@ -154,7 +154,7 @@
             android:id="@+id/termsAcceptButton"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Acepto — Ingresar a MotoRFAR"
+            android:text="Acepto — Ingresar a Baqueano"
             android:textSize="16sp"
             android:textColor="#000000"
             android:textAllCaps="false"
