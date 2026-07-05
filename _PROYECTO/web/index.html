@@ -321,6 +321,19 @@
     }
     .cf-diagram { margin-top: 60px; }
 
+    /* ── Comparativa ── */
+    #comparativa { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .compare-wrap { margin-top: 48px; overflow-x: auto; }
+    .compare-table { width: 100%; border-collapse: collapse; min-width: 620px; }
+    .compare-table th, .compare-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .compare-table thead th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-mute); border-bottom: 1px solid var(--border2); }
+    .compare-table tbody th { font-weight: 500; color: var(--text-dim); white-space: nowrap; }
+    .compare-table td { color: var(--text-dim); }
+    .compare-table .compare-col-bq { background: rgba(240,160,32,0.05); }
+    .compare-table thead th.compare-col-bq { color: var(--amber); }
+    .compare-yes { color: var(--green); }
+    .compare-no { color: var(--text-mute); }
+
     /* ── Frecuencias ── */
     #frecuencias { background: var(--bg); }
     .freq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-top: 48px; }
@@ -607,6 +620,7 @@
       <ul class="nav-links">
         <li><a href="#salida">Experiencia</a></li>
         <li><a href="#beneficios">Beneficios</a></li>
+        <li><a href="#comparativa">Comparativa</a></li>
         <li><a href="#frecuencias">Frecuencias</a></li>
         <li><a href="#balizas">Emergencia</a></li>
         <li><a href="#man-down">Man-Down</a></li>
@@ -909,6 +923,67 @@
           <div class="cf-title">La app muestra todo</div>
           <p class="cf-body">La app Android recibe el audio, muestra el mapa offline con los integrantes del grupo y te da el botón PTT. Voz, mapa y control en una pantalla.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARATIVA -->
+  <section id="comparativa">
+    <div class="container">
+      <div class="section-label reveal">¿Por qué no un handy o un intercom?</div>
+      <h2 class="section-title reveal reveal-delay-1">El alcance de un VHF real.<br/>Sin tener que sostenerlo.</h2>
+      <p class="section-body reveal reveal-delay-2">
+        Baqueano es radio VHF de verdad — mismo alcance, misma libertad de licencia que un handy tradicional. La diferencia es cómo lo usás: el equipo se conecta a tu celular por su propia red WiFi, sin cables, así que no tenés que llevarlo en la mano ni operarlo directo. Hablás y ves todo desde tu propio teléfono.
+      </p>
+      <div class="compare-wrap reveal reveal-delay-3">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Handy VHF tradicional</th>
+              <th>Intercom Bluetooth de moto</th>
+              <th class="compare-col-bq">Baqueano</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Alcance real</th>
+              <td><span class="compare-yes">✓</span> Kilómetros (VHF)</td>
+              <td><span class="compare-no">✗</span> Cientos de metros, según línea de vista</td>
+              <td class="compare-col-bq"><span class="compare-yes">✓</span> Kilómetros (VHF)</td>
+            </tr>
+            <tr>
+              <th scope="row">Necesitás la misma marca en todo el grupo</th>
+              <td><span class="compare-yes">✓</span> No, cualquier VHF sirve</td>
+              <td><span class="compare-no">✗</span> Sí, o compatibilidad limitada</td>
+              <td class="compare-col-bq"><span class="compare-yes">✓</span> No, cualquier VHF sirve</td>
+            </tr>
+            <tr>
+              <th scope="row">Cómo lo operás</th>
+              <td>Directo en el equipo, pantalla chica</td>
+              <td>Manos libres, pero atado al casco/auricular propietario</td>
+              <td class="compare-col-bq">Desde tu propio celular — pantalla grande, mapa, alias</td>
+            </tr>
+            <tr>
+              <th scope="row">Cables o hardware en la mano</th>
+              <td>Ninguno, pero sin mapa ni funciones smart</td>
+              <td>Auriculares/intercomunicador integrados al casco</td>
+              <td class="compare-col-bq"><span class="compare-yes">✓</span> Ninguno — WiFi propio entre el equipo y tu celular</td>
+            </tr>
+            <tr>
+              <th scope="row">Mapa del grupo en tiempo real</th>
+              <td><span class="compare-no">✗</span></td>
+              <td><span class="compare-no">✗</span></td>
+              <td class="compare-col-bq"><span class="compare-yes">✓</span> Con alias</td>
+            </tr>
+            <tr>
+              <th scope="row">Alerta automática de caída</th>
+              <td><span class="compare-no">✗</span></td>
+              <td><span class="compare-no">✗</span></td>
+              <td class="compare-col-bq"><span class="compare-yes">✓</span> Man-Down</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
