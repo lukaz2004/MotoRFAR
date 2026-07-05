@@ -32,6 +32,16 @@ public class ToneHelper {
         playTone(1200, 150, volume, false);
     }
 
+    /**
+     * Tono de advertencia para cuenta regresiva.
+     * @param progress 0.0 a 1.0 (cuanto más cerca de 1, más agudo y rápido)
+     */
+    public static void playCountdownBeep(float progress, float volume) {
+        int freq = (int) (600 + (progress * 1400)); // De 600Hz a 2000Hz
+        int duration = (int) (150 - (progress * 100)); // De 150ms a 50ms
+        playTone(freq, duration, volume, false);
+    }
+
     public static void playStaticBurst(float volume) {
         playNoise(80, volume * 0.3f);
     }
@@ -79,11 +89,15 @@ public class ToneHelper {
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
         int bufSize = Math.max(minBuf, samples.length * 2);
+
+        AudioAttributes attrs = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM) // Prioridad alta
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED) // Obligatorio en algunos sistemas
+                .build();
+
         AudioTrack track = new AudioTrack.Builder()
-                .setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build())
+                .setAudioAttributes(attrs)
                 .setAudioFormat(new AudioFormat.Builder()
                         .setSampleRate(SAMPLE_RATE)
                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)

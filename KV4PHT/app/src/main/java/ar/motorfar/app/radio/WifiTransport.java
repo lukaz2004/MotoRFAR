@@ -12,6 +12,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * WiFi UDP transport for the ESP32 SoftAP (Contrato A, F0=WiFi).
@@ -55,6 +57,10 @@ public class WifiTransport {
     private Thread receiveThread;
     private volatile boolean running = false;
 
+    // Sends run here so callers (which may be on the main thread, e.g. an
+    // emergency alert or beacon tick) never trip NetworkOnMainThreadException.
+    private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor();
+
     // ── FrameWriter (injected into Protocol.Sender) ─────────────────────────
 
     /**
@@ -65,11 +71,15 @@ public class WifiTransport {
         DatagramSocket s   = socket;
         InetAddress    addr = espAddress;
         if (s == null || addr == null || s.isClosed()) return;
-        try {
-            s.send(new DatagramPacket(frame, frameSize, addr, UDP_PORT));
-        } catch (IOException e) {
-            Log.w(TAG, "UDP send error", e);
-        }
+        // Caller (Protocol.Sender.writeEncodedFrame) already hands us a fresh
+        // copy per call, so it's safe to send it from this background thread.
+        sendExecutor.execute(() -> {
+            try {
+                s.send(new DatagramPacket(frame, frameSize, addr, UDP_PORT));
+            } catch (IOException e) {
+                Log.w(TAG, "UDP send error", e);
+            }
+        });
     };
 
     // ── Constructor ──────────────────────────────────────────────────────────
@@ -135,6 +145,7 @@ public class WifiTransport {
         espAddress = null;
         DatagramSocket s = socket;
         socket = null;
+        sendExecutor.shutdownNow();
         if (s != null) s.close();   // unblocks socket.receive() in the receive thread
 
         ConnectivityManager.NetworkCallback cb = networkCallback;

@@ -17,7 +17,8 @@ data class MainUiState(
     val locationGranted: Boolean        = false,
     val headingDeg: Float?              = null,
     val isRouteActive: Boolean          = false,
-    val alertHistory: List<ReceivedAlert> = emptyList()
+    val alertHistory: List<ReceivedAlert> = emptyList(),
+    val fallCountdown: Int?             = null
 ) {
     companion object {
         fun preview() = MainUiState(

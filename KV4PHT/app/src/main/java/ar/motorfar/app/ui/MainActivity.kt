@@ -95,6 +95,7 @@ class MainActivity : ComponentActivity() {
     private var alertVolume: Int = 70
     private var listenOnly: Boolean = false
     private var smartBeaconEnabled: Boolean = true
+    private var manDownEnabled: Boolean = false
 
     // Estado de movimiento del GPS (alimenta SmartBeaconing y Modo Ruta)
     @Volatile private var currentSpeedKmh: Double = 0.0
@@ -125,6 +126,7 @@ class MainActivity : ComponentActivity() {
     private var countdownJob: Job? = null
     private val countdownTimeSec = 30
     private val _countdownValue = MutableStateFlow<Int?>(null)
+    private var fallAudioFocusRequest: android.media.AudioFocusRequest? = null
 
     private var pendingAlertType: AlertHelper.AlertType? = null
 
@@ -481,6 +483,7 @@ class MainActivity : ComponentActivity() {
                                 currentBeaconIntervalSec = beaconIntervalSec,
                                 currentVolume            = alertVolume,
                                 currentSmartBeacon       = smartBeaconEnabled,
+                                currentManDown           = manDownEnabled,
                                 onSave                   = ::saveAliasSettings,
                                 onToggleSmartBeacon      = { enabled ->
                                     smartBeaconEnabled = enabled
@@ -489,6 +492,14 @@ class MainActivity : ComponentActivity() {
                                     executor.execute {
                                         RadioServiceAccessor.getAppDb(viewModel)
                                             .saveAppSetting(AppSetting.SETTING_SMART_BEACON, enabled.toString())
+                                    }
+                                },
+                                onToggleManDown          = { enabled ->
+                                    manDownEnabled = enabled
+                                    if (enabled) fallDetectionManager?.start() else fallDetectionManager?.stop()
+                                    executor.execute {
+                                        RadioServiceAccessor.getAppDb(viewModel)
+                                            .saveAppSetting(AppSetting.SETTING_MAN_DOWN, enabled.toString())
                                     }
                                 },
                                 onDownloadMaps           = {
@@ -610,24 +621,21 @@ class MainActivity : ComponentActivity() {
         
         countdownJob = serviceScope.launch {
             // Solicita foco de audio exclusivo para sonar sobre la música
-            val focusRequest = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                fallAudioFocusRequest = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
                     .setAudioAttributes(android.media.AudioAttributes.Builder()
                         .setUsage(android.media.AudioAttributes.USAGE_ALARM)
                         .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build())
                     .build()
-            } else null
-
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && focusRequest != null) {
-                audioManager.requestAudioFocus(focusRequest)
+                audioManager.requestAudioFocus(fallAudioFocusRequest!!)
             }
 
             for (i in countdownTimeSec downTo 0) {
                 _countdownValue.value = i
                 val progress = (countdownTimeSec - i).toFloat() / countdownTimeSec
                 ToneHelper.playCountdownBeep(progress, alertVolume / 100f)
-                
+
                 // El intervalo entre beeps se acorta (de 1s a 250ms)
                 val sleepTime = (1000 - (progress * 750)).toLong()
                 delay(sleepTime)
@@ -637,10 +645,7 @@ class MainActivity : ComponentActivity() {
             _countdownValue.value = null
             transmitGroupAlert(AlertHelper.AlertType.EMERGENCY)
             countdownJob = null
-            
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && focusRequest != null) {
-                audioManager.abandonAudioFocusRequest(focusRequest)
-            }
+            releaseFallAudioFocus()
         }
     }
 
@@ -648,8 +653,16 @@ class MainActivity : ComponentActivity() {
         countdownJob?.cancel()
         countdownJob = null
         _countdownValue.value = null
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-        audioManager.abandonAudioFocus(null)
+        releaseFallAudioFocus()
+    }
+
+    private fun releaseFallAudioFocus() {
+        val request = fallAudioFocusRequest ?: return
+        fallAudioFocusRequest = null
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            audioManager.abandonAudioFocusRequest(request)
+        }
     }
 
     // ── Service binding ───────────────────────────────────────────────
@@ -681,6 +694,7 @@ class MainActivity : ComponentActivity() {
         alertVolume        = settings.getOrDefault(AppSetting.SETTING_ALERT_VOLUME, "70").toIntOrNull() ?: 70
         listenOnly         = settings.getOrDefault(AppSetting.SETTING_LISTEN_ONLY, "false").toBoolean()
         smartBeaconEnabled = settings.getOrDefault(AppSetting.SETTING_SMART_BEACON, "true").toBoolean()
+        manDownEnabled     = settings.getOrDefault(AppSetting.SETTING_MAN_DOWN, "false").toBoolean()
         _beaconIntervalFlow.value = beaconIntervalSec * 1000L
         runOnUiThread {
             _uiState.update { it.copy(activeFrequency = activeFrequencyStr, isListenOnly = listenOnly) }

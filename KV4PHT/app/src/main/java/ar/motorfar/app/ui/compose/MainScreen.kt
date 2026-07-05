@@ -45,6 +45,7 @@ import ar.motorfar.app.ui.compose.components.AlertButtonsPanel
 import ar.motorfar.app.ui.compose.components.AppStatusBar
 import ar.motorfar.app.ui.compose.components.ChannelRow
 import ar.motorfar.app.ui.compose.components.EmergencyConfirmButton
+import ar.motorfar.app.ui.compose.components.FallCountdownOverlay
 import ar.motorfar.app.ui.compose.components.FrequencyDisplayCard
 import ar.motorfar.app.ui.compose.components.ModulationVisualizer
 import ar.motorfar.app.ui.compose.components.PttButton
@@ -88,6 +89,13 @@ fun MainScreen(
             LandscapeLayout(state, onAction, onDismissAlert, onOpenSettings)
         } else {
             PortraitLayout(state, onAction, onDismissAlert, onOpenSettings)
+        }
+
+        state.fallCountdown?.let { seconds ->
+            FallCountdownOverlay(
+                secondsLeft = seconds,
+                onCancel = { onAction(MainUiAction.CancelFallCountdown) }
+            )
         }
     }
 }

@@ -49,8 +49,10 @@ fun AliasSettingScreen(
     currentBeaconIntervalSec: Int = 60,
     currentVolume: Int = 70,
     currentSmartBeacon: Boolean = true,
+    currentManDown: Boolean = false,
     onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> },
     onToggleSmartBeacon: (Boolean) -> Unit = {},
+    onToggleManDown: (Boolean) -> Unit = {},
     onDownloadMaps: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
@@ -59,6 +61,7 @@ fun AliasSettingScreen(
 
     var aliasInput   by remember { mutableStateOf(currentAlias) }
     var smartBeacon  by remember { mutableStateOf(currentSmartBeacon) }
+    var manDown      by remember { mutableStateOf(currentManDown) }
     var intervalIndex by remember {
         mutableFloatStateOf(
             BEACON_INTERVAL_OPTIONS.indexOf(currentBeaconIntervalSec).coerceAtLeast(0).toFloat()
@@ -188,6 +191,44 @@ fun AliasSettingScreen(
                 colors        = SliderDefaults.colors(
                     thumbColor       = colors.borderActive,
                     activeTrackColor = colors.borderActive
+                )
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        // ── Man-Down ──────────────────────────────────────────────────
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text     = "DETECCIÓN DE CAÍDAS (MAN-DOWN)",
+                    color    = colors.textPrimary,
+                    fontFamily = ShareTechMono,
+                    fontSize = 18.sp,
+                    letterSpacing = 2.sp
+                )
+                Text(
+                    text     = "Si detecta un impacto fuerte seguido de quietud, cuenta 30s y avisa al grupo. Podés cancelarlo. Puede dispararse por baches fuertes.",
+                    color    = colors.textSecondary,
+                    fontFamily = ShareTechMono,
+                    fontSize = 15.sp
+                )
+            }
+            androidx.compose.material3.Switch(
+                checked = manDown,
+                onCheckedChange = {
+                    manDown = it
+                    onToggleManDown(it)
+                },
+                colors = androidx.compose.material3.SwitchDefaults.colors(
+                    checkedThumbColor   = colors.accent,
+                    checkedTrackColor   = colors.accent.copy(alpha = 0.4f),
+                    uncheckedThumbColor = colors.textSecondary,
+                    uncheckedTrackColor = colors.surface
                 )
             )
         }

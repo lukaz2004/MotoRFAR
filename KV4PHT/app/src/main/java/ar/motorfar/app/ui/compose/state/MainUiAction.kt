@@ -13,4 +13,5 @@ sealed class MainUiAction {
     data class SetTheme(val theme: AppTheme)      : MainUiAction()
     object ToggleRouteActive                      : MainUiAction()
     object SendWaypoint                           : MainUiAction()
+    object CancelFallCountdown                    : MainUiAction()
 }
