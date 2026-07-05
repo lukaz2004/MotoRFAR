@@ -667,7 +667,7 @@
             <rect x="195" y="120" width="130" height="80" rx="6" fill="#111520" stroke="#252b3e" stroke-width="1.5"/>
             <rect x="208" y="132" width="104" height="28" rx="3" fill="#0a0d12" stroke="#1c2030"/>
             <text x="260" y="151" text-anchor="middle" font-family="monospace" font-size="10" fill="#f0a020">Baqueano HT</text>
-            <text x="260" y="172" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b7585">ESP32 + SA818-V</text>
+            <text x="260" y="172" text-anchor="middle" font-family="monospace" font-size="9" fill="#6b7585">RADIO VHF · WIFI PROPIO</text>
             <rect x="220" y="175" width="80" height="16" rx="2" fill="#0f1525" stroke="#1c2030"/>
             <text x="260" y="186" text-anchor="middle" font-family="monospace" font-size="8" fill="#10c870">● 139.970 MHz TX/RX</text>
             <!-- Antena -->
@@ -756,7 +756,7 @@
           <div class="salida-step-num">01</div>
           <span class="salida-icon"><svg class="icon"><use href="#i-plug"/></svg></span>
           <div class="salida-step-title">Enchufás y listo</div>
-          <p class="salida-step-body">Conectás el Baqueano a la batería de 12V de tu moto o 4×4. Se enciende en segundos. <span class="salida-highlight">No hay configuración.</span> Ya está en el canal grupal.</p>
+          <p class="salida-step-body">Conectás el Baqueano por USB-C — a un cargador de tu moto o 4×4, o a un power bank. Se enciende en segundos. <span class="salida-highlight">No hay configuración.</span> Ya está en el canal grupal.</p>
         </div>
         <div class="salida-step reveal reveal-delay-1">
           <div class="salida-step-num">02</div>
@@ -768,7 +768,7 @@
           <div class="salida-step-num">03</div>
           <span class="salida-icon"><svg class="icon"><use href="#i-mic"/></svg></span>
           <div class="salida-step-title">PTT, hablás</div>
-          <p class="salida-step-body">Presionás el botón PTT en el manillar. Todos en el grupo te escuchan por radio VHF. <span class="salida-highlight">Sin datos, sin cobertura, sin latencia.</span> Voz real.</p>
+          <p class="salida-step-body">Mantenés presionado el botón PTT <em>(Push To Talk — presionar para hablar)</em> en el manillar y hablás; soltás para escuchar. Todos en el grupo te escuchan por radio VHF. <span class="salida-highlight">Sin datos, sin cobertura, sin latencia.</span> Voz real.</p>
         </div>
         <div class="salida-step reveal reveal-delay-3">
           <div class="salida-step-num">04</div>
@@ -895,13 +895,13 @@
           <div class="cf-step-num">PASO 1</div>
           <span class="cf-icon"><svg class="icon"><use href="#i-radio"/></svg></span>
           <div class="cf-title">Radio VHF transmite y recibe</div>
-          <p class="cf-body">El módulo SA818-V en el dispositivo hace el trabajo de radio real: transmite audio por VHF a los otros equipos del grupo. Potencia 1–5W, alcance de kilómetros.</p>
+          <p class="cf-body">Adentro del dispositivo, un módulo de radio hace el trabajo real: transmite tu voz por VHF a los otros equipos del grupo. Alcance de kilómetros en campo abierto.</p>
         </div>
         <div class="cf-step reveal reveal-delay-1">
           <div class="cf-step-num">PASO 2</div>
           <span class="cf-icon"><svg class="icon"><use href="#i-wifi"/></svg></span>
           <div class="cf-title">El dispositivo crea su WiFi</div>
-          <p class="cf-body">Un microcontrolador ESP32 traduce la señal de radio a audio digital y la manda por su propia red WiFi local. Sin internet. Tu celular se conecta a esa red.</p>
+          <p class="cf-body">Un microcontrolador traduce la señal de radio a audio digital y la manda por su propia red WiFi local. Sin internet. Tu celular se conecta a esa red.</p>
         </div>
         <div class="cf-step reveal reveal-delay-2">
           <div class="cf-step-num">PASO 3</div>
@@ -961,7 +961,7 @@
           <img class="montaje-photo" src="assets/moto-grupo.jpg" alt="Convoy de motos coordinado con Baqueano en ruta de ripio" loading="lazy" />
           <span class="montaje-icon"><svg class="icon"><use href="#i-moto"/></svg></span>
           <div class="montaje-title">Grupos de motos</div>
-          <p class="montaje-desc">La unidad va bajo el asiento o en el portaequipajes, alimentada de la batería de 12V. El PTT externo se instala en el manillar: hablás sin soltar el puño. El grupo se ve en el mapa en tiempo real.</p>
+          <p class="montaje-desc">La unidad va bajo el asiento o en el portaequipajes, alimentada por USB-C (cargador de la moto o power bank). El PTT externo se instala en el manillar: hablás sin soltar el puño. El grupo se ve en el mapa en tiempo real.</p>
           <div class="montaje-tags">
             <span class="montaje-tag">PTT MANILLAR</span>
             <span class="montaje-tag">BAJO ASIENTO</span>
@@ -992,13 +992,16 @@
         <div class="montaje-card reveal reveal-delay-1">
           <span class="montaje-icon"><svg class="icon"><use href="#i-sprout"/></svg></span>
           <div class="montaje-title">Trabajo Rural y Campo</div>
-          <p class="montaje-desc">Coordinación entre personal disperso en campo, estancia o zona agrícola sin cobertura. Montado en el vehículo o fijo en un punto con alimentación 12V. Alcance de kilómetros sin infraestructura.</p>
+          <p class="montaje-desc">Coordinación entre personal disperso en campo, estancia o zona agrícola sin cobertura. Se alimenta por USB-C — fijo en un vehículo o punto de trabajo, o portátil con power bank. Alcance de kilómetros sin infraestructura.</p>
           <div class="montaje-tags">
-            <span class="montaje-tag">12V FIJO O MÓVIL</span>
+            <span class="montaje-tag">USB-C · FIJO O MÓVIL</span>
             <span class="montaje-tag">SIN INFRAESTRUCTURA</span>
             <span class="montaje-tag">LARGO ALCANCE</span>
           </div>
         </div>
+      </div>
+      <div class="balizas-nav-note reveal" style="margin-top:32px;">
+        <strong>Desmontable o instalación fija:</strong> lo llevás suelto (mochila, portaequipaje) o lo dejamos instalado de forma permanente en tu vehículo. Contanos qué vehículo tenés y cómo lo vas a usar — armamos la instalación a medida donde sea posible.
       </div>
     </div>
   </section>
