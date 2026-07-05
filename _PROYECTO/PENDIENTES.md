@@ -1,7 +1,21 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-06-24 (Privacy Policy OK · web borrador listo · Release v1.0-beta1 creado · ProGuard pendiente).
+> Última edición: 2026-07-04 (Man-Down countdown cerrado y probado · fix build · fix crash alerta WiFi).
+
+## 🚑 Man-Down — countdown cerrado y probado (2026-07-04)
+- ✅ Toggle en Ajustes (Compose `AliasSettingScreen.kt`) — estaba wireado pero inalcanzable desde
+  que la navegación pasó a Compose (vivía en `SettingsActivity` legacy). Opt-in, default OFF.
+- ✅ Fix leak de audio focus al cancelar countdown ("ESTOY BIEN").
+- ✅ Fix crash `NetworkOnMainThreadException` en `WifiTransport` al mandar la alerta de emergencia
+  (afectaba también baliza y chat, no solo Man-Down).
+- ✅ Build roto arreglado de paso: XML legacy huérfano (`layout-land/activity_main.xml`) rompía
+  AAPT2 — probablemente lo que colgó la sesión anterior.
+- ✅ Probado end-to-end en emulador con caída simulada (acelerómetro inyectado).
+- ✅ Commits: `aad9a5e` (fix build) + `9858d8c` (feature + fix crash).
+- ⬜ Probar en dispositivo físico (moto real, no emulador).
+- ⬜ Calibrar umbrales de `FallDetectionManager.kt` (impacto 25 m/s², quietud 1.5, countdown 30s)
+  con uso real — hoy son valores de arranque.
 
 ## 🟢 APP-1 — CERRADO (2026-06-24)
 - ✅ Sprints 1-9 mergeados en main.
@@ -15,6 +29,28 @@
   keytool -genkey -v -keystore baqueano-release.jks -alias baqueano -keyalg RSA -keysize 2048 -validity 10000
   ```
   Luego copiar `keystore.properties.template` → `keystore.properties` y completar contraseñas. ⚠️ Hacer backup del .jks — sin él no se puede actualizar la app.
+
+## 📱 APP — ÍCONOS (2026-06-30)
+- ✅ Todos los mipmap reemplazados con badge Baqueano (5 densidades × 3 archivos).
+- ✅ Splash screen automático Android 12+ usa el adaptive icon nuevo.
+
+## 🌐 WEB — GALERÍA REAL (2026-06-30)
+- ✅ 6 fotos reales en `_PROYECTO/web/img/` (moto-01 a moto-06).
+- ✅ Video demo con logo Baqueano en `_PROYECTO/web/baqueano-demo.mp4`.
+- ✅ HTML sección "En acción" actualizado con grilla 3×2, hover/zoom, captions y video.
+
+## 🏗️ EST-1 — CARCASA — ESPECIFICACIONES CERRADAS (2026-06-30)
+- ✅ Dimensiones externas: **170 × 75 × 24mm**
+- ✅ Construcción: sandwich 2 tapas Al 3mm + frame 18mm corte por agua
+- ✅ Tapa: 8 tornillos M3 countersunk (3 por lado largo, 1 por lado corto)
+- ✅ Frente: botón M16 Short Body High Head LED azul (esq. sup. izq., 10mm márgenes), USB-C centrado, tapa PETG 60×20×4mm antena WiFi (parte inferior)
+- ✅ Borde superior: SMA VHF (15mm del borde der., 15mm del borde frontal)
+- ✅ Pigtail RG316 → antena varilla inox 50cm
+- ✅ Sin conector 5V separado (USB-C alimenta todo)
+- ✅ Terminaciones: arenado crudo ó anodizado negro sobre arenado
+- ⬜ Modelado en Fusion 360 (EST-1 arrancable — leer `ramas/EST_estetica.md`)
+- ⬜ Corte por agua del frame de 18mm
+- ⬜ Impresión 3D prueba antes de mecanizar aluminio
 
 ## 🌐 WEB — PUBLICADA (2026-06-24)
 - ✅ Rediseño comercial completo: hero, kit, features, frecuencias, app mockup, vehículos, accesorios, specs, CTA.
@@ -46,7 +82,7 @@
 - **Deadman PTT**: corte **instantáneo** por desconexión limpia (`softAPgetStationNum()==0`) + respaldo de 400 ms para fuera-de-rango/app-colgada. → Tunable; revisar el valor tras test real en la moto.
 - **Windowing (`COMMAND_WINDOW_UPDATE`)**: se mantiene en FW-3a (queda inerte). → **Quitar/rediseñar en FW-3b + APP-2.**
 
-## 🟡 HW-1 — avanzado (2026-06-24)
+## 🟢 HW-1 — CERRADO (2026-06-29)
 - ✅ SW1/SW2 (botones físicos PTT) marcados DNP en esquemático.
 - ✅ J2 conector jack 3.5mm TS PTT externo agregado al esquemático.
 - ✅ Logo BAQUEANO en B.SilkS del PCB.
@@ -56,13 +92,10 @@
 - ✅ BOM formato JLCPCB (`BOM_JLCPCB.csv`, 38 componentes con LCSC#).
 - ✅ CPL formato JLCPCB (`CPL_JLCPCB.csv`, 89 componentes posicionados).
 - ⚠️ SA818-V y jack 3.5mm PJ302M NO van en el PCBA — comprar por separado (AliExpress).
-- ⬜ **GUI KiCad — 4 tareas pendientes antes de ordenar:**
-  1. Rutear 3 pistas cortas /PTT Button Right: R14-pad1 → C33-pad1 → U5-pad29 → J3-pad1
-  2. Verificar y ajustar traza RF de J1: el U.FL tiene pad central más pequeño que el SMA — verificar que la pista existente conecte bien. Extender si hace falta (VHF 138MHz → 2m λ, unos mm extra = inocuos).
-  3. Verificar posición LOGO1 (y=140) y J3 (x=163.5, ~1.6mm del borde derecho) — pueden necesitar ajuste
-  4. DRC completo (diálogo queda off-screen: abrir con Win+Shift+Flecha)
-- ⬜ Actualizar esquemático: agregar J3 header 2-pin + cambiar U5 a WROOM-32U-N4 para mantener sync PCB↔SCH.
-- ⬜ Regenerar Gerbers + BOM + ZIP tras las correcciones GUI.
+- ✅ GUI KiCad — 4 tareas completadas (2026-06-29)
+- ✅ Esquemático actualizado: J3 + U5 WROOM-32U-N4
+- ✅ Gerbers + BOM + ZIP regenerados
+- ⬜ **Pedir a JLCPCB** (próximo paso de hardware)
 - ✅ Backup pre-cambios: `AppData\Local\Temp\kv4p-ht-BACKUP-pre-82mm.kicad_pcb`
 
 ## 🔵 FW-3b — roadmap (tras validar 3a)

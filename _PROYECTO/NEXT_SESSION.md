@@ -1,5 +1,56 @@
 # BAQUEANO — Prompt de arranque de sesión
-> Copiá y pegá esto al inicio de cada chat. Claude lee SOLO este archivo y arranca.
+> Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
+
+## ⚡ CIERRE 2026-07-04 — estado más reciente (si contradice algo de abajo, MANDA ESTO)
+- **Sesión anterior colgada:** un `layout-land/activity_main.xml` legacy (huérfano de antes de la
+  migración a Compose, nadie lo referenciaba) rompía el merge de recursos de AAPT2 con un error
+  críptico ("layout file should've changed") y probablemente eso colgó el chat previo. Borrado junto
+  con `MainActivityLegacy.java` y `layout/activity_main.xml` (mismo legacy, también muerto).
+  Commit `aad9a5e`.
+- **Man-Down — countdown completo y probado (commit `9858d8c`):** el toggle vivía en el
+  `SettingsActivity` legacy, que ya no es alcanzable desde la navegación Compose actual → la
+  función estaba wireada (countdown, overlay, tono, DB) pero **inaccesible para el usuario**.
+  Agregado el toggle en `AliasSettingScreen.kt` (opt-in, default OFF). De paso, dos bugs reales
+  encontrados probando en emulador:
+  - Fuga de audio focus al cancelar ("ESTOY BIEN"): liberaba con una API vieja que no hacía nada;
+    el foco exclusivo (silencia música/GPS) quedaba trabado para siempre.
+  - **Crash real:** `WifiTransport` mandaba el UDP en el mismo thread que lo llamaba →
+    `NetworkOnMainThreadException` justo cuando el countdown llega a 0 y dispara
+    `transmitGroupAlert(EMERGENCY)` — la app se caía exactamente al mandar la alerta de
+    emergencia. Ahora corre en un executor propio (aplica también a baliza y chat).
+  - Probado end-to-end en emulador (Pixel_10_Pro_XL, caída simulada por acelerómetro): toggle,
+    countdown, cancelar, y countdown completo → alerta se manda sin crashear.
+  - ⬜ Falta: probar en dispositivo físico (el emulador valida la lógica, no el umbral de impacto
+    real en moto). Umbrales de `FallDetectionManager` (30s countdown, impacto 25 m/s², quietud
+    1.5) son valores de arranque sin calibrar con uso real.
+- **⚠️ Working tree con 3 frentes sueltos sin commitear** (no tocados esta sesión, dejados
+  adrede — cada uno es su propia etapa):
+  1. Rediseño visual completo de `_PROYECTO/web/index.html` (tipografía Rajdhani, paleta
+     verde retocada, título ya dice Baqueano).
+  2. Rebrand de íconos: los 5 mipmaps (`ic_launcher*`) recomprimidos/actualizados.
+  3. Limpieza menor Compose: `MainViewModel.java` (executor pool), `MapScreen.kt` (Polyline de
+     ruta), `activity_terms.xml` (texto MotoRFAR→Baqueano).
+  Correr `git status` antes de asumir árbol limpio en el próximo chat.
+- **Emulador:** quedó corriendo y se cerró solo (o se lo mató) durante la sesión — no hay AVD
+  activo al cierre.
+
+## ⚡ CIERRE 2026-07-02
+- **HW-1:** DRC completo corrido (CLI + GUI de LuKaZ, misma foto). **Ruteo PTT de LuKaZ: LIMPIO, cero errores.**
+  Quedan 6 retoques de GUI (~25 min) con coordenadas exactas en `HW1_CIERRE.md` → hacerlos, re-correr
+  DRC, y HW-1 pasa a CERRADO definitivo con evidencia. Las 169 marcas heredadas están clasificadas
+  como no bloqueantes en ese archivo: NO se trabajan, NO se re-auditan.
+- **05_VISION.md:** creado y aprobado por LuKaZ. Se lee en cada arranque junto a este archivo.
+- **Esquemático:** BOM UTF-8 (3 bytes inválidos) eliminado; backup `kv4p-ht.kicad_sch.bak-BOM-2026-07-02`.
+- **Conectores MCP:** Spotify / Shopify / Vercel / GDrive DESCONECTADOS (2026-07-02). Ignorar menciones viejas.
+- **Python del sistema: FUNCIONA** (3.14.6 + pip 26.1.2, verificado 2026-07-02). Regla "Python roto" obsoleta.
+  PlatformIO sigue en pio-venv (el build del firmware no se migra).
+- **PRÓXIMA ETAPA — REBRAND total → Baqueano (chat propio, 1 chat = 1 etapa):** renombrar carpetas,
+  app, SSID (MotoRFAR-HT → Baqueano-HT), web, docs. MotoRFAR muere como nombre: el producto ya no es
+  solo para motos. ⚠️ Límite GPL: los headers de copyright kv4p/Vance Vagell dentro de los archivos
+  fuente y el texto de la licencia NO se tocan (atribución obligatoria); todo lo demás se renombra.
+- **Pendiente de organización:** crear `CERRADO.md` / `HISTORIAL.md` / `IDEAS.md` + adelgazar este
+  archivo (mover historia vieja a HISTORIAL). Primera tarea del próximo chat de organización.
+- **Alerta web:** SIGUE VIGENTE (ver abajo), sin cambios hoy.
 
 ---
 
@@ -15,6 +66,41 @@
 - Web: `C:\Users\lukaz\OneDrive\Escritorio\MotoRFAR-MTTT\docs\` → publicada en Netlify
 
 **Frecuencias TX permitidas (Res 5/2015 MTTT):** 139.970 · 138.510 · 140.970 MHz — whitelist en firmware ES LA AUTORIDAD FINAL.
+
+---
+
+## ESTADO AL 2026-07-02
+
+### 🔴 ALERTA — WEB en estado divergente, sesión de auditoría no persistida a disco
+- `docs\index.html` (deployado en Netlify) sin cambios desde 29/06 01:18 — 71K, 1238 líneas.
+- `_PROYECTO\web\index.html` (fuente/staging) sin cambios desde 30/06 01:02 — 32K, 832 líneas.
+- Chat "Subir fotos al proyecto web" (activo hasta 01/07 tarde-noche) hizo fetch a baqueano.netlify.app, auditoría completa de diseño/contenido, y reconstruyó la página — pero trabajó en el filesystem efímero del contenedor (`/home/claude/baqueano-web-assets/`) y nunca copió el resultado final a estos paths vía Desktop Commander. Ese trabajo puede estar accesible solo reabriendo ese chat puntual.
+- **Antes de tocar la web de nuevo:** buscar ese chat con `conversation_search` ("auditoria diseño landing baqueano") y confirmar si el HTML final es recuperable. Si no, rehacer la auditoría — esta vez cerrando con copia a disco.
+- Hasta resolver esto, los dos `index.html` siguen siendo versiones distintas — no asumir cuál es la vigente.
+
+### 🟡 Conectores MCP — estado real (verificado 2026-07-02)
+- **Vercel**: registrado pero no autorizado en esta sesión (`No approval received` al listar teams). Si se quiere usar para deploy/debug de la web, hay que reautorizarlo desde la configuración de Claude primero.
+- **Google Drive**: mismo estado — registrado, no autorizado.
+- **Shopify**: conectado y con herramientas activas, sin uso todavía en este proyecto. Relevante recién en la etapa de venta comercial.
+- **Spotify**: conectado, sin relevancia para este proyecto.
+
+---
+
+## ESTADO AL 2026-06-30
+
+### Cambios de la sesión 2026-06-30
+- ✅ **App ícono**: Todos los mipmap (mdpi→xxxhdpi) reemplazados con badge Baqueano — `ic_launcher.png`, `ic_launcher_moto.png`, `ic_launcher_round.png` en las 5 densidades. Splash screen automático en Android 12+.
+- ✅ **Web galería real**: 6 fotos reales en `_PROYECTO/web/img/` (moto-01 a moto-06, ~50-200KB c/u). Video demo con logo Baqueano en `_PROYECTO/web/baqueano-demo.mp4` (1.6MB). HTML actualizado con grilla 3×2 real, hover/zoom y captions.
+- ✅ **Videos procesados**: Watermark Gemini tapado (blur quirúrgico + logo Baqueano overlay) en los 2 videos originales (`imegenes baqueano edit/mp4.mp4` y `mp4 (1).mp4`).
+- ✅ **Diseño carcasa EST-1**: Especificaciones completas definidas:
+  - Construcción sandwich: 2 tapas aluminio 3mm + frame 18mm corte por agua
+  - Dimensiones externas: **170 × 75 × 24mm**
+  - 8 tornillos M3 en la tapa (3 por lado largo, 1 por lado corto)
+  - Frente: botón M16 Short Body High Head con LED azul (esquina superior izquierda, 10mm de margen), USB-C centrado, tapa PETG 60×20×4mm antena WiFi (parte inferior)
+  - Borde superior: SMA VHF (15mm del borde derecho, 15mm del borde frontal) con pigtail RG316 → antena varilla inox 50cm
+  - Sin conector 5V separado (alimenta por USB-C)
+  - Terminaciones: aluminio arenado crudo ó anodizado negro sobre arenado
+- ✅ **Prompt render prototipo**: Desarrollado prompt iterativo para Gemini Image — estrategia por capas (caja+tornillos+USB-C primero, luego botón, luego antenas)
 
 ---
 
@@ -43,7 +129,7 @@
 | FW-3a WiFi transport | ✅ flasheado + Hello OK | `--open-rx` + failsafe (SA818) |
 | FW-3b TCP/UDP split | ⬜ roadmap | tras FW-3a validado completo |
 | FW-4 PTT J2 | 🟡 auditado | test físico con SA818 |
-| HW-1 PCB | 🟡 Gerbers/BOM/CPL/ZIP listos | 4 tareas GUI KiCad (ver abajo) |
+| HW-1 PCB | ✅ CERRADO (2026-06-29) | — |
 | HW-2/3/4 | ⬜ | tras HW-1 |
 | APP-1 | ✅ CERRADO | — |
 | APP-2 WiFi client | 🟡 transport + UI guide hechos (PR #8+#9) | test real con SA818+ESP32 |
@@ -131,6 +217,7 @@ Emulador: `C:\Users\lukaz\AppData\Local\Android\Sdk\emulator\emulator.exe -avd P
 ## REGLAS QUE NO SE NEGOCIAN
 - 🔴 Nunca script para rutear cobre crítico en KiCad → GUI siempre.
 - 🔴 Whitelist TX: firmware es la autoridad final (no confiar solo en la app).
+- 🔴 Todo trabajo hecho en filesystem efímero de una sesión (bash_tool, `/home/claude/...`) se copia al disco real vía Desktop Commander ANTES de cerrar el chat. Si no se copia, se pierde — ya pasó con el rebuild de la web (ver ESTADO AL 2026-07-02).
 - 🟢 Backup del PCB ANTES de cualquier cambio.
 - 🟢 Cada chat = 1 etapa. Los contratos (`01_CONTRATOS.md`) son la memoria compartida entre ramas.
 - 🟢 Python system installer roto en esta máquina — siempre pio-venv.
