@@ -121,6 +121,7 @@ class MainActivity : ComponentActivity() {
     // Punto al que centrar el mapa al tocar "ir a ubicación" en una alerta del chat
     private val _mapFocus = MutableStateFlow<Pair<Double, Double>?>(null)
     private val _routePoints = MutableStateFlow<List<ar.motorfar.app.data.RoutePoint>>(emptyList())
+    private var currentRouteSessionId: Long = 0L
 
     private var fallDetectionManager: FallDetectionManager? = null
     private var countdownJob: Job? = null
@@ -607,11 +608,19 @@ class MainActivity : ComponentActivity() {
             timestamp = System.currentTimeMillis(),
             latitude  = lat,
             longitude = lon,
-            alias     = userAlias
+            alias     = userAlias,
+            sessionId = currentRouteSessionId
         )
         _routePoints.update { it + point }
         executor.execute {
             RadioServiceAccessor.getAppDb(viewModel).routePointDao().insert(point)
+        }
+    }
+
+    private fun clearRoute() {
+        _routePoints.value = emptyList()
+        executor.execute {
+            RadioServiceAccessor.getAppDb(viewModel).routePointDao().deleteForAlias(userAlias)
         }
     }
 
@@ -681,10 +690,14 @@ class MainActivity : ComponentActivity() {
         val settings = db.appSettingDao().getAll()
             .associateBy(AppSetting::name, AppSetting::value)
         
-        // Carga puntos de ruta guardados
+        // Carga los puntos de la última salida guardada (no todo el historial mezclado)
         executor.execute {
-            val points = db.routePointDao().getPointsForAlias(userAlias)
-            _routePoints.value = points
+            val dao = db.routePointDao()
+            val latestSession = dao.getLatestSessionId(userAlias)
+            if (latestSession != null) {
+                currentRouteSessionId = latestSession
+                _routePoints.value = dao.getPointsForSession(userAlias, latestSession)
+            }
         }
 
         callsign           = settings.getOrDefault(AppSetting.SETTING_CALLSIGN, "")
@@ -785,6 +798,9 @@ class MainActivity : ComponentActivity() {
                 val nowActive = !uiState.value.isRouteActive
                 _uiState.update { it.copy(isRouteActive = nowActive) }
                 if (nowActive) {
+                    // Nueva salida: arranca una sesión propia, no sigue la línea de la anterior
+                    currentRouteSessionId = System.currentTimeMillis()
+                    _routePoints.value = emptyList()
                     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                     stationaryStartMs = 0L
                     android.widget.Toast.makeText(
@@ -812,6 +828,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             MainUiAction.CancelFallCountdown -> cancelFallCountdown()
+            MainUiAction.ClearRoute -> clearRoute()
         }
     }
 

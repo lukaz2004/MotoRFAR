@@ -10,5 +10,6 @@ data class RoutePoint(
     val timestamp: Long,
     val latitude: Double,
     val longitude: Double,
-    val alias: String // Para diferenciar quién dejó el punto (tú o un compañero)
+    val alias: String, // Para diferenciar quién dejó el punto (tú o un compañero)
+    val sessionId: Long = 0 // Agrupa los puntos de una misma salida (Ruta activada→desactivada)
 )

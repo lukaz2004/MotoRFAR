@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
  * Al primer inicio carga automáticamente los canales habilitados en Argentina (ENACOM).
  */
 @Database(
-    version = 7,
+    version = 8,
     entities = {AppSetting.class, ChannelMemory.class, APRSMessage.class, RoutePoint.class}
 )
 public abstract class AppDatabase extends RoomDatabase {
@@ -53,6 +53,7 @@ public abstract class AppDatabase extends RoomDatabase {
             database.execSQL("CREATE TABLE IF NOT EXISTS `route_points` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `alias` TEXT NOT NULL)");
         }
     };
+    public static final Migration MIGRATION_7_8 = new MigrationFrom7To8();
 
     @SuppressWarnings({"java:S3077", "java:S3008"})
     private static volatile AppDatabase INSTANCE;
@@ -81,7 +82,8 @@ public abstract class AppDatabase extends RoomDatabase {
                 MIGRATION_3_4,
                 MIGRATION_4_5,
                 MIGRATION_5_6,
-                MIGRATION_6_7
+                MIGRATION_6_7,
+                MIGRATION_7_8
             )
             // Sin fallbackToDestructiveMigration: si falta una migración, la app
             // lanzará IllegalStateException en lugar de borrar datos silenciosamente.

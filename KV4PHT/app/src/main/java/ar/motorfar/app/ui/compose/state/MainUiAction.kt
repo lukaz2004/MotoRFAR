@@ -14,4 +14,5 @@ sealed class MainUiAction {
     object ToggleRouteActive                      : MainUiAction()
     object SendWaypoint                           : MainUiAction()
     object CancelFallCountdown                    : MainUiAction()
+    object ClearRoute                             : MainUiAction()
 }
