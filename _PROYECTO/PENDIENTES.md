@@ -151,6 +151,14 @@
 - ⬜ Windowing: quitar/rediseñar en FW-3b (hoy inerte).
 
 ## ⚖️ Licencia / Venta — checklist pre-venta
+- ⬜ **Homologación ENACOM del equipo** (2026-07-05, real, no opcional). Distinto
+  de que el canal sea libre para el usuario (Res. 5/2015, eso ya está): vender
+  hardware que usa espectro sin homologar es infracción a la Res. 729/80,
+  sancionable bajo Ley 24.240 (multas, decomiso, hasta clausura). Bloqueante
+  real antes de cualquier venta comercial (la lista de espera actual no vende,
+  no es urgente todavía, pero hay que arrancar el trámite antes de facturar).
+  Fuente: enacom.gob.ar/homologacion-de-equipos_p347
+
 - ✅ Decidido: vender es compatible con GPL. Firmware y app siguen siendo forks GPL-3.0; se publica el fuente.
 - ✅ Repo con fuente publicado (Release v1.0-beta1).
 - ✅ Pantalla "Acerca de / Licencias" — completa. Email removido de Créditos. Solo atribuciones exigidas por licencia. (2026-06-24)
