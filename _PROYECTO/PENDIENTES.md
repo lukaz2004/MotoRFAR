@@ -14,6 +14,18 @@
   acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
   infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,
   ya transmite posición por VHF) en vez de ser algo nuevo desde cero.
+- ⬜ **Man-Down: countdown variable según fuerza G del golpe** (propuesto 2026-07-05).
+  Golpe fuerte → cuenta corta (más urgente); golpe leve → cuenta larga (más
+  chance de cancelar). Requiere: `FallDetectionManager` guarde el pico de
+  aceleración y lo pase en el callback (`onFallDetected: (peakG: Float) -> Unit`
+  en vez de `() -> Unit`), y `countdownTimeSec` deje de ser fijo. Se agrupa con
+  el pendiente ya existente de calibración de Man-Down (prueba en dispositivo
+  físico) — no tiene sentido calibrar umbrales dos veces por separado.
+- ⬜ **Web — copy de CTCSS ("Tu grupo escucha solo a tu grupo")**: la frase "Sin
+  interferencias" sobrevende, mismo problema que el ya corregido "200 motos" de
+  la card de al lado — CTCSS filtra lo que escuchás, no separa el RF real (ver
+  caveat ya documentado más abajo en "Feature — CTCSS/DCS por canal"). Ajustar
+  cuando se retome esta sección.
 
 ## 🔧 HW-1 — rework real 2026-07-04 (rescatado, no se había anotado en su momento)
 - ✅ Stub RF viejo de J1 borrado + traza C5→J1 re-ruteada (se rompió al borrar el stub).
