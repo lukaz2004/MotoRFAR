@@ -1,7 +1,24 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-07-05 (rework web comercial + registro de ruta por sesión en la app).
+> Última edición: 2026-07-05 (cierre sesión larga: web comercial completa + registro de ruta).
+
+## 💡 Navegación turn-by-turn propia (propuesto 2026-07-05)
+Hoy Baqueano NO calcula ruta — el mapa interno (OSMDroid) solo muestra posición
+del grupo y tu track. "IR A UBICACIÓN" abre Google Maps con una coordenada
+puntual; no hay forma de inyectar POIs/waypoints DENTRO de una navegación activa
+de Google Maps (no existe esa API pública). Si se quiere "ver al grupo y navegar"
+en una sola pantalla, haría falta motor de ruteo propio (OSRM/GraphHopper) sobre
+los tiles offline ya descargados — feature grande, no un ajuste chico. Sin
+construir, solo la idea registrada.
+
+## ✅ Confirmado con código (no había que arreglar nada) — 2026-07-05
+- El PTT físico (botón del equipo o externo por jack) funciona con cualquier
+  otra app abierta en pantalla (Google Maps, etc.) — `RadioAudioService` corre
+  como foreground service y procesa `isPhysPttDown()` fuera del ciclo de vida
+  de la Activity. Ya sumado como diferencial en la web (beneficios).
+- "IR A UBICACIÓN" ya abre Google Maps real vía intent `geo:`, no el mapa
+  interno — confirmado en `APRSAdapter.java`.
 
 ## 🗺️ Registro de ruta — arreglado 2026-07-05
 - ✅ Antes mezclaba todo el historial de un alias en una sola línea sin fin, sin

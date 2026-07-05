@@ -1,7 +1,42 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
-## ⚡ CIERRE 2026-07-05 — sesión de orden (nada de código nuevo, solo prolijidad)
+## ⚡ CIERRE 2026-07-05 (segunda parte) — web comercial + registro de ruta
+- **Web reconstruida de punta a punta** sobre `docs/index.html` (la que ya estaba
+  en vivo, más madura de lo que parecía — ver auditoría en
+  `AUDITORIA_MARKETING_WEB.md`): íconos SVG en vez de emoji, animaciones de
+  hover/mouse, sección Comparativa nueva (vs. handy VHF e intercom Bluetooth,
+  con gancho creativo vs. armar un grupo de Discord/Zello por LTE), "Cómo
+  funciona" movido arriba del todo (justo después del hero), copy menos técnico
+  (sin nombrar módulo/chip en el flujo principal), alimentación corregida a
+  USB-C en todos lados (ya no dice 12V, esa idea se había descartado), PTT
+  aclarado como término (Push To Talk) y corregido para no asumir manillar en
+  pasos genéricos, ejemplo de "200 motos" en CTCSS corregido (sobrevendía).
+  `_PROYECTO/web/index.html` y `docs/index.html` quedan sincronizados — ver
+  `_PROYECTO/web/README.md` para el flujo (se edita ahí, se copia a docs/).
+- **Registro de ruta arreglado en la app** (no solo copy): antes mezclaba todo
+  el historial en una sola línea infinita sin forma de borrarla. Ahora agrupa
+  por sesión (`RoutePoint.sessionId`, migración Room 7→8) y hay botón de borrar
+  con confirmación. Build verificado (`assembleDebug` OK).
+- **Hallazgo legal real, no cosmético:** homologación ENACOM del equipo es un
+  trámite obligatorio y separado de que el canal sea libre para el usuario —
+  vender sin homologar es infracción sancionable (Res. 729/80, Ley 24.240).
+  El copy "Legal por diseño" sobrevendía esto, corregido. Homologación queda
+  como bloqueante real antes de vender de verdad (no urgente mientras solo haya
+  lista de espera) — anotado en `PENDIENTES.md`.
+- **Pendientes anotados, sin construir:** Man-Down con countdown variable según
+  fuerza G del golpe; marcar y compartir POIs propios (reusaría el botón
+  WAYPOINT existente); navegación turn-by-turn propia (feature grande, no se
+  puede inyectar en la navegación de Google Maps desde afuera); exportar ruta a
+  GPX; adaptar frecuencias a otros países (técnicamente trivial en el firmware,
+  el problema es la investigación legal país por país, no el código).
+- **Sin pushear a GitHub** — todos los commits de web quedaron locales en
+  `main`, a la espera de que LuKaZ revise antes de subir.
+- **Sesión larga, costo alto** (~$120) por la cantidad de idas y vueltas de
+  diseño/copy en vivo. Para la próxima: si se retoma la web, arrancar leyendo
+  este cierre + `AUDITORIA_MARKETING_WEB.md` antes de tocar nada.
+
+## ⚡ CIERRE 2026-07-05 (primera parte) — sesión de orden (nada de código nuevo, solo prolijidad)
 - **Los 3 frentes sueltos del cierre anterior, commiteados:** rediseño web (`c942c00`),
   rebrand de íconos (`1461aaa`), limpieza Compose + rename MotoRFAR→Baqueano (`1905c96`).
   Working tree limpio salvo `imegenes baqueano edit/` (16MB, material fuente de video, no
