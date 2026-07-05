@@ -1,7 +1,19 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-07-04 (Man-Down countdown cerrado y probado · fix build · fix crash alerta WiFi).
+> Última edición: 2026-07-05 (rescatado cierre real de HW-1 del 2026-07-04, no había quedado anotado).
+
+## 🔧 HW-1 — rework real 2026-07-04 (rescatado, no se había anotado en su momento)
+- ✅ Stub RF viejo de J1 borrado + traza C5→J1 re-ruteada (se rompió al borrar el stub).
+- ✅ C9→R2 conectado — **bug heredado real** (filtro mic audio nunca se había completado,
+  no eran restos de cobre para borrar como se pensó al principio).
+- ✅ J2 corregido en el esquemático (Pin1/Pin2 estaban invertidos).
+- ✅ Texto silkscreen 'Baqueano V 2.0.1' movido de F.Cu a F.Silkscreen.
+- ✅ DRC final: 90 violaciones, todas heredadas y documentadas (ver `HW1_CIERRE.md`).
+- ⬜ **C15/C32** — pin2 debería ir a GND (hoy comparte nodo con R12/J2 en `/PTT Button Left`).
+  Cosmético, no bloquea fabricación, pero requiere reubicar el símbolo en el esquemático
+  con supervisión en vivo — no editar a ciegas.
+- Evidencia: `HW1_CIERRE.md`, `drc_FINAL_night.json`, `erc_j2_redo.json`, `netlist_after_j2.net`.
 
 ## 🚑 Man-Down — countdown cerrado y probado (2026-07-04)
 - ✅ Toggle en Ajustes (Compose `AliasSettingScreen.kt`) — estaba wireado pero inalcanzable desde

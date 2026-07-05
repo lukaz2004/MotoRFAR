@@ -1,6 +1,26 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-05 — sesión de orden (nada de código nuevo, solo prolijidad)
+- **Los 3 frentes sueltos del cierre anterior, commiteados:** rediseño web (`c942c00`),
+  rebrand de íconos (`1461aaa`), limpieza Compose + rename MotoRFAR→Baqueano (`1905c96`).
+  Working tree limpio salvo `imegenes baqueano edit/` (16MB, material fuente de video, no
+  se toca).
+- **Rescatado un cierre real de HW-1 del 2026-07-04 que nunca quedó anotado** (pasó el
+  mismo día que Man-Down y se perdió en el cierre de esa sesión): stub RF J1 borrado,
+  C9→R2 conectado (bug heredado real), J2 corregido en esquemático, DRC final en 90
+  violaciones heredadas. Commiteado en `2d1555f` junto con `05_VISION.md` (aprobado el
+  02/07, tampoco se había commiteado) y el schema Room v7. Detalle completo en
+  `HW1_CIERRE.md`. Único pendiente real: C15/C32 (pin2 a GND), requiere sesión en vivo.
+- **Limpieza `_PROYECTO/`:** borrados 15 archivos de iteración de DRC/ERC del 07-04
+  (`drc_verify_2026-07-04*.json` a-j, `drc_final_2026-07-02.json`, `erc_after_j2.json`,
+  `erc_verify_now.rpt`, `netlist_check.net`) — todos superados por los reportes finales
+  ya commiteados arriba. También `tools_cierre_hw1.py` (script de un solo uso, ya
+  ejecutado) y `ESTADO_SESION.txt` (resumen viejo del 28/06, redundante con este archivo).
+- **Man-Down — sigue igual que el 04/07:** falta prueba en dispositivo físico y calibrar
+  umbrales de `FallDetectionManager.kt`. Bloqueado en hardware, no hay nada más para
+  hacer sin la moto real — no reabrir sin datos nuevos.
+
 ## ⚡ CIERRE 2026-07-04 — estado más reciente (si contradice algo de abajo, MANDA ESTO)
 - **Sesión anterior colgada:** un `layout-land/activity_main.xml` legacy (huérfano de antes de la
   migración a Compose, nadie lo referenciaba) rompía el merge de recursos de AAPT2 con un error
