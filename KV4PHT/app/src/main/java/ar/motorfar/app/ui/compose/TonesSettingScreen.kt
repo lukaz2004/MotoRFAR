@@ -1,6 +1,5 @@
 package ar.motorfar.app.ui.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
@@ -8,10 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,8 +34,8 @@ import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
 
 /**
- * Selección de tono CTCSS por canal (Grupo/Alternativo). Emergencia se
- * muestra sin tono, a propósito — tiene que ser audible para cualquiera.
+ * Selección de tono CTCSS por canal (Grupo/Alternativo). Emergencia no se
+ * lista acá: nunca lleva tono a propósito, no es configurable.
  */
 @Composable
 fun TonesSettingScreen(
@@ -51,7 +48,6 @@ fun TonesSettingScreen(
     var editingChannel by remember { mutableStateOf<ChannelMemory?>(null) }
 
     val editable = channels.filter { it.name != "EMERGENCIA" }
-    val emergencia = channels.firstOrNull { it.name == "EMERGENCIA" }
 
     Column(
         modifier = Modifier
@@ -99,30 +95,6 @@ fun TonesSettingScreen(
 
         editable.forEach { channel ->
             ChannelToneRow(channel = channel, onClick = { editingChannel = channel })
-        }
-
-        emergencia?.let {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.surface, RoundedCornerShape(4.dp))
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "EMERGENCIA — sin tono (fijo)",
-                    color = colors.textSecondary,
-                    fontFamily = ShareTechMono,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "No lleva tono a propósito: tiene que escucharla cualquiera en el canal, no solo tu grupo.",
-                    color = colors.textSecondary,
-                    fontFamily = ShareTechMono,
-                    fontSize = 13.sp
-                )
-            }
         }
     }
 
@@ -215,27 +187,32 @@ private fun TonePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text("Elegí el tono") },
         text = {
-            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+            LazyColumn(
+                modifier = Modifier.heightIn(max = 420.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 items(ToneHelper.VALID_TONE_STRINGS) { tone ->
                     val label = if (tone == "None") "Sin tono" else "$tone Hz"
                     val isCurrent = tone == currentTone
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .border(
+                                1.dp,
+                                if (isCurrent) colors.accent else colors.borderActive,
+                                RoundedCornerShape(4.dp)
+                            )
                             .clickable { onSelect(tone) }
                             .padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = label,
+                            text = if (isCurrent) "✓ $label" else label,
                             color = if (isCurrent) colors.accent else colors.textPrimary,
                             fontFamily = ShareTechMono,
                             fontSize = 16.sp,
                             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
                         )
-                        if (isCurrent) {
-                            Text("✓", color = colors.accent, fontFamily = ShareTechMono, fontSize = 16.sp)
-                        }
                     }
                 }
             }

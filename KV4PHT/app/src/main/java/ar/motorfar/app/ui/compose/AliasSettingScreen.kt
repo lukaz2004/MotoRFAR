@@ -327,7 +327,7 @@ fun AliasSettingScreen(
             letterSpacing = 2.sp
         )
         Text(
-            text     = "Descargá el mapa de Argentina para usar sin señal en ruta. Próximamente.",
+            text     = "Descargá el mapa de Argentina para usar sin señal en ruta.",
             color    = colors.textSecondary,
             fontFamily = ShareTechMono,
             fontSize = 15.sp

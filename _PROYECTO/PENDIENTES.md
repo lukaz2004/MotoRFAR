@@ -182,6 +182,25 @@ app (`assembleDebug`).
   indican el prefijo común ("Baqueano-") ya que cada equipo tiene su propio
   nombre. Build verificado en firmware (`pio run`) y app
   (`gradlew assembleDebug`), sin probar en dispositivo real todavía.
+- ✅ **Ajustes de pantalla de Tonos + texto de mapas offline (2026-07-06)**:
+  a pedido, se sacó la tarjeta "EMERGENCIA — sin tono (fijo)" de
+  `TonesSettingScreen.kt` (no aportaba nada, Emergencia no es configurable).
+  El picker de tonos ahora muestra cada frecuencia en su propio recuadro con
+  texto centrado (antes era una lista de filas con texto a la izquierda).
+  También se sacó el "Próximamente" que había quedado pegado al texto de
+  Mapas Offline en `AliasSettingScreen.kt` (el botón ya dispara la descarga
+  real desde el fix anterior, pero el texto seguía sin actualizar).
+  Investigado a fondo el reporte de "el tono no cambia, queda clavado en
+  100Hz/123Hz": se instaló el build actual en el emulador y se verificó
+  contra la base SQLite real (con WAL incluido) que `dao.update()` sí
+  persiste el tono elegido y que la pantalla lo refleja correctamente al
+  reabrir el selector (el tono marcado como actual ya no era el default de
+  fábrica). El emulador antes de reinstalar el build de hoy todavía mostraba
+  el copy viejo "Identificás tu moto" (ya corregido en `cb07c4f`), lo que
+  indica que el dispositivo real del usuario estaba probando un APK más
+  viejo que varios de estos fixes — no se pudo reproducir el bug de
+  persistencia con el código actual. Build verificado
+  (`gradlew assembleDebug` y `assembleRelease`).
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no
