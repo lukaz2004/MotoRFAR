@@ -141,6 +141,13 @@ desacoplado del tráfico UDP genérico, validación de origen UDP en la app,
 fix de parsing APRS, copy de privacidad de Man-Down, headers de seguridad en
 la web, `.netlify/` fuera de git. Build verificado en firmware (`pio run`) y
 app (`assembleDebug`).
+- ✅ **Descarga de mapas offline unificada (2026-07-06)**: había dos entradas
+  para lo mismo — un ícono real en el Mapa (`CacheManager`, ya funcionaba) y
+  un botón placeholder en Ajustes que solo decía "Próximamente" sin hacer
+  nada (encontrado por el usuario probando el APK real). A pedido, se sacó
+  el ícono del Mapa y el botón de Ajustes ahora dispara la descarga real
+  (misma lógica, solo cambia desde dónde se llama — navega al Mapa y
+  arranca la descarga del área visible ahí). Build verificado.
 - ✅ **SSID renombrado a "Baqueano-HT" (2026-07-06)**: quedaba pendiente desde
   el rebrand del 02/07 ("MotoRFAR-HT → Baqueano-HT"), nunca se había hecho.
   Cambiado en firmware (`wifi_credentials.h`/`.example`) y app

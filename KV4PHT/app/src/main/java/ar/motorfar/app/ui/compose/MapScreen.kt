@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +68,11 @@ fun MapScreen(
     listenOnly: Boolean = false,
     onPttDown: () -> Unit = {},
     onPttUp: () -> Unit = {},
+    // 2026-07-06: el disparador de descarga de tiles se movió a Ajustes (era
+    // un ícono acá que duplicaba/competía con el botón de Ajustes, que decía
+    // "Próximamente" sin hacer nada — quedaba confuso tener dos entradas).
+    triggerDownload: Boolean = false,
+    onDownloadTriggerConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -280,6 +286,54 @@ fun MapScreen(
             }
         }
 
+        // 2026-07-06: descarga de tiles del área visible — antes se disparaba
+        // con un ícono acá mismo, ahora se dispara desde Ajustes (ver
+        // triggerDownload/onDownloadTriggerConsumed). Misma lógica, solo
+        // cambió desde dónde se llama.
+        fun startTileDownload() {
+            val cm = CacheManager(mapView)
+            cacheManagerRef = cm
+            downloadProgress = 0f
+            downloadDone = 0
+            downloadTotal = 0
+            showDownloadDialog = true
+            cm.downloadAreaAsync(
+                context,
+                mapView.boundingBox,
+                10,
+                16,
+                object : CacheManager.CacheManagerCallback {
+                    override fun onTaskComplete() {
+                        showDownloadDialog = false
+                        cacheManagerRef = null
+                    }
+                    override fun onTaskFailed(errors: Int) {
+                        showDownloadDialog = false
+                        cacheManagerRef = null
+                    }
+                    override fun updateProgress(
+                        progress: Int,
+                        currentZoomLevel: Int,
+                        zoomMin: Int,
+                        zoomMax: Int
+                    ) {
+                        downloadDone = progress
+                    }
+                    override fun downloadStarted() {}
+                    override fun setPossibleTilesInArea(total: Int) {
+                        downloadTotal = total
+                    }
+                }
+            )
+        }
+
+        LaunchedEffect(triggerDownload) {
+            if (triggerDownload) {
+                startTileDownload()
+                onDownloadTriggerConsumed()
+            }
+        }
+
         // Controles del mapa (columna derecha): zoom, orientación, mi ubicación
         Column(
             modifier = Modifier
@@ -337,47 +391,6 @@ fun MapScreen(
                         mapView.controller.animateTo(OBELISCO)
                         mapView.controller.setZoom(INITIAL_ZOOM)
                     }
-                }
-            )
-            // Descargar mapa de zona (tiles offline)
-            MapControlButton(
-                iconRes = R.drawable.ic_download,
-                colors  = colors,
-                onClick = {
-                    val cm = CacheManager(mapView)
-                    cacheManagerRef = cm
-                    downloadProgress = 0f
-                    downloadDone = 0
-                    downloadTotal = 0
-                    showDownloadDialog = true
-                    cm.downloadAreaAsync(
-                        context,
-                        mapView.boundingBox,
-                        10,
-                        16,
-                        object : CacheManager.CacheManagerCallback {
-                            override fun onTaskComplete() {
-                                showDownloadDialog = false
-                                cacheManagerRef = null
-                            }
-                            override fun onTaskFailed(errors: Int) {
-                                showDownloadDialog = false
-                                cacheManagerRef = null
-                            }
-                            override fun updateProgress(
-                                progress: Int,
-                                currentZoomLevel: Int,
-                                zoomMin: Int,
-                                zoomMax: Int
-                            ) {
-                                downloadDone = progress
-                            }
-                            override fun downloadStarted() {}
-                            override fun setPossibleTilesInArea(total: Int) {
-                                downloadTotal = total
-                            }
-                        }
-                    )
                 }
             )
         }
