@@ -19,16 +19,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -114,24 +110,6 @@ private fun TopBar(
 ) {
     val colors = LocalMotoRFARColors.current
     var themeMenuOpen by remember { mutableStateOf(false) }
-    var showClearRouteDialog by remember { mutableStateOf(false) }
-
-    if (showClearRouteDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearRouteDialog = false },
-            title = { Text("¿Borrar la ruta guardada?") },
-            text  = { Text("Se elimina el recorrido de la última salida. No se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    onAction(MainUiAction.ClearRoute)
-                    showClearRouteDialog = false
-                }) { Text("Borrar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearRouteDialog = false }) { Text("Cancelar") }
-            }
-        )
-    }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -170,15 +148,6 @@ private fun TopBar(
             Icon(
                 painter            = painterResource(R.drawable.ic_pin),
                 contentDescription = "Enviar waypoint",
-                tint               = colors.textSecondary
-            )
-        }
-
-        // Borrar la ruta guardada (con confirmación, no se puede deshacer)
-        IconButton(onClick = { showClearRouteDialog = true }) {
-            Icon(
-                imageVector        = Icons.Default.Delete,
-                contentDescription = "Borrar ruta guardada",
                 tint               = colors.textSecondary
             )
         }

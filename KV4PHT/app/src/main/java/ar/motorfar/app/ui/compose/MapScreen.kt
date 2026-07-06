@@ -261,29 +261,72 @@ fun MapScreen(
             }
         )
 
-        // HUD táctico: coordenadas + zoom + rumbo (arriba izquierda)
-        Surface(
-            color  = colors.background.copy(alpha = 0.78f),
-            shape  = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
-            border = BorderStroke(1.dp, colors.borderSubtle),
+        // HUD táctico: coordenadas + zoom + rumbo, con los controles de mapa al lado
+        // (2026-07-06: se sacaron los botones +/- de zoom -- el pellizco con dos dedos
+        // ya hace zoom, molestaban duplicados en pantalla -- y orientación/centrado se
+        // movieron acá arriba para que el PTT quede solo abajo, sin riesgo de toque
+        // accidental con botones chicos al lado mientras se maneja).
+        androidx.compose.foundation.layout.Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(12.dp)
+                .padding(12.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
-                androidx.compose.material3.Text(
-                    text       = hudCoord(hudLat, hudLon),
-                    color      = colors.textPrimary,
-                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize   = 15.sp
-                )
-                androidx.compose.material3.Text(
-                    text       = "ZM " + hudZoom.toInt() + (headingDeg?.let { "   ·   HDG " + (((it % 360) + 360) % 360).toInt() + "°" } ?: ""),
-                    color      = colors.textSecondary,
-                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize   = 13.sp
-                )
+            Surface(
+                color  = colors.background.copy(alpha = 0.78f),
+                shape  = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                border = BorderStroke(1.dp, colors.borderSubtle)
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                    androidx.compose.material3.Text(
+                        text       = hudCoord(hudLat, hudLon),
+                        color      = colors.textPrimary,
+                        fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                        fontSize   = 15.sp
+                    )
+                    androidx.compose.material3.Text(
+                        text       = "ZM " + hudZoom.toInt() + (headingDeg?.let { "   ·   HDG " + (((it % 360) + 360) % 360).toInt() + "°" } ?: ""),
+                        color      = colors.textSecondary,
+                        fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                        fontSize   = 13.sp
+                    )
+                }
             }
+
+            // Orientar a la ruta (rota el mapa según el rumbo)
+            MapControlButton(
+                iconRes = R.drawable.ic_pin,
+                label   = "RUMBO",
+                colors  = colors,
+                active  = routeOriented,
+                onClick = {
+                    routeOriented = !routeOriented
+                    if (routeOriented && headingDeg != null) {
+                        mapView.mapOrientation = -headingDeg
+                    } else {
+                        mapView.mapOrientation = 0f
+                    }
+                    mapView.invalidate()
+                }
+            )
+            // Centrar en mi ubicación
+            MapControlButton(
+                iconRes = R.drawable.ic_pin,
+                label   = "MI GPS",
+                colors  = colors,
+                accent  = true,
+                onClick = {
+                    val loc = myLocationOverlay.myLocation
+                    if (loc != null) {
+                        mapView.controller.animateTo(loc)
+                        mapView.controller.setZoom(17.0)
+                    } else {
+                        mapView.controller.animateTo(OBELISCO)
+                        mapView.controller.setZoom(INITIAL_ZOOM)
+                    }
+                }
+            )
         }
 
         // 2026-07-06: descarga de tiles del área visible — antes se disparaba
@@ -334,64 +377,16 @@ fun MapScreen(
             }
         }
 
-        // Controles del mapa (columna derecha): zoom, orientación, mi ubicación
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // PTT directo desde el mapa: transmitir mirando la navegación sin volver atrás
+        // PTT directo desde el mapa, solo en su esquina -- sin botones chicos al lado
+        // para evitar toques accidentales manejando (el resto de los controles se
+        // movió arriba, junto al HUD de coordenadas).
+        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
             MapPttButton(
                 colors         = colors,
                 isTransmitting = isTransmitting,
                 listenOnly     = listenOnly,
                 onPttDown      = onPttDown,
                 onPttUp        = onPttUp
-            )
-            // Zoom +
-            MapControlButton(
-                label   = "+",
-                colors  = colors,
-                onClick = { mapView.controller.zoomIn() }
-            )
-            // Zoom −
-            MapControlButton(
-                label   = "−",
-                colors  = colors,
-                onClick = { mapView.controller.zoomOut() }
-            )
-            // Orientación a la ruta (toggle)
-            MapControlButton(
-                iconRes   = R.drawable.ic_pin,
-                colors    = colors,
-                active    = routeOriented,
-                onClick   = {
-                    routeOriented = !routeOriented
-                    if (routeOriented && headingDeg != null) {
-                        mapView.mapOrientation = -headingDeg
-                    } else {
-                        mapView.mapOrientation = 0f
-                    }
-                    mapView.invalidate()
-                }
-            )
-            // Centrar en mi ubicación
-            MapControlButton(
-                iconRes = R.drawable.ic_pin,
-                colors  = colors,
-                accent  = true,
-                onClick = {
-                    val loc = myLocationOverlay.myLocation
-                    if (loc != null) {
-                        mapView.controller.animateTo(loc)
-                        mapView.controller.setZoom(17.0)
-                    } else {
-                        mapView.controller.animateTo(OBELISCO)
-                        mapView.controller.setZoom(INITIAL_ZOOM)
-                    }
-                }
             )
         }
 
@@ -431,13 +426,13 @@ fun MapScreen(
     }
 }
 
-/** Botón circular de control del mapa (zoom, orientación, ubicación). */
+/** Botón de control del mapa: ícono + etiqueta corta (orientación, mi ubicación). */
 @Composable
 private fun MapControlButton(
+    iconRes: Int,
+    label: String,
     colors: MotoRFARColors,
     onClick: () -> Unit,
-    label: String? = null,
-    iconRes: Int? = null,
     active: Boolean = false,
     accent: Boolean = false
 ) {
@@ -447,28 +442,29 @@ private fun MapControlButton(
         else   -> colors.textSecondary
     }
     Surface(
-        shape    = CircleShape,
+        shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
         color    = if (active) colors.accent.copy(alpha = 0.18f) else colors.surface,
         border   = androidx.compose.foundation.BorderStroke(
             1.dp, if (active) colors.accent else colors.borderSubtle
         ),
-        modifier = Modifier.size(46.dp).clickable(onClick = onClick)
+        modifier = Modifier.clickable(onClick = onClick)
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (label != null) {
-                androidx.compose.material3.Text(
-                    text     = label,
-                    color    = tint,
-                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize = 24.sp
-                )
-            } else if (iconRes != null) {
-                Icon(
-                    painter            = painterResource(iconRes),
-                    contentDescription = null,
-                    tint               = tint
-                )
-            }
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                painter            = painterResource(iconRes),
+                contentDescription = label,
+                tint               = tint,
+                modifier           = Modifier.size(22.dp)
+            )
+            androidx.compose.material3.Text(
+                text       = label,
+                color      = tint,
+                fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                fontSize   = 10.sp
+            )
         }
     }
 }

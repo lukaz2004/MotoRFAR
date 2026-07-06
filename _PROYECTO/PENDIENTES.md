@@ -201,6 +201,27 @@ app (`assembleDebug`).
   viejo que varios de estos fixes — no se pudo reproducir el bug de
   persistencia con el código actual. Build verificado
   (`gradlew assembleDebug` y `assembleRelease`).
+- ✅ **Reordenamiento de controles del Mapa + saca "Borrar ruta" de la barra
+  superior (2026-07-06)**: a pedido, tras feedback sobre la pantalla de
+  Mapa. Se sacaron los botones +/- de zoom de `MapScreen.kt` (el pellizco
+  con dos dedos ya hace zoom — `setMultiTouchControls(true)` ya estaba
+  activo — así que eran redundantes y "molestaban en pantalla"). Los
+  controles de orientación a la ruta ("RUMBO") y centrar en mi ubicación
+  ("MI GPS") se movieron de la columna inferior derecha (donde competían
+  con el PTT y arriesgaban un toque accidental manejando) a la izquierda
+  del HUD de coordenadas, arriba — cada uno ahora con ícono + etiqueta de
+  texto corta (antes los dos usaban el mismo ícono sin texto, no se
+  distinguían). El PTT queda solo en su esquina. Se sacó también el botón
+  de "Borrar ruta guardada" (ícono de tacho) de la barra superior de la
+  pantalla principal (`MainScreen.kt`) — estaba descontextualizado ahí — y
+  se movió a Ajustes, como sección "RUTA GUARDADA" al lado de "MAPAS
+  OFFLINE" (`AliasSettingScreen.kt`), con el mismo diálogo de confirmación.
+  Nota: no existe pantalla de historial de rutas — `RoutePointDao` solo
+  guarda la sesión más reciente por alias (`getLatestSessionId`) y
+  "Borrar ruta guardada" borra todo lo guardado, no por sesión; navegar
+  recorridos pasados sería una feature nueva, no estaba construida. Build
+  verificado y layout confirmado visualmente en el emulador
+  (`gradlew assembleDebug`).
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no

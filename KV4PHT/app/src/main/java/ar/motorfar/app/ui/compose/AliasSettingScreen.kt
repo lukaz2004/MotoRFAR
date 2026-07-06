@@ -57,10 +57,12 @@ fun AliasSettingScreen(
     onDownloadMaps: () -> Unit = {},
     onConfigureTones: () -> Unit = {},
     onConfigureWifi: () -> Unit = {},
+    onClearRoute: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
 ) {
     val colors = LocalMotoRFARColors.current
+    var showClearRouteDialog by remember { mutableStateOf(false) }
 
     var aliasInput   by remember { mutableStateOf(currentAlias) }
     var smartBeacon  by remember { mutableStateOf(currentSmartBeacon) }
@@ -344,6 +346,34 @@ fun AliasSettingScreen(
             Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
         }
 
+        Spacer(Modifier.height(4.dp))
+
+        // ── Ruta guardada ─────────────────────────────────────────────
+        Text(
+            text     = "RUTA GUARDADA",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 18.sp,
+            letterSpacing = 2.sp
+        )
+        Text(
+            text     = "Borra el recorrido de la última salida que quedó guardado en el mapa.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 15.sp
+        )
+        OutlinedButton(
+            onClick  = { showClearRouteDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, EmergencyBorder),
+            colors   = ButtonDefaults.outlinedButtonColors(
+                contentColor = EmergencyBorder
+            )
+        ) {
+            Text("BORRAR RUTA GUARDADA", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
+        }
+
         Spacer(Modifier.weight(1f))
 
         Row(
@@ -392,6 +422,23 @@ fun AliasSettingScreen(
         ) {
             Text("GUARDAR", fontFamily = ShareTechMono, letterSpacing = 3.sp)
         }
+    }
+
+    if (showClearRouteDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showClearRouteDialog = false },
+            title = { Text("¿Borrar la ruta guardada?") },
+            text  = { Text("Se elimina el recorrido de la última salida. No se puede deshacer.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    onClearRoute()
+                    showClearRouteDialog = false
+                }) { Text("Borrar") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showClearRouteDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
 

@@ -643,6 +643,7 @@ class MainActivity : ComponentActivity() {
                                 onConfigureWifi          = {
                                     navController.navigate("wifi") { launchSingleTop = true }
                                 },
+                                onClearRoute             = { clearRoute() },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
                                 },
