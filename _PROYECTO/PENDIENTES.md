@@ -3,14 +3,18 @@
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
 > Última edición: 2026-07-05 (cierre sesión larga: web comercial completa + registro de ruta).
 
-## 💡 Navegación turn-by-turn propia (propuesto 2026-07-05)
-Hoy Baqueano NO calcula ruta — el mapa interno (OSMDroid) solo muestra posición
-del grupo y tu track. "IR A UBICACIÓN" abre Google Maps con una coordenada
-puntual; no hay forma de inyectar POIs/waypoints DENTRO de una navegación activa
-de Google Maps (no existe esa API pública). Si se quiere "ver al grupo y navegar"
-en una sola pantalla, haría falta motor de ruteo propio (OSRM/GraphHopper) sobre
-los tiles offline ya descargados — feature grande, no un ajuste chico. Sin
-construir, solo la idea registrada.
+## 🧭 Navegación turn-by-turn propia — diseño aprobado (2026-07-05)
+Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`: motor **BRouter** (Java puro,
+GPL-3.0, sin pipeline OSM propio), datos de ruteo ~400-600MB para toda
+Argentina (verificado contra tamaños reales de BRouter/Geofabrik/OsmAnd),
+descarga en 2 etapas (tile local obligatorio al primer inicio + resto del país
+en background, nunca bloquea el radio/grupo), voz + flecha visual con ducking
+de audio sobre el radio VHF. Aprobado para pasar a plan de implementación, pero
+**el propio spec marca puntos a pulir antes de arrancar a codear** (ver sección
+"Abierto para pulir" del archivo): tile inicial sin GPS fix, UI del cartel de
+advertencia, integración fina del ducking, destino sobre miembro sin fix
+reciente. Sin código escrito todavía — feature grande (subsistema nuevo, no un
+ajuste chico).
 
 ## ✅ Confirmado con código (no había que arreglar nada) — 2026-07-05
 - El PTT físico (botón del equipo o externo por jack) funciona con cualquier
