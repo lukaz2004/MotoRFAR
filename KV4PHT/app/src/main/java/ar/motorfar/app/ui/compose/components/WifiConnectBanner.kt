@@ -32,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.R
-import ar.motorfar.app.radio.WifiTransport
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
 
@@ -41,7 +40,9 @@ import ar.motorfar.app.ui.compose.theme.ShareTechMono
  * Informa al usuario que debe conectar el teléfono a la red WiFi del ESP32
  * y ofrece un atajo directo a los ajustes de WiFi del sistema.
  *
- * El nombre de red (SSID) viene de WifiTransport.AP_SSID para evitar literales duplicados.
+ * 2026-07-06: cada equipo genera un SSID único ("Baqueano-XXXX") o uno elegido
+ * por el usuario en Ajustes > WiFi, así que ya no hay un nombre de red fijo
+ * para mostrar — se indica el prefijo común en vez de WifiTransport.AP_SSID.
  */
 @Composable
 fun WifiConnectBanner(
@@ -96,7 +97,7 @@ fun WifiConnectBanner(
             modifier   = Modifier.padding(top = 6.dp, start = 28.dp)
         )
         Text(
-            text       = WifiTransport.AP_SSID,
+            text       = "la red que empieza con \"Baqueano-\" (o la que le pusiste en Ajustes > WiFi)",
             color      = colors.textPrimary,
             fontFamily = ShareTechMono,
             fontSize   = 14.sp,
@@ -154,7 +155,7 @@ fun WifiConnectInline(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            text       = "SIN RADIO · ${WifiTransport.AP_SSID}",
+            text       = "SIN RADIO · red \"Baqueano-\"",
             color      = colors.textSecondary,
             fontFamily = ShareTechMono,
             fontSize   = 12.sp

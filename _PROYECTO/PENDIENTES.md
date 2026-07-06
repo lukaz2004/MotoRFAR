@@ -165,6 +165,23 @@ app (`assembleDebug`).
   recuperarla si se olvida sin reflashear). Build verificado
   (`gradlew assembleDebug`), sin probar en emulador/dispositivo real
   todavía (necesita el equipo físico conectado para tener sentido).
+- ✅ **SSID único por equipo + configurable desde la app (2026-07-06)**:
+  motivado por una pregunta de seguridad real del usuario — ¿qué pasa si dos
+  equipos están a 20m uno del otro con el mismo SSID fijo y el teléfono se
+  conecta al equipo equivocado? Firmware: `loadOrCreateWifiSsid()` genera un
+  SSID único por defecto en el primer boot (`Baqueano-XXXX`, últimos 4 hex
+  del efuse MAC), persistido en NVS (namespace `wifinet`); nuevo comando
+  `COMMAND_HOST_SET_WIFI_SSID` (`0x0F`) para cambiarlo desde la app (1-32
+  bytes ASCII, límite 802.11). App: mismo comando espejado en
+  `Protocol.java` (`Sender.setWifiSsid`) +
+  `RadioAudioService.setWifiSsid()` + nueva sección en
+  `WifiSettingScreen.kt` (campo + confirmación, mismo patrón que la clave).
+  De paso se corrigió `WifiConnectBanner.kt` y el texto de notificación en
+  `RadioAudioService` (`radioMissing()`), que todavía mostraban el SSID fijo
+  viejo `WifiTransport.AP_SSID` como si fuera un nombre exacto — ahora
+  indican el prefijo común ("Baqueano-") ya que cada equipo tiene su propio
+  nombre. Build verificado en firmware (`pio run`) y app
+  (`gradlew assembleDebug`), sin probar en dispositivo real todavía.
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no

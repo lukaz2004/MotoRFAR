@@ -683,6 +683,7 @@ class MainActivity : ComponentActivity() {
                             ar.motorfar.app.ui.compose.WifiSettingScreen(
                                 isConnected    = state.isConnected,
                                 onSavePassword = { pw -> radioService?.setWifiPassword(pw) ?: false },
+                                onSaveSsid     = { ssid -> radioService?.setWifiSsid(ssid) ?: false },
                                 onBack         = { navController.popBackStack() }
                             )
                         }

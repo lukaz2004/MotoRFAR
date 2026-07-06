@@ -59,7 +59,10 @@ public final class Protocol {
         // 2026-07-06: cambia la clave WPA2 del SoftAP del equipo. Payload =
         // password en ASCII crudo (8-63 bytes, limites WPA2-PSK). El firmware
         // la aplica de inmediato (ver protocol.h/kv4p_ht_esp32_wroom_32.ino).
-        COMMAND_HOST_SET_WIFI_PASSWORD(0x0E);
+        COMMAND_HOST_SET_WIFI_PASSWORD(0x0E),
+        // 2026-07-06: cambia el SSID del SoftAP. Payload = SSID en ASCII
+        // crudo (1-32 bytes, límite 802.11).
+        COMMAND_HOST_SET_WIFI_SSID(0x0F);
         private final int value;
         SndCommand(int value) {
             this.value = value;
@@ -379,6 +382,17 @@ public final class Protocol {
         public void setWifiPassword(String password) {
             byte[] bytes = password.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
             sendKv4pVendorFrame(SndCommand.COMMAND_HOST_SET_WIFI_PASSWORD, bytes, bytes.length);
+        }
+
+        /**
+         * 2026-07-06: cambia el SSID del SoftAP del equipo. El firmware la
+         * aplica de inmediato junto con la clave actual — el teléfono se va a
+         * desconectar del WiFi justo después de mandar esto (esperado, hay
+         * que reconectarse a mano a la red nueva).
+         */
+        public void setWifiSsid(String ssid) {
+            byte[] bytes = ssid.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+            sendKv4pVendorFrame(SndCommand.COMMAND_HOST_SET_WIFI_SSID, bytes, bytes.length);
         }
 
         private int encodeKissFrame(int kissCommand, byte[] payload, int len) {

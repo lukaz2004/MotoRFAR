@@ -666,6 +666,20 @@ public class RadioAudioService extends Service {
         return true;
     }
 
+    /**
+     * 2026-07-06: cambia el SSID del SoftAP (1-32 bytes ASCII, límite 802.11).
+     * El teléfono se va a desconectar del WiFi del equipo justo después
+     * (esperado).
+     * @return true si se mandó el comando (radio conectada), false si no.
+     */
+    public boolean setWifiSsid(String ssid) {
+        if (hostToEsp32 == null || ssid.length() < 1 || ssid.length() > 32) {
+            return false;
+        }
+        hostToEsp32.setWifiSsid(ssid);
+        return true;
+    }
+
     // === Man-Down (2026-07-06) =================================================
 
     public void setManDownEnabled(boolean enabled) {
@@ -1402,7 +1416,7 @@ public class RadioAudioService extends Service {
         Log.i(TAG, connectLog("radioMissing(): state=" + connectionStateSummary()));
         connectionController.markAttemptFinished();
         closePortAndReset();
-        updateForegroundNotification("Sin radio · Conectate a " + WifiTransport.AP_SSID);
+        updateForegroundNotification("Sin radio · Conectate a la red \"Baqueano-\" del equipo");
         if (!radioMissingNotified) {
             radioMissingNotified = true;
             getCallbacks().radioMissing(); // Notify UI only on transition into missing state

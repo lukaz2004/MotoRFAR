@@ -40,6 +40,7 @@ import ar.motorfar.app.ui.compose.theme.ShareTechMono
 fun WifiSettingScreen(
     isConnected: Boolean,
     onSavePassword: (String) -> Boolean,
+    onSaveSsid: (String) -> Boolean = { false },
     onBack: () -> Unit = {}
 ) {
     val colors = LocalMotoRFARColors.current
@@ -47,7 +48,12 @@ fun WifiSettingScreen(
     var showConfirm by remember { mutableStateOf(false) }
     var resultMessage by remember { mutableStateOf<String?>(null) }
 
+    var ssid by remember { mutableStateOf("") }
+    var showSsidConfirm by remember { mutableStateOf(false) }
+    var ssidResultMessage by remember { mutableStateOf<String?>(null) }
+
     val isValid = password.length in 8..63
+    val isSsidValid = ssid.length in 1..32
 
     Column(
         modifier = Modifier
@@ -145,6 +151,54 @@ fun WifiSettingScreen(
                 fontSize = 14.sp
             )
         }
+
+        Text(
+            text     = "NOMBRE DE RED (SSID)",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 18.sp,
+            letterSpacing = 2.sp
+        )
+
+        Text(
+            text = "El equipo ya trae un nombre único (Baqueano-XXXX) para que dos equipos " +
+                   "cerca uno del otro no se confundan. Podés cambiarlo por uno propio si querés.",
+            color = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 14.sp
+        )
+
+        OutlinedTextField(
+            value = ssid,
+            onValueChange = { ssid = it.take(32) },
+            label = { Text("SSID nuevo (1-32 caracteres)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor   = colors.borderActive,
+                unfocusedBorderColor = colors.borderActive,
+                cursorColor          = colors.textPrimary,
+                focusedContainerColor   = colors.surface,
+                unfocusedContainerColor = colors.surface
+            )
+        )
+
+        Button(
+            onClick = { showSsidConfirm = true },
+            enabled = isSsidValid && isConnected,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("GUARDAR SSID NUEVO", fontFamily = ShareTechMono)
+        }
+
+        ssidResultMessage?.let {
+            Text(
+                text = it,
+                color = colors.accent,
+                fontFamily = ShareTechMono,
+                fontSize = 14.sp
+            )
+        }
     }
 
     if (showConfirm) {
@@ -171,6 +225,34 @@ fun WifiSettingScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showConfirm = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (showSsidConfirm) {
+        AlertDialog(
+            onDismissRequest = { showSsidConfirm = false },
+            title = { Text("¿Cambiar el nombre de red?") },
+            text = {
+                Text(
+                    "El equipo va a cambiar el SSID YA. Tu teléfono se va a " +
+                    "desconectar y vas a tener que reconectarte a mano a la red " +
+                    "nueva."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSsidConfirm = false
+                    val ok = onSaveSsid(ssid)
+                    ssidResultMessage = if (ok) {
+                        "SSID enviado. Reconectate a la red nueva."
+                    } else {
+                        "No se pudo mandar — revisá que el equipo esté conectado."
+                    }
+                }) { Text("Sí, cambiar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSsidConfirm = false }) { Text("Cancelar") }
             }
         )
     }
