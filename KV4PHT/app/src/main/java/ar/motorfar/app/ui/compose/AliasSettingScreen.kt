@@ -56,6 +56,7 @@ fun AliasSettingScreen(
     onToggleManDown: (Boolean) -> Unit = {},
     onDownloadMaps: () -> Unit = {},
     onConfigureTones: () -> Unit = {},
+    onConfigureWifi: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
 ) {
@@ -279,6 +280,36 @@ fun AliasSettingScreen(
         ) {
             Text(
                 text     = "CONFIGURAR TONOS →",
+                color    = colors.textPrimary,
+                fontFamily = ShareTechMono,
+                fontSize = 15.sp
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        // ── WiFi del equipo ───────────────────────────────────────────
+        Text(
+            text     = "WIFI DEL EQUIPO",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 18.sp,
+            letterSpacing = 2.sp
+        )
+        Text(
+            text     = "Cambiá la clave WiFi del equipo por una que elijas vos.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 15.sp
+        )
+        OutlinedButton(
+            onClick  = onConfigureWifi,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive)
+        ) {
+            Text(
+                text     = "CONFIGURAR WIFI →",
                 color    = colors.textPrimary,
                 fontFamily = ShareTechMono,
                 fontSize = 15.sp

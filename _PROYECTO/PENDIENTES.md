@@ -141,11 +141,16 @@ desacoplado del tráfico UDP genérico, validación de origen UDP en la app,
 fix de parsing APRS, copy de privacidad de Man-Down, headers de seguridad en
 la web, `.netlify/` fuera de git. Build verificado en firmware (`pio run`) y
 app (`assembleDebug`).
-- ⬜ **UI en la app para ver/cambiar la clave WiFi del equipo**: el firmware
-  ya tiene el comando (`COMMAND_HOST_SET_WIFI_PASSWORD`) y persiste en NVS,
-  pero la app todavía no lo manda — falta agregar `Protocol.java` + pantalla
-  de ajustes. Es la mitad que falta del pendiente viejo "Config credenciales
-  AP desde app".
+- ✅ **UI para cambiar la clave WiFi del equipo (2026-07-06)**: nueva
+  `WifiSettingScreen.kt` (Ajustes → "CONFIGURAR WIFI →"). Agrega
+  `COMMAND_HOST_SET_WIFI_PASSWORD` a `Protocol.java` (mismo valor `0x0E`
+  que el firmware) + `RadioAudioService.setWifiPassword()`. Valida 8-63
+  caracteres, diálogo de confirmación explícito (avisa que el teléfono se
+  desconecta del WiFi al toque y hay que reconectarse a mano con la clave
+  nueva — y que anotarla es responsabilidad del usuario, no hay forma de
+  recuperarla si se olvida sin reflashear). Build verificado
+  (`gradlew assembleDebug`), sin probar en emulador/dispositivo real
+  todavía (necesita el equipo físico conectado para tener sentido).
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no

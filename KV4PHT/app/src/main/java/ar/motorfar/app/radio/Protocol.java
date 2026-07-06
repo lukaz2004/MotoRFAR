@@ -55,7 +55,11 @@ public final class Protocol {
     public enum SndCommand {
         COMMAND_SND_UNKNOWN(0x00),
         COMMAND_HOST_TX_AUDIO(0x07), // [COMMAND_HOST_TX_AUDIO(byte[])]
-        COMMAND_HOST_DESIRED_STATE(0x0D);
+        COMMAND_HOST_DESIRED_STATE(0x0D),
+        // 2026-07-06: cambia la clave WPA2 del SoftAP del equipo. Payload =
+        // password en ASCII crudo (8-63 bytes, limites WPA2-PSK). El firmware
+        // la aplica de inmediato (ver protocol.h/kv4p_ht_esp32_wroom_32.ino).
+        COMMAND_HOST_SET_WIFI_PASSWORD(0x0E);
         private final int value;
         SndCommand(int value) {
             this.value = value;
@@ -364,6 +368,17 @@ public final class Protocol {
 
         public void txAx25(byte[] ax25Bytes) {
             sendKissDataFrame(ax25Bytes);
+        }
+
+        /**
+         * 2026-07-06: cambia la clave WPA2 del SoftAP del equipo. El firmware
+         * la aplica de inmediato — el teléfono se va a desconectar del WiFi
+         * del equipo justo después de mandar esto (esperado, hay que
+         * reconectarse a mano con la clave nueva).
+         */
+        public void setWifiPassword(String password) {
+            byte[] bytes = password.getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+            sendKv4pVendorFrame(SndCommand.COMMAND_HOST_SET_WIFI_PASSWORD, bytes, bytes.length);
         }
 
         private int encodeKissFrame(int kissCommand, byte[] payload, int len) {

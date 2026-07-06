@@ -652,6 +652,20 @@ public class RadioAudioService extends Service {
         notificationManager.createNotificationChannel(channel);
     }
 
+    /**
+     * 2026-07-06: cambia la clave WPA2 del equipo. El firmware la aplica de
+     * inmediato -- el teléfono se desconecta del WiFi del equipo justo
+     * después (esperado). Requiere 8-63 caracteres ASCII (límite WPA2-PSK).
+     * @return true si se mandó el comando (radio conectada), false si no.
+     */
+    public boolean setWifiPassword(String password) {
+        if (hostToEsp32 == null || password.length() < 8 || password.length() > 63) {
+            return false;
+        }
+        hostToEsp32.setWifiPassword(password);
+        return true;
+    }
+
     // === Man-Down (2026-07-06) =================================================
 
     public void setManDownEnabled(boolean enabled) {

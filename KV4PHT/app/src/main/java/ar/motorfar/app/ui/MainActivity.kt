@@ -633,6 +633,9 @@ class MainActivity : ComponentActivity() {
                                 onConfigureTones         = {
                                     navController.navigate("tones") { launchSingleTop = true }
                                 },
+                                onConfigureWifi          = {
+                                    navController.navigate("wifi") { launchSingleTop = true }
+                                },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
                                 },
@@ -645,6 +648,13 @@ class MainActivity : ComponentActivity() {
                             ar.motorfar.app.ui.compose.TonesSettingScreen(
                                 channels       = state.channels,
                                 onToneSelected = ::updateChannelTone,
+                                onBack         = { navController.popBackStack() }
+                            )
+                        }
+                        composable("wifi") {
+                            ar.motorfar.app.ui.compose.WifiSettingScreen(
+                                isConnected    = state.isConnected,
+                                onSavePassword = { pw -> radioService?.setWifiPassword(pw) ?: false },
                                 onBack         = { navController.popBackStack() }
                             )
                         }
