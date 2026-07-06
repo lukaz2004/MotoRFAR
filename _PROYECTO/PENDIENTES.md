@@ -112,8 +112,24 @@ ahí — nada lo impedía. Corregido:
   repetidoras — no hizo falta migración de Room). Grupo=100.0Hz,
   Alternativo=123.0Hz. Emergencia queda SIN tono a propósito (debe ser
   audible para cualquiera). Marcador de seed subido a `v7_channels_ctcss`
-  para que instalaciones existentes se re-seedeen solas. Sin UI para que el
-  usuario elija otro tono — queda como pendiente si hace falta más adelante.
+  para que instalaciones existentes se re-seedeen solas.
+- ✅ **Pantalla de selección de tonos (2026-07-06)**: nueva
+  `TonesSettingScreen.kt`, accesible desde Ajustes → "CONFIGURAR TONOS →".
+  Muestra los 38 tonos CTCSS estándar (ya existían en `ToneHelper`) por
+  canal Grupo/Alternativo, con ícono ⓘ que explica en criollo qué hace el
+  tono y — remarcado a pedido — que TODO el grupo tiene que estar en el
+  MISMO canal Y el MISMO tono para escucharse, y que esto no evita
+  solaparse con otro grupo si transmiten al mismo tiempo. Persiste el
+  cambio via `ChannelMemoryDao.update()` (ya existía, sin migración).
+  Verificado por dump de accesibilidad (no por screenshot, tuvo timing
+  inestable en el emulador): `channels.size=3`, Grupo/Alternativo muestran
+  el tono correcto, botones "CAMBIAR →" presentes.
+- ✅ **Bug de paso corregido**: la pantalla de Ajustes (`AliasSettingScreen`)
+  no tenía scroll — con la sección nueva de tonos, el botón "GUARDAR" y los
+  links de Privacidad/Acerca de quedaban fuera de pantalla e inalcanzables.
+  Agregado `.verticalScroll()` (afecta a todo Ajustes, no solo lo nuevo).
+- ⬜ **Sin verificar en dispositivo físico**: la pantalla de tonos y el
+  scroll de Ajustes, igual que el resto de los cambios de UI de hoy.
 Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
 
 ## 🔒 Auditoría de seguridad — correcciones aplicadas (2026-07-06)

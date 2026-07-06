@@ -2,6 +2,7 @@ package ar.motorfar.app.ui.compose
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,6 +55,7 @@ fun AliasSettingScreen(
     onToggleSmartBeacon: (Boolean) -> Unit = {},
     onToggleManDown: (Boolean) -> Unit = {},
     onDownloadMaps: () -> Unit = {},
+    onConfigureTones: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
 ) {
@@ -75,6 +77,7 @@ fun AliasSettingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(androidx.compose.foundation.rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -251,6 +254,36 @@ fun AliasSettingScreen(
                 activeTrackColor = colors.borderActive
             )
         )
+
+        Spacer(Modifier.height(4.dp))
+
+        // ── Tonos CTCSS ───────────────────────────────────────────────
+        Text(
+            text     = "TONOS CTCSS",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 18.sp,
+            letterSpacing = 2.sp
+        )
+        Text(
+            text     = "Elegí el tono por canal (Grupo/Alternativo) para no escuchar a otros grupos en el mismo canal.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 15.sp
+        )
+        OutlinedButton(
+            onClick  = onConfigureTones,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive)
+        ) {
+            Text(
+                text     = "CONFIGURAR TONOS →",
+                color    = colors.textPrimary,
+                fontFamily = ShareTechMono,
+                fontSize = 15.sp
+            )
+        }
 
         Spacer(Modifier.height(4.dp))
 

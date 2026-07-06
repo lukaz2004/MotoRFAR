@@ -630,12 +630,22 @@ class MainActivity : ComponentActivity() {
                                         android.widget.Toast.LENGTH_SHORT
                                     ).show()
                                 },
+                                onConfigureTones         = {
+                                    navController.navigate("tones") { launchSingleTop = true }
+                                },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
                                 },
                                 onAbout                  = {
                                     startActivity(android.content.Intent(this@MainActivity, AboutActivity::class.java))
                                 }
+                            )
+                        }
+                        composable("tones") {
+                            ar.motorfar.app.ui.compose.TonesSettingScreen(
+                                channels       = state.channels,
+                                onToneSelected = ::updateChannelTone,
+                                onBack         = { navController.popBackStack() }
                             )
                         }
                         composable("chat") {
@@ -795,6 +805,20 @@ class MainActivity : ComponentActivity() {
             db.saveAppSetting(AppSetting.SETTING_USER_ALIAS, alias)
             db.saveAppSetting(AppSetting.SETTING_BEACON_INTERVAL_SEC, intervalSec.toString())
             db.saveAppSetting(AppSetting.SETTING_ALERT_VOLUME, volume.toString())
+        }
+    }
+
+    // 2026-07-06: persiste el tono CTCSS elegido para un canal (Grupo/Alternativo).
+    // txTone y rxTone quedan iguales — mismo tono para transmitir y para filtrar
+    // lo que se escucha, que es como se usa CTCSS en la práctica.
+    private fun updateChannelTone(memoryId: Int, tone: String) {
+        executor.execute {
+            val db = RadioServiceAccessor.getAppDb(viewModel)
+            val dao = db.channelMemoryDao()
+            val memory = dao.getById(memoryId) ?: return@execute
+            memory.txTone = tone
+            memory.rxTone = tone
+            dao.update(memory)
         }
     }
 
