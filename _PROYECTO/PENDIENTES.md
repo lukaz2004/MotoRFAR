@@ -25,10 +25,13 @@ ahí — nada lo impedía. Corregido:
   EMERGENCY queda sin tocar — ya tiene su propia confirmación deliberada
   (`EmergencyConfirmButton`, hold de 2 segundos), un diálogo ahí sería
   fricción redundante en una emergencia real, no una mejora de seguridad.
-- ⬜ **Tonos CTCSS por canal (Principal/Alternativo)**: pedido, no implementado
-  todavía — falta definir qué tonos concretos asignar (ver "Feature —
-  CTCSS/DCS por canal" más abajo, que ya tenía el caveat de que CTCSS filtra
-  lo que se escucha, no separa el RF real).
+- ✅ **Tonos CTCSS por canal (2026-07-06)**: `ArgentinaChannels.java` ya
+  asignaba `ChannelMemory.txTone`/`rxTone` (existentes, usados hoy para
+  repetidoras — no hizo falta migración de Room). Grupo=100.0Hz,
+  Alternativo=123.0Hz. Emergencia queda SIN tono a propósito (debe ser
+  audible para cualquiera). Marcador de seed subido a `v7_channels_ctcss`
+  para que instalaciones existentes se re-seedeen solas. Sin UI para que el
+  usuario elija otro tono — queda como pendiente si hace falta más adelante.
 Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
 
 ## 🔒 Auditoría de seguridad — correcciones aplicadas (2026-07-06)
