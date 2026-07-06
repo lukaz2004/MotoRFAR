@@ -1,7 +1,8 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-07-05 (cierre sesión larga: web comercial completa + registro de ruta).
+> Última edición: 2026-07-05 (cierre tercera parte: diseño navegación turn-by-turn,
+> correcciones EST-1/Netlify, copy web, keystore de release, push a GitHub).
 
 ## 🧭 Navegación turn-by-turn propia — diseño aprobado (2026-07-05)
 Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`: motor **BRouter** (Java puro,

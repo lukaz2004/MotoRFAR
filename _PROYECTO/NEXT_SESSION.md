@@ -1,6 +1,53 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-05 (tercera parte) — diseño navegación + limpieza de pendientes + keystore + push
+- **Navegación turn-by-turn propia — diseño aprobado, sin código todavía:**
+  spec completo en `_PROYECTO/NAV_TURN_BY_TURN_DISENO.md`. Motor elegido:
+  **BRouter** (Java puro, sin NDK, GPL-3.0 — mismo esquema de licencia que ya
+  usa Baqueano; datos de ruteo pre-procesados por el proyecto, no hace falta
+  pipeline OSM propio). Tamaño real verificado: ~400-600MB para cubrir toda
+  Argentina (contra tamaños reales de tiles `.rd5`, extracto Geofabrik y
+  paquete OsmAnd). Estrategia de descarga en 2 etapas para no bloquear nunca
+  la función crítica (radio/grupo): tile local obligatorio al primer inicio +
+  resto del país en background. Voz (TTS) + flecha visual, con **ducking** de
+  audio sobre el radio VHF en vez de cortarlo. **El propio spec deja 4 puntos
+  para pulir antes de armar el plan de implementación** (ver sección "Abierto
+  para pulir" del archivo) — no dar por definitivo sin repasarlos.
+- **Correcciones de estado real, quedaba desactualizado:**
+  - EST-1 carcasa: estaba anotada con tareas pendientes (modelado, corte,
+    impresión) que LuKaZ ya había resuelto fuera de las sesiones de chat —
+    marcada CERRADA.
+  - Web Netlify: estaba anotada con "reclamar cuenta + renombrar" pendiente;
+    verificado por fetch real que `baqueano.netlify.app` ya está online con la
+    cuenta reclamada — corregido en `PENDIENTES.md` y `NEXT_SESSION.md`.
+- **Copy de la web corregido:** las 3 menciones de "30 segundos" fijo en
+  Man-Down (ya no es así desde el countdown variable por fuerza G) → "cuenta
+  regresiva" sin número fijo. Copy de CTCSS ("Sin interferencias, sin
+  confusión...") sobrevendía → corregido a lo que realmente hace (filtra lo
+  que escuchás, no separa el RF real).
+- **CTCSS/DCS por canal — verificado, no hacía falta tocar código:**
+  `reconcileDesiredState()` ya pasa `ctcss_tx`/`ctcss_rx` a `sa818.group(...)`
+  (línea 312 de `kv4p_ht_esp32_wroom_32.ino`). Quedaba anotado como "no
+  verificado" desde hace rato — ya funciona.
+- **Keystore de release generado:** `KV4PHT/baqueano-release.jks` (RSA 2048,
+  alias `baqueano`, válido hasta 2053) + `KV4PHT/keystore.properties` con
+  contraseña fuerte generada al azar (gitignorado). Encontrado y reemplazado
+  un `keystore.properties` viejo a medio armar (contraseña débil, ruta rota,
+  apuntaba a un `.jks` que nunca existió). Primer intento del certificado puso
+  `OU=MotoRFAR` por error de Claude — corregido y regenerado con todo en
+  `Baqueano` antes de que se usara para firmar nada. Guía de backup (Bitwarden
+  como Nota Segura, no Login) dada a LuKaZ — **el backup físico del `.jks` en
+  un segundo lugar (fuera de esta PC) queda como acción suya, no está hecho
+  todavía.**
+- **Push a GitHub:** los ~30 commits locales de la sesión larga anterior +
+  los de hoy quedaron subidos a `origin/main` (`ce76180..eee7010`). Ya no hay
+  nada pendiente de pushear.
+- **Sesión termina acá.** LuKaZ puede retomar mañana a la mañana si tiene
+  tiempo — punto de partida sugerido: repasar los 4 puntos de "Abierto para
+  pulir" del spec de navegación y, si cierran, pasar a armar el plan de
+  implementación (`writing-plans`).
+
 ## ⚡ CIERRE 2026-07-05 (segunda parte) — web comercial + registro de ruta
 - **Web reconstruida de punta a punta** sobre `docs/index.html` (la que ya estaba
   en vivo, más madura de lo que parecía — ver auditoría en
