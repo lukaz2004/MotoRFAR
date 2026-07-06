@@ -39,6 +39,13 @@ public class PositionParser {
     public static Position parseUncompressed(byte[] msgBody, int cursor) throws Exception {
         Calendar.Builder cb = new Calendar.Builder();
         Calendar date = cb.build();
+        // 2026-07-06 (auditoria de seguridad, MEDIO-2): el chequeo de longitud va
+        // ANTES de tocar cualquier indice del buffer (incluido msgBody[0]). Un
+        // paquete APRS truncado ya no puede disparar ArrayIndexOutOfBoundsException
+        // aca; ahora siempre falla con la excepcion controlada de mas abajo.
+        if (msgBody.length < cursor + 19) {
+            throw new UnparsablePositionException("Uncompressed packet too short");
+        }
         if (msgBody[0] == '/' || msgBody[0] == '@') {
             // With a prepended timestamp, jump over it.
             if (msgBody[cursor+6] == 'z') {
@@ -49,9 +56,6 @@ public class PositionParser {
                 date.set(Calendar.HOUR, hour);
                 date.set(Calendar.MINUTE, minute);
             }
-        }
-        if (msgBody.length < cursor + 19) {
-            throw new UnparsablePositionException("Uncompressed packet too short");
         }
 
         int positionAmbiguity = 0;

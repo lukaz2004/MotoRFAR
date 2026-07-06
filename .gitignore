@@ -24,6 +24,9 @@ Thumbs.db
 *.aab
 *.dex
 
+# Netlify CLI local state (contiene path absoluto local, no aporta nada versionado)
+.netlify/
+
 # Secrets
 **/secrets.properties
 **/keystore.properties

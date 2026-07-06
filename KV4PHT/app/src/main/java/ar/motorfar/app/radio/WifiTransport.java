@@ -169,6 +169,14 @@ public class WifiTransport {
                 try {
                     DatagramPacket pkt = new DatagramPacket(buf, buf.length);
                     s.receive(pkt);
+                    // 2026-07-06 (auditoria de seguridad, MEDIO-3): el ESP32 tiene IP fija
+                    // por diseño del SoftAP (192.168.4.1). Descartar paquetes de cualquier
+                    // otro origen cierra el vector de spoofing UDP desde otro dispositivo
+                    // asociado al mismo WiFi (defensa en profundidad, barata y sin downside).
+                    InetAddress trustedAddr = espAddress;
+                    if (trustedAddr != null && !trustedAddr.equals(pkt.getAddress())) {
+                        continue;
+                    }
                     int len = pkt.getLength();
                     if (len > 0) {
                         byte[] data = new byte[len];

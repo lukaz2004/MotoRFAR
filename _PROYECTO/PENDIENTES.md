@@ -4,6 +4,31 @@
 > Última edición: 2026-07-05 (cierre tercera parte: diseño navegación turn-by-turn,
 > correcciones EST-1/Netlify, copy web, keystore de release, push a GitHub).
 
+## 🔒 Auditoría de seguridad — correcciones aplicadas (2026-07-06)
+Reportes completos: `AUDITORIA_SEGURIDAD_APP.md`, `AUDITORIA_SEGURIDAD_FIRMWARE.md`,
+`AUDITORIA_SEGURIDAD_WEB.md` (cada uno con su sección "Estado de correcciones").
+Resuelto: whitelist TX también en `sa818.group()` (defensa en profundidad),
+clave WPA2 única por equipo (ya no hardcodeada/compartida), deadman de PTT
+desacoplado del tráfico UDP genérico, validación de origen UDP en la app,
+fix de parsing APRS, copy de privacidad de Man-Down, headers de seguridad en
+la web, `.netlify/` fuera de git. Build verificado en firmware (`pio run`) y
+app (`assembleDebug`).
+- ⬜ **UI en la app para ver/cambiar la clave WiFi del equipo**: el firmware
+  ya tiene el comando (`COMMAND_HOST_SET_WIFI_PASSWORD`) y persiste en NVS,
+  pero la app todavía no lo manda — falta agregar `Protocol.java` + pantalla
+  de ajustes. Es la mitad que falta del pendiente viejo "Config credenciales
+  AP desde app".
+- ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
+  con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
+  La autenticación de aplicación de verdad es un rediseño de protocolo, no
+  un fix de una sesión — necesita su propia sesión de diseño.
+- ⬜ Confirmar en el dashboard de Netlify el `publish directory` real (para
+  validar que `_headers` quedó en la carpeta correcta).
+- ⬜ Confirmar que el build de release del firmware define `RELEASE` (evita
+  que quede un `while(true)` sin resetear WDT en el binario de producción).
+- ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
+  conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
+
 ## 🧭 Navegación turn-by-turn propia — diseño aprobado (2026-07-05)
 Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`: motor **BRouter** (Java puro,
 GPL-3.0, sin pipeline OSM propio), datos de ruteo ~400-600MB para toda
