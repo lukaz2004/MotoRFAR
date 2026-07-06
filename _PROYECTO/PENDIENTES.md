@@ -82,11 +82,15 @@ ajuste chico).
 - ✅ GitHub Release v1.0-beta1 publicado con APK debug: https://github.com/lukaz2004/MotoRFAR/releases/tag/v1.0-beta1
 - ✅ Fix ProGuard/R8 — BUILD SUCCESSFUL. Los warnings de Lombok son benignos, no bloquean. (2026-06-24)
 - ✅ Signing pipeline configurado: `build.gradle` lee `keystore.properties` local (no commiteado). Template en `KV4PHT/keystore.properties.template`. (2026-06-24)
-- ⬜ **Generar keystore** (una sola vez, antes de publicar en Play Store):
-  ```
-  keytool -genkey -v -keystore baqueano-release.jks -alias baqueano -keyalg RSA -keysize 2048 -validity 10000
-  ```
-  Luego copiar `keystore.properties.template` → `keystore.properties` y completar contraseñas. ⚠️ Hacer backup del .jks — sin él no se puede actualizar la app.
+- ✅ **Keystore generado (2026-07-05)**: `KV4PHT/baqueano-release.jks` (RSA 2048,
+  alias `baqueano`, válido hasta 2053), `KV4PHT/keystore.properties` completo con
+  contraseñas fuertes generadas al azar (gitignorado, no en el repo). Verificado
+  con `keytool -list`. Había un `keystore.properties` viejo a medio armar con
+  contraseña débil y ruta rota (`storeFile` sin el `../` que pide `build.gradle`,
+  apuntando a un .jks que nunca existió) — reemplazado.
+  ⚠️ **Hacer backup de `baqueano-release.jks` YA** (password manager o backup
+  externo) — sin él no se puede volver a firmar/actualizar la app en Play Store.
+  Las contraseñas están solo en `keystore.properties` en este disco.
 
 ## 📱 APP — ÍCONOS (2026-06-30)
 - ✅ Todos los mipmap reemplazados con badge Baqueano (5 densidades × 3 archivos).
