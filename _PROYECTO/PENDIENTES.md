@@ -141,6 +141,13 @@ desacoplado del tráfico UDP genérico, validación de origen UDP en la app,
 fix de parsing APRS, copy de privacidad de Man-Down, headers de seguridad en
 la web, `.netlify/` fuera de git. Build verificado en firmware (`pio run`) y
 app (`assembleDebug`).
+- ✅ **SSID renombrado a "Baqueano-HT" (2026-07-06)**: quedaba pendiente desde
+  el rebrand del 02/07 ("MotoRFAR-HT → Baqueano-HT"), nunca se había hecho.
+  Cambiado en firmware (`wifi_credentials.h`/`.example`) y app
+  (`WifiTransport.AP_SSID`, única fuente — `WifiConnectBanner`/notificación
+  ya lo referencian desde ahí, no hubo que tocar más lugares). Solo texto,
+  no afecta la lógica de conexión (matchea por IP/subred, no por SSID).
+  Build verificado en ambos lados (`pio run` y `gradlew assembleDebug`).
 - ✅ **UI para cambiar la clave WiFi del equipo (2026-07-06)**: nueva
   `WifiSettingScreen.kt` (Ajustes → "CONFIGURAR WIFI →"). Agrega
   `COMMAND_HOST_SET_WIFI_PASSWORD` a `Protocol.java` (mismo valor `0x0E`

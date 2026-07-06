@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 public class WifiTransport {
     private static final String TAG = "WifiTransport";
 
-    public static final String AP_SSID  = "MotoRFAR-HT";
+    public static final String AP_SSID  = "Baqueano-HT";
     public static final String AP_IP    = "192.168.4.1";
     public static final int    UDP_PORT = 4210;
     private static final int   RECV_BUFFER_SIZE = 4096;
