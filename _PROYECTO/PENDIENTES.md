@@ -34,11 +34,22 @@ apagada) desactivaba la función que más importa ahí.
   cuando está abierta (vía nuevo callback `manDownCountdownTick`), pero ya no
   es la autoridad — es solo un espejo de UI.
 - Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
-- ⬜ **CRÍTICO, sin verificar todavía:** este cambio no se probó en emulador
-  ni dispositivo físico (sesión sin acceso a hardware). Antes de confiar en
-  esto, probar: caída simulada con la app en segundo plano/pantalla apagada,
-  botón "ESTOY BIEN" desde la notificación, y una alerta de otro integrante
-  llegando con la app cerrada.
+- ✅ **Verificado en emulador (2026-07-06, Pixel_10_Pro_XL):** caída simulada
+  con `adb emu sensor set acceleration` (impacto + quietud real, no el valor
+  de gravedad ~9.8 que usé al principio y que el algoritmo NO cuenta como
+  "quieto") con la app en segundo plano. Confirmado por `dumpsys sensorservice`
+  que el listener sigue registrado tras backgroundear. Notificación de alta
+  prioridad aparece con el texto y countdown correctos. Sin cancelar, la
+  alerta se dispara sola: logs confirman envío de paquete AX25 + "Beaconing
+  position via APRS" + segundo paquete, dos corridas independientes, sin
+  crash (proceso vivo en ambas). No pude tapear el botón "ESTOY BIEN" con
+  precisión vía `adb` (el peek de la notificación colapsa rápido) — es
+  `NotificationCompat.addAction()` estándar, no código custom, pero falta
+  confirmarlo con el dedo en un dispositivo real.
+- ⬜ **Pendiente real:** probar en dispositivo físico Android (no emulador) —
+  el botón "ESTOY BIEN · CANCELAR" tocado a mano, y una alerta de otro
+  integrante llegando con la app cerrada (esto último no se pudo simular en
+  el emulador por falta de un segundo radio/peer).
 - ⬜ **Relacionado, no resuelto:** `onTaskRemoved()` sigue haciendo
   `stopSelf()` — si el usuario desliza la app fuera de "apps recientes"
   (gesto distinto a solo minimizarla), el Service entero se mata y Man-Down
