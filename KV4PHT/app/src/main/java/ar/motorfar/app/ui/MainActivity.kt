@@ -131,6 +131,14 @@ class MainActivity : ComponentActivity() {
     // como espejo de UI, alimentado por el callback manDownCountdownTick().
     private val _countdownValue = MutableStateFlow<Int?>(null)
 
+    // 2026-07-06: si nos abrió el full-screen intent de Man-Down, el cartel de
+    // recordatorio del canal de emergencia no debe taparle la pantalla a la
+    // cuenta regresiva. Va en un StateFlow (no un `remember` local) porque si
+    // la Activity ya estaba viva, Android reentrega el intent por
+    // onNewIntent() en vez de recrear la Composition — un `remember` no se
+    // enteraría de ese segundo aviso.
+    private val _showEmergencyReminder = MutableStateFlow(true)
+
     private var pendingAlertType: AlertHelper.AlertType? = null
 
     // 2026-07-06: confirmacion real para STOP/REGROUP (un tap simple, sin hold,
@@ -323,10 +331,59 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // 2026-07-06: si nos abrió la notificación de Man-Down (full-screen intent),
+    // mostrarnos encima de la pantalla bloqueada (mismo mecanismo que apps de
+    // llamadas/alarmas) y no dejar que el cartel del canal de emergencia tape
+    // la cuenta regresiva. Se llama desde onCreate() Y onNewIntent() — si la
+    // Activity ya estaba viva, Android reentrega el intent por onNewIntent()
+    // en vez de recrear la Activity.
+    private fun handleManDownFullscreenIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(RadioAudioService.EXTRA_MANDOWN_FULLSCREEN, false) == true) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            _showEmergencyReminder.value = false
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleManDownFullscreenIntent(intent)
+    }
+
+    // 2026-07-06: cancelar Man-Down apretando VOLUMEN ABAJO 3 veces seguidas —
+    // pensado para el caso real de una caída donde la pantalla se rompió o no
+    // responde al tacto (guantes, agua, vidrio roto), pero las teclas físicas
+    // siguen andando. Solo actúa si hay una cuenta regresiva activa; el resto
+    // del tiempo el volumen se comporta normal.
+    private val volumeDownPressTimestamps = mutableListOf<Long>()
+    private val VOLUME_CANCEL_PRESSES = 3
+    private val VOLUME_CANCEL_WINDOW_MS = 2500L
+
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN && _countdownValue.value != null) {
+            val now = System.currentTimeMillis()
+            volumeDownPressTimestamps.add(now)
+            volumeDownPressTimestamps.removeAll { now - it > VOLUME_CANCEL_WINDOW_MS }
+            if (volumeDownPressTimestamps.size >= VOLUME_CANCEL_PRESSES) {
+                volumeDownPressTimestamps.clear()
+                cancelFallCountdown()
+            }
+            return true // no toques el volumen real mientras hay cuenta regresiva
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
     // ── Lifecycle ─────────────────────────────────────────────────────
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // 2026-07-06: si nos abrió la notificación de Man-Down (full-screen
+        // intent), mostrarnos encima de la pantalla bloqueada — mismo
+        // mecanismo que usan apps de llamadas/alarmas. Gateado por el extra
+        // para no hacerlo en un arranque normal de la app.
+        handleManDownFullscreenIntent(intent)
 
         // Registra el receiver para cerrar la app si el servicio se detiene
         val filter = android.content.IntentFilter(RadioAudioService.ACTION_SERVICE_STOPPING)
@@ -383,13 +440,13 @@ class MainActivity : ComponentActivity() {
                 val colors = LocalMotoRFARColors.current
 
                 // 2026-07-06: recordatorio del uso exclusivo del canal de emergencia.
-                // `remember` (sin Saveable) reinicia a `true` en cada Composition nueva
-                // (o sea, cada vez que la Activity se crea de cero) pero NO se resetea
-                // al volver de segundo plano (onResume no recompone desde cero).
-                var showEmergencyReminder by remember { mutableStateOf(true) }
+                // Vive en _showEmergencyReminder (StateFlow de la Activity, no un
+                // `remember` local) para que onNewIntent() lo pueda apagar también
+                // si Man-Down nos reabre con la Activity ya viva.
+                val showEmergencyReminder by _showEmergencyReminder.collectAsState()
                 if (showEmergencyReminder) {
                     AlertDialog(
-                        onDismissRequest = { showEmergencyReminder = false },
+                        onDismissRequest = { _showEmergencyReminder.value = false },
                         title = { Text("⚠ Canal de Emergencia (140.970 MHz)") },
                         text = {
                             Text(
@@ -401,7 +458,7 @@ class MainActivity : ComponentActivity() {
                             )
                         },
                         confirmButton = {
-                            TextButton(onClick = { showEmergencyReminder = false }) {
+                            TextButton(onClick = { _showEmergencyReminder.value = false }) {
                                 Text("Entendido")
                             }
                         }

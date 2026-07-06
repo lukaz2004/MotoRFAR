@@ -212,7 +212,7 @@ fun AliasSettingScreen(
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text     = "Si detecta un impacto fuerte seguido de quietud, cuenta unos segundos (menos cuanto más fuerte el golpe) y transmite tu posición sin cifrar por VHF — la puede escuchar cualquiera en el canal, no solo tu grupo. Podés cancelarlo. Puede dispararse por golpes fuertes o terreno irregular (baches, pozos, caídas).",
+                    text     = "Si detecta un impacto fuerte seguido de quietud, asume que puede ser una caída o accidente: cuenta unos segundos (menos cuanto más fuerte el golpe) y transmite tu posición sin cifrar por VHF — la puede escuchar cualquiera en el canal, no solo tu grupo. Podés cancelarlo. Puede dispararse por golpes fuertes o terreno irregular (baches, pozos, caídas) sin que haya pasado nada en realidad.",
                     color    = colors.textSecondary,
                     fontFamily = ShareTechMono,
                     fontSize = 15.sp

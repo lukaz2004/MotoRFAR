@@ -50,6 +50,36 @@ apagada) desactivaba la función que más importa ahí.
   el botón "ESTOY BIEN · CANCELAR" tocado a mano, y una alerta de otro
   integrante llegando con la app cerrada (esto último no se pudo simular en
   el emulador por falta de un segundo radio/peer).
+
+### Ronda 2 (mismo día): pantalla propia, potencial, y atajo de volumen
+- ✅ **Pantalla propia (full-screen intent).** La notificación de Man-Down
+  ahora abre `MainActivity` encima de la pantalla bloqueada (`setFullScreenIntent`
+  + `setShowWhenLocked`/`setTurnScreenOn`, mismo mecanismo que llamadas/alarmas).
+  Antes solo dependía de que el usuario viera/tocara la notificación.
+  ⚠️ Sigue dependiendo de que las notificaciones estén habilitadas para la app
+  a nivel sistema — si el usuario las desactiva por completo, esto también
+  queda mudo (limitación real de Android, no hay forma de saltarla del todo
+  sin permiso `SYSTEM_ALERT_WINDOW`/overlay, que es una feature aparte).
+- ✅ **Corregido bug encontrado en la propia verificación:** si `MainActivity`
+  ya estaba viva cuando Man-Down disparaba, Android reentrega el intent por
+  `onNewIntent()` en vez de recrear la Activity — el cartel de "Canal de
+  Emergencia" (que se muestra siempre al abrir la app) tapaba la cuenta
+  regresiva. Corregido moviendo el estado a un `StateFlow` de la Activity y
+  manejando `onNewIntent()` explícitamente.
+- ✅ **Atajo de volumen físico**: apretar VOLUMEN (–) 3 veces seguidas cancela
+  Man-Down — pensado para el caso real de pantalla rota/no responde al tacto
+  tras una caída, pero las teclas físicas siguen andando.
+- ✅ **Overlay de cuenta regresiva agrandado**: círculo 220dp, número 96sp,
+  botón "ESTOY BIEN · CANCELAR" a todo el ancho — pensado para usar con
+  guantes o sin precisión justo después de una caída.
+- ✅ **Copy en modo potencial**: "Detectamos una posible caída" (notificación),
+  "¿CAÍDA O ACCIDENTE?" (overlay), "asume que puede ser una caída o accidente"
+  (Ajustes) — ya no afirma como hecho lo que es una detección automática.
+- ✅ **Verificado en emulador, flujo completo**: pantalla apagada → impacto
+  simulado → pantalla se prende sola, abre la app directo en la cuenta
+  regresiva (sin el cartel de emergencia tapándola) → volumen abajo x3 →
+  cancela limpio, sin transmitir nada (confirmado por logs, sin AX25 posterior).
+  Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
 - ⬜ **Relacionado, no resuelto:** `onTaskRemoved()` sigue haciendo
   `stopSelf()` — si el usuario desliza la app fuera de "apps recientes"
   (gesto distinto a solo minimizarla), el Service entero se mata y Man-Down

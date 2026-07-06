@@ -142,6 +142,7 @@ public class RadioAudioService extends Service {
     private static final int MANDOWN_NOTIFICATION_ID = 2;
     private static final int INCOMING_ALERT_NOTIFICATION_ID = 3;
     public static final String ACTION_CANCEL_MANDOWN = "ar.motorfar.app.CANCEL_MANDOWN";
+    public static final String EXTRA_MANDOWN_FULLSCREEN = "ar.motorfar.app.EXTRA_MANDOWN_FULLSCREEN";
     public static final List<Digipeater> DEFAULT_DIGIPEATERS = List.of(new Digipeater("WIDE1*"), new Digipeater("WIDE2-1"));
     private static final long SCAN_SQUELCHED_ADVANCE_DELAY_MS = 250L;
 
@@ -734,17 +735,28 @@ public class RadioAudioService extends Service {
         PendingIntent pCancel = PendingIntent.getService(this, 1, cancelIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        // 2026-07-06: pantalla propia, no solo la notificacion — un usuario puede
+        // tener las notificaciones apagadas o simplemente no llegar a leerla a
+        // tiempo. setFullScreenIntent() abre MainActivity encima de lo que sea
+        // que este en pantalla (incluso con el telefono bloqueado), mismo
+        // mecanismo que usan apps de llamadas/alarmas. MainActivity ya muestra
+        // el overlay de cuenta regresiva (FallCountdownOverlay) apenas se
+        // bindea al Service y recibe el primer manDownCountdownTick().
         Intent openApp = new Intent(this, MainActivity.class);
-        PendingIntent pOpen = PendingIntent.getActivity(this, 1, openApp, PendingIntent.FLAG_IMMUTABLE);
+        openApp.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        openApp.putExtra(EXTRA_MANDOWN_FULLSCREEN, true);
+        PendingIntent pOpen = PendingIntent.getActivity(this, 1, openApp,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_radio)
-                .setContentTitle("⚠ Detectamos una caída")
+                .setContentTitle("⚠ Detectamos una posible caída")
                 .setContentText("Transmitiendo alerta en " + secondsRemaining + "s si no cancelás")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setOnlyAlertOnce(true)
                 .setContentIntent(pOpen)
+                .setFullScreenIntent(pOpen, true)
                 .addAction(0, "ESTOY BIEN · CANCELAR", pCancel)
                 .setOngoing(true);
 

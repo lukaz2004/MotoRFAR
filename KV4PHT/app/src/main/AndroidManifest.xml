@@ -19,6 +19,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 2026-07-06: permite que la notificacion de Man-Down abra la pantalla
+         propia de la app aunque el telefono este bloqueado (mismo mecanismo
+         que usan apps de llamadas/alarmas). -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <!-- Storage: solo necesario hasta API 28; a partir de API 29 se usa MediaStore sin permiso -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
