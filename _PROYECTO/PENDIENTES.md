@@ -41,13 +41,13 @@ ajuste chico).
   (~2.5-4G, original) → 30s. Build verificado. Umbrales de corte (60/40) son
   punto de partida — se calibran junto con el resto de Man-Down en dispositivo
   físico (mismo pendiente de siempre, no se probó en moto real todavía).
-  ⬜ Nota menor: el copy de la web sigue diciendo "30 segundos" fijo en la
-  sección Man-Down — ya no es siempre así, ajustar cuando se retome la web.
-- ⬜ **Web — copy de CTCSS ("Tu grupo escucha solo a tu grupo")**: la frase "Sin
-  interferencias" sobrevende, mismo problema que el ya corregido "200 motos" de
-  la card de al lado — CTCSS filtra lo que escuchás, no separa el RF real (ver
-  caveat ya documentado más abajo en "Feature — CTCSS/DCS por canal"). Ajustar
-  cuando se retome esta sección.
+  ✅ Copy de la web corregido (2026-07-05): las 3 menciones de "30 segundos"
+  fijo (beneficios, card Man-Down, FAQ) ahora dicen "cuenta regresiva" sin
+  número fijo, coherente con el countdown variable por fuerza G.
+- ✅ **Web — copy de CTCSS corregido (2026-07-05)**: "Sin interferencias, sin
+  confusión, sin escuchar a desconocidos" (sobrevendía) → "No escuchás a
+  desconocidos que compartan el canal, aunque transmitan al mismo tiempo que
+  tu grupo" — ya no insinúa que separa el RF real, solo lo que se escucha.
 
 ## 🔧 HW-1 — rework real 2026-07-04 (rescatado, no se había anotado en su momento)
 - ✅ Stub RF viejo de J1 borrado + traza C5→J1 re-ruteada (se rompió al borrar el stub).
@@ -113,7 +113,9 @@ ajuste chico).
 - ✅ ACLARADO: las "subfrecuencias" = CTCSS/DCS (tonos/códigos de squelch), NO frecuencias. Dejan que varios grupos compartan el mismo canal legal sin escucharse. **No mueve la frecuencia → no toca la whitelist, 100% legal (Res 5/2015 = solo 3 freqs).**
 - Caveat: CTCSS filtra lo que ESCUCHÁS, no separa el RF (si dos grupos transmiten a la vez, igual colisionan). No es canal privado.
 - Viable en el hardware: el SA818 soporta CTCSS (38 tonos) + DCS; el protocolo ya tiene `ctcss_tx`/`ctcss_rx` en `HostDesiredState` (el transporte WiFi ya los lleva gratis).
-- PENDIENTE FW: confirmar que `reconcileDesiredState()` pase `ctcss_tx`/`ctcss_rx` al `sa818.group()` (no verificado aún). Si falta, es un add chico.
+- ✅ Verificado (2026-07-05): `reconcileDesiredState()` ya pasa `ctcss_tx`/`ctcss_rx`
+  a `sa818.group(...)` — línea 312 de `kv4p_ht_esp32_wroom_32.ino`. Ya andaba, no
+  hacía falta cambiar código.
 - PENDIENTE APP-2: UI para elegir tono/código por canal/grupo.
 - Orden: feature aparte, DESPUÉS de validar el transporte FW-3a.
 
