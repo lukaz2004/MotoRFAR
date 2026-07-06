@@ -61,4 +61,15 @@ public class TxWhitelist {
     public float getEmergencyFreq() {
         return ALLOWED_TX_FREQS_MHZ[2]; // 140.970 MHz
     }
+
+    /**
+     * 2026-07-06: la Res. 5/2015 reserva 140.970 MHz de uso EXCLUSIVO para
+     * emergencias reales. Tráfico de datos de rutina (balizado APRS, chat,
+     * STOP/REAGRUPAMIENTO) no debería transmitirse ahí solo porque el usuario
+     * dejó el radio sintonizado en ese canal — únicamente la alerta real de
+     * emergencia debe usarlo.
+     */
+    public boolean isEmergencyFreq(float freqMhz) {
+        return Math.abs(freqMhz - getEmergencyFreq()) <= TOLERANCE_MHZ;
+    }
 }

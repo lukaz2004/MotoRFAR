@@ -322,7 +322,16 @@ public class RadioAudioService extends Service {
                     // 20 seconds is usually ample for a single beacon
                     wakeLock.acquire(20_000);
                 }
-                if (aprsBeaconPosition) {
+                // 2026-07-06: el balizado de RUTINA nunca debe salir por el canal de
+                // emergencia (140.970, uso exclusivo Res. 5/2015) — a diferencia de la
+                // alerta real de EMERGENCY (que tunea, transmite y vuelve a propósito),
+                // esto es tráfico automático periódico sin ninguna emergencia detrás.
+                String targetBeaconFreq = "Current".equals(aprsBeaconFrequency) ? activeFrequencyStr : aprsBeaconFrequency;
+                boolean beaconTargetsEmergency = false;
+                try {
+                    beaconTargetsEmergency = txWhitelist.isEmergencyFreq(Float.parseFloat(targetBeaconFreq));
+                } catch (NumberFormatException ignored) {}
+                if (aprsBeaconPosition && !beaconTargetsEmergency) {
                     sendPositionBeacon();  // uses FusedLocation + TX
                 }
             } catch (Throwable t) {

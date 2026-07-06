@@ -165,6 +165,7 @@
     <string name="listen_only_on">MODO SOLO ESCUCHA · TX deshabilitada</string>
     <string name="listen_only_off">MODO NORMAL · TX habilitada</string>
     <string name="listen_only_blocked">MODO SOLO ESCUCHA · soltá el modo escucha para transmitir</string>
+    <string name="emergency_channel_blocked">CANAL EMERGENCIA · uso exclusivo M.T.T.T., cambiá de canal para chatear</string>
     <string name="waypoint_sent">WAYPOINT · posición enviada al grupo</string>
     <string name="waypoint_no_radio">Sin radio · waypoint no transmitido</string>
 </resources>

@@ -21,6 +21,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Observer
 import ar.motorfar.app.data.AppSetting
@@ -371,6 +372,33 @@ class MainActivity : ComponentActivity() {
 
             MotoRFARTheme(state.theme) {
                 val colors = LocalMotoRFARColors.current
+
+                // 2026-07-06: recordatorio del uso exclusivo del canal de emergencia.
+                // `remember` (sin Saveable) reinicia a `true` en cada Composition nueva
+                // (o sea, cada vez que la Activity se crea de cero) pero NO se resetea
+                // al volver de segundo plano (onResume no recompone desde cero).
+                var showEmergencyReminder by remember { mutableStateOf(true) }
+                if (showEmergencyReminder) {
+                    AlertDialog(
+                        onDismissRequest = { showEmergencyReminder = false },
+                        title = { Text("⚠ Canal de Emergencia (140.970 MHz)") },
+                        text = {
+                            Text(
+                                "Es de uso EXCLUSIVO para emergencias reales, regido por " +
+                                "la Res. 5/2015 (ENACOM / Secretaría de Comunicaciones). " +
+                                "No lo dejes sintonizado para chatear — la app ya bloquea " +
+                                "el chat de texto y los avisos STOP/Reagrupamiento ahí; la " +
+                                "voz por PTT queda a tu criterio y responsabilidad."
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showEmergencyReminder = false }) {
+                                Text("Entendido")
+                            }
+                        }
+                    )
+                }
+
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route ?: "main"
@@ -896,6 +924,18 @@ class MainActivity : ComponentActivity() {
         ).show()
     }
 
+    // 2026-07-06: 140.970 es uso exclusivo de emergencias reales (Res. 5/2015) —
+    // chat libre y avisos STOP/REAGRUPAMIENTO no deben salir por ese canal solo
+    // porque el usuario lo dejó sintonizado ahí. La alerta real de EMERGENCY no
+    // pasa por este aviso, sigue funcionando siempre.
+    private fun notifyEmergencyChannelBlocked() {
+        android.widget.Toast.makeText(
+            this,
+            getString(R.string.emergency_channel_blocked),
+            android.widget.Toast.LENGTH_LONG
+        ).show()
+    }
+
     // DEMO: simula 3 integrantes del grupo alrededor de Villa Martelli
     private fun seedDemoGroupMembers() {
         val now = System.currentTimeMillis()
@@ -967,6 +1007,8 @@ class MainActivity : ComponentActivity() {
     private fun sendChatMessage(text: String) {
         // En modo escucha no se transmite texto
         if (listenOnly) { ToneHelper.playAlertBeep(alertVolume / 100f); notifyListenOnlyBlocked(); return }
+        // Canal de emergencia: uso exclusivo M.T.T.T., no chat de rutina
+        if (activeFrequencyStr == AlertHelper.EMERGENCY_FREQ) { ToneHelper.playAlertBeep(alertVolume / 100f); notifyEmergencyChannelBlocked(); return }
         addChatMessage(userAlias, text, outgoing = true)
         val svc = radioService
         if (svc != null && uiState.value.isConnected) {
@@ -1009,6 +1051,14 @@ class MainActivity : ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     private fun transmitGroupAlert(type: AlertHelper.AlertType) {
+        // 2026-07-06: STOP/REGROUP no son emergencias reales — no deben salir por
+        // 140.970 solo porque el usuario dejó el radio sintonizado ahí. EMERGENCY
+        // siempre pasa (fuerza su propia frecuencia en AlertHelper.getTargetFrequency).
+        if (type != AlertHelper.AlertType.EMERGENCY && activeFrequencyStr == AlertHelper.EMERGENCY_FREQ) {
+            ToneHelper.playAlertBeep(alertVolume / 100f)
+            notifyEmergencyChannelBlocked()
+            return
+        }
         // 1. Posición actual (puede ser null si aún no hay fix GPS)
         val loc = getLastKnownLocation()
         val lat = loc?.latitude

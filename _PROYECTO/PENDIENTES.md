@@ -4,6 +4,32 @@
 > Última edición: 2026-07-05 (cierre tercera parte: diseño navegación turn-by-turn,
 > correcciones EST-1/Netlify, copy web, keystore de release, push a GitHub).
 
+## ⚖️ Canal Emergencia — uso restringido a emergencias reales (2026-07-06)
+Pregunta real de un radioaficionado: ¿el balizado/alertas de la app usan el
+canal Emergencia (140.970) o los canales Principal/Alternativo? Respuesta:
+Man-Down y la alerta manual de emergencia SIEMPRE usan 140.970 (correcto, es
+una emergencia real). Pero STOP/Reagrupamiento, el chat libre y el balizado
+de rutina podían salir por 140.970 si el usuario dejaba el radio sintonizado
+ahí — nada lo impedía. Corregido:
+- ✅ Chat libre y STOP/Reagrupamiento bloqueados si el canal activo es
+  Emergencia (`MainActivity.kt`, `notifyEmergencyChannelBlocked()`).
+- ✅ Balizado APRS de rutina (el automático cada 5 min) se salta si el canal
+  resuelto es Emergencia (`RadioAudioService.java`, scheduler).
+- ✅ Nuevo método `TxWhitelist.isEmergencyFreq()` centraliza el chequeo.
+- ✅ Cartel de recordatorio al abrir la app (no al volver de segundo plano):
+  explica que 140.970 es uso exclusivo M.T.T.T./ENACOM. `AlertDialog` con
+  `remember` (no Saveable) — se resetea solo si la Activity se crea de cero.
+- ⬜ **Hallazgo de paso, sin resolver:** `AlertHelper.getConfirmationTitle()`/
+  `getConfirmationText()` existen (texto de confirmación antes de mandar una
+  alerta de emergencia) pero **nunca se usan** — el botón de emergencia
+  transmite directo, sin diálogo de confirmación. Código muerto o feature a
+  medio terminar; decidir si conectarlo a un `AlertDialog` real.
+- ⬜ **Tonos CTCSS por canal (Principal/Alternativo)**: pedido, no implementado
+  todavía — falta definir qué tonos concretos asignar (ver "Feature —
+  CTCSS/DCS por canal" más abajo, que ya tenía el caveat de que CTCSS filtra
+  lo que se escucha, no separa el RF real).
+Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
+
 ## 🔒 Auditoría de seguridad — correcciones aplicadas (2026-07-06)
 Reportes completos: `AUDITORIA_SEGURIDAD_APP.md`, `AUDITORIA_SEGURIDAD_FIRMWARE.md`,
 `AUDITORIA_SEGURIDAD_WEB.md` (cada uno con su sección "Estado de correcciones").
