@@ -1,8 +1,49 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-07-05 (cierre tercera parte: diseño navegación turn-by-turn,
-> correcciones EST-1/Netlify, copy web, keystore de release, push a GitHub).
+> Última edición: 2026-07-06 (Man-Down y alertas movidas al Service — bug de
+> segundo plano corregido, ver sección de arriba).
+
+## 🚨 Man-Down y alertas dejaban de funcionar en segundo plano — CORREGIDO (2026-07-06)
+Pregunta del usuario: "si la app está en segundo plano y alguien manda una
+alerta, ¿hay algún aviso?" Investigando esto encontré un bug más grave: **el
+acelerómetro de Man-Down se apagaba solo** cuando la app dejaba de estar en
+pantalla.
+
+**Causa raíz:** `FallDetectionManager` (el acelerómetro) y el callback de
+alertas recibidas vivían atados al ciclo de vida de `MainActivity`
+(`onStart()`/`onStop()`), no al `RadioAudioService` (el foreground service que
+sigue corriendo con la app en segundo plano). `onStop()` literalmente hacía
+`fallDetectionManager?.stop()` y desvinculaba el callback (`unbindService`) —
+exactamente el escenario real de uso (teléfono en el bolsillo/soporte, pantalla
+apagada) desactivaba la función que más importa ahí.
+
+**Corregido, movido todo a `RadioAudioService.java`:**
+- ✅ `FallDetectionManager` vive y corre en el Service (`setManDownEnabled()`),
+  ya no se detiene al salir de la app.
+- ✅ Cuenta regresiva + disparo de la alerta real (`transmitEmergencyAlert()`)
+  corren en el Service, independiente de si `MainActivity` está abierta.
+- ✅ Notificación de alta prioridad (canal `IMPORTANCE_HIGH`, sonido+vibración
+  por default) durante la cuenta regresiva, con botón "ESTOY BIEN · CANCELAR"
+  que funciona desde la bandeja de notificaciones sin abrir la app.
+- ✅ **Alertas de OTROS integrantes (EMERGENCIA/DETENCIÓN/REAGRUPAMIENTO)
+  ahora generan notificación independiente** — antes solo llegaban vía un
+  callback que se volvía no-op si la app no estaba bindeada (silencio total
+  en segundo plano).
+- ✅ `MainActivity` sigue mostrando el overlay visual de cuenta regresiva
+  cuando está abierta (vía nuevo callback `manDownCountdownTick`), pero ya no
+  es la autoridad — es solo un espejo de UI.
+- Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
+- ⬜ **CRÍTICO, sin verificar todavía:** este cambio no se probó en emulador
+  ni dispositivo físico (sesión sin acceso a hardware). Antes de confiar en
+  esto, probar: caída simulada con la app en segundo plano/pantalla apagada,
+  botón "ESTOY BIEN" desde la notificación, y una alerta de otro integrante
+  llegando con la app cerrada.
+- ⬜ **Relacionado, no resuelto:** `onTaskRemoved()` sigue haciendo
+  `stopSelf()` — si el usuario desliza la app fuera de "apps recientes"
+  (gesto distinto a solo minimizarla), el Service entero se mata y Man-Down
+  se apaga igual. No se tocó en esta pasada; es una decisión de producto
+  aparte (¿Man-Down debería sobrevivir incluso a eso, como apps tipo Life360?).
 
 ## ⚖️ Canal Emergencia — uso restringido a emergencias reales (2026-07-06)
 Pregunta real de un radioaficionado: ¿el balizado/alertas de la app usan el

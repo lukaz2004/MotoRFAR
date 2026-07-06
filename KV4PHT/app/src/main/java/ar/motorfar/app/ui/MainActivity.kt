@@ -124,17 +124,12 @@ class MainActivity : ComponentActivity() {
     private val _routePoints = MutableStateFlow<List<ar.motorfar.app.data.RoutePoint>>(emptyList())
     private var currentRouteSessionId: Long = 0L
 
-    private var fallDetectionManager: FallDetectionManager? = null
-    private var countdownJob: Job? = null
-    // Cuenta regresiva de Man-Down: más corta cuanto más fuerte el golpe
-    // (más urgente avisar); más larga si es leve (más chance de cancelar a mano).
-    private fun countdownSecondsFor(peakAcceleration: Float): Int = when {
-        peakAcceleration > 60f -> 8  // Golpe muy fuerte, ~>6G
-        peakAcceleration > 40f -> 15 // Golpe fuerte, ~4-6G
-        else -> 30                  // Golpe moderado, ~2.5-4G (valor original)
-    }
+    // 2026-07-06: Man-Down (acelerometro, cuenta regresiva, disparo de la alerta)
+    // se movio a RadioAudioService -- vivia atado al ciclo de vida de esta
+    // Activity y se apagaba justo al salir a segundo plano/pantalla apagada,
+    // el escenario real para el que existe. _countdownValue se mantiene solo
+    // como espejo de UI, alimentado por el callback manDownCountdownTick().
     private val _countdownValue = MutableStateFlow<Int?>(null)
-    private var fallAudioFocusRequest: android.media.AudioFocusRequest? = null
 
     private var pendingAlertType: AlertHelper.AlertType? = null
 
@@ -211,6 +206,16 @@ class MainActivity : ComponentActivity() {
             RadioServiceAccessor.setCallbacks(service, serviceCallbacks)
             service.start() // CRITICAL: Start the service connection controller
             _uiState.update { it.copy(isConnected = true) }
+            // 2026-07-06: Man-Down vive en el Service (sigue en segundo plano) --
+            // se activa acá según el setting guardado, no atado a onStart().
+            serviceScope.launch(Dispatchers.IO) {
+                val manDownEnabled = RadioServiceAccessor.getAppDb(viewModel).appSettingDao()
+                    .getByName(AppSetting.SETTING_MAN_DOWN)
+                    ?.value?.toBoolean() ?: false
+                withContext(Dispatchers.Main) {
+                    service.setManDownEnabled(manDownEnabled)
+                }
+            }
         }
         override fun onServiceDisconnected(name: ComponentName?) {
             radioService = null
@@ -229,6 +234,11 @@ class MainActivity : ComponentActivity() {
 
     // ── RadioAudioService Callbacks ───────────────────────────────────
     private val serviceCallbacks = object : RadioAudioService.RadioAudioServiceCallbacks {
+        // 2026-07-06: espejo de UI del countdown de Man-Down, que ahora vive y
+        // corre en el Service (sigue funcionando aunque esto no esté bindeado).
+        override fun manDownCountdownTick(secondsRemaining: Int?) {
+            _countdownValue.value = secondsRemaining
+        }
         override fun radioConnected() {
             _uiState.update { it.copy(isConnected = true) }
         }
@@ -317,13 +327,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // Inicializa detector de caídas
-        fallDetectionManager = FallDetectionManager(this) { peakAcceleration ->
-            if (countdownJob == null) {
-                startFallCountdown(countdownSecondsFor(peakAcceleration))
-            }
-        }
 
         // Registra el receiver para cerrar la app si el servicio se detiene
         val filter = android.content.IntentFilter(RadioAudioService.ACTION_SERVICE_STOPPING)
@@ -557,7 +560,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onToggleManDown          = { enabled ->
                                     manDownEnabled = enabled
-                                    if (enabled) fallDetectionManager?.start() else fallDetectionManager?.stop()
+                                    radioService?.setManDownEnabled(enabled)
                                     executor.execute {
                                         RadioServiceAccessor.getAppDb(viewModel)
                                             .saveAppSetting(AppSetting.SETTING_MAN_DOWN, enabled.toString())
@@ -601,24 +604,15 @@ class MainActivity : ComponentActivity() {
         startAndBindService()
         beaconManager.start(serviceScope)
         startMovementUpdates()
-        // Only start Man-Down detection if the user has explicitly enabled it
-        serviceScope.launch(Dispatchers.IO) {
-            val manDownEnabled = RadioServiceAccessor.getAppDb(viewModel).appSettingDao()
-                .getByName(AppSetting.SETTING_MAN_DOWN)
-                ?.value?.toBoolean() ?: false
-            if (manDownEnabled) {
-                withContext(Dispatchers.Main) {
-                    fallDetectionManager?.start()
-                }
-            }
-        }
+        // Man-Down se activa en onServiceConnected() (vive en el Service, no acá).
     }
 
     override fun onStop() {
         super.onStop()
         beaconManager.stop()
         stopMovementUpdates()
-        fallDetectionManager?.stop()
+        // Man-Down NO se detiene acá a propósito — debe seguir funcionando con
+        // la app en segundo plano/pantalla apagada, que es el uso real.
         if (radioServiceBound) {
             unbindService(serviceConnection)
             radioServiceBound = false
@@ -685,53 +679,13 @@ class MainActivity : ComponentActivity() {
     }
 
     // ── Fall Detection ───────────────────────────────────────────────
-    private fun startFallCountdown(countdownTimeSec: Int) {
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-
-        countdownJob = serviceScope.launch {
-            // Solicita foco de audio exclusivo para sonar sobre la música
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                fallAudioFocusRequest = android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
-                    .setAudioAttributes(android.media.AudioAttributes.Builder()
-                        .setUsage(android.media.AudioAttributes.USAGE_ALARM)
-                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build())
-                    .build()
-                audioManager.requestAudioFocus(fallAudioFocusRequest!!)
-            }
-
-            for (i in countdownTimeSec downTo 0) {
-                _countdownValue.value = i
-                val progress = (countdownTimeSec - i).toFloat() / countdownTimeSec
-                ToneHelper.playCountdownBeep(progress, alertVolume / 100f)
-
-                // El intervalo entre beeps se acorta (de 1s a 250ms)
-                val sleepTime = (1000 - (progress * 750)).toLong()
-                delay(sleepTime)
-            }
-
-            // Si llega a 0, dispara la emergencia
-            _countdownValue.value = null
-            transmitGroupAlert(AlertHelper.AlertType.EMERGENCY)
-            countdownJob = null
-            releaseFallAudioFocus()
-        }
-    }
-
+    // 2026-07-06: la cuenta regresiva, el disparo de la alerta y el foco de
+    // audio se movieron a RadioAudioService (ver setManDownEnabled/
+    // cancelManDownCountdown ahí) — acá solo queda la cancelación manual,
+    // que delega al Service. _countdownValue se actualiza vía el callback
+    // manDownCountdownTick() cuando la Activity está bindeada.
     private fun cancelFallCountdown() {
-        countdownJob?.cancel()
-        countdownJob = null
-        _countdownValue.value = null
-        releaseFallAudioFocus()
-    }
-
-    private fun releaseFallAudioFocus() {
-        val request = fallAudioFocusRequest ?: return
-        fallAudioFocusRequest = null
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-            audioManager.abandonAudioFocusRequest(request)
-        }
+        radioService?.cancelManDownCountdown()
     }
 
     // ── Service binding ───────────────────────────────────────────────

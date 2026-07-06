@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package ar.motorfar.app.radio;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -73,6 +74,8 @@ import ar.motorfar.app.javAX25.ax25.Packet;
 import ar.motorfar.app.radio.Protocol.KissParser;
 import ar.motorfar.app.radio.Protocol.RcvCommand;
 import ar.motorfar.app.radio.Protocol.WindowUpdate;
+import ar.motorfar.app.ui.AlertHelper;
+import ar.motorfar.app.ui.FallDetectionManager;
 import ar.motorfar.app.ui.MainActivity;
 import ar.motorfar.app.ui.ToneHelper;
 import lombok.Getter;
@@ -131,6 +134,14 @@ public class RadioAudioService extends Service {
     private static final int APRS_MAX_MESSAGE_NUM = 99999;
     private static final String MESSAGE_NOTIFICATION_CHANNEL_ID = "aprs_message_notifications";
     private static final int MESSAGE_NOTIFICATION_TO_YOU_ID = 0;
+    // 2026-07-06: Man-Down y las alertas de grupo vivian atadas al ciclo de vida
+    // de la Activity -- se apagaban justo al salir a segundo plano/pantalla
+    // apagada, el escenario real para el que existen. Ahora viven ACA, en el
+    // foreground service, que sigue corriendo sin importar si la app esta visible.
+    private static final String ALERT_NOTIFICATION_CHANNEL_ID = "safety_alert_notifications";
+    private static final int MANDOWN_NOTIFICATION_ID = 2;
+    private static final int INCOMING_ALERT_NOTIFICATION_ID = 3;
+    public static final String ACTION_CANCEL_MANDOWN = "ar.motorfar.app.CANCEL_MANDOWN";
     public static final List<Digipeater> DEFAULT_DIGIPEATERS = List.of(new Digipeater("WIDE1*"), new Digipeater("WIDE2-1"));
     private static final long SCAN_SQUELCHED_ADVANCE_DELAY_MS = 250L;
 
@@ -141,6 +152,12 @@ public class RadioAudioService extends Service {
     // MotoRFAR: TX restringida por whitelist Res. 5/2015 (ver TxWhitelist.java).
     // Los campos min/maxTxFreq del diseño original fueron reemplazados.
     private final TxWhitelist txWhitelist = new TxWhitelist();
+
+    // === Man-Down (2026-07-06, movido desde MainActivity) ===
+    private FallDetectionManager fallDetectionManager;
+    private int manDownSecondsRemaining = -1; // -1 = sin cuenta regresiva activa
+    private int manDownTotalSeconds = 0;
+    private AudioFocusRequest manDownAudioFocusRequest;
 
     public enum RadioModuleType {UNKNOWN, VHF, UHF}
 
@@ -245,6 +262,9 @@ public class RadioAudioService extends Service {
         default void radioModuleNotFound() {}
         default void audioTrackCreated() {}
         default void packetReceived(APRSPacket aprsPacket) {}
+        // 2026-07-06: mirror opcional para la UI si la Activity esta bindeada;
+        // el Service es la autoridad real (funciona con o sin esto).
+        default void manDownCountdownTick(Integer secondsRemaining) {}
         default void startingAprsBeacon(String frequencyStr) {}
         default void scannedToMemory(int memoryId) {}
         default void tunedToFreq(String frequencyStr) {}
@@ -429,7 +449,22 @@ public class RadioAudioService extends Service {
 
             NotificationManager nm = getSystemService(NotificationManager.class);
             nm.createNotificationChannel(chan);
+
+            // 2026-07-06: canal de alta prioridad (sonido+vibracion por default)
+            // para Man-Down y alertas EMERGENCIA/DETENCION/REAGRUPAMIENTO del
+            // grupo -- necesita notarse aunque la app este en segundo plano.
+            NotificationChannel alertChan = new NotificationChannel(
+                    ALERT_NOTIFICATION_CHANNEL_ID,
+                    "Alertas de seguridad",
+                    NotificationManager.IMPORTANCE_HIGH);
+            alertChan.setDescription("Man-Down y alertas del grupo (EMERGENCIA/DETENCION/REAGRUPAMIENTO)");
+            nm.createNotificationChannel(alertChan);
         }
+
+        fallDetectionManager = new FallDetectionManager(this, (peak) -> {
+            onFallDetected(peak);
+            return kotlin.Unit.INSTANCE;
+        });
 
         SecureRandom random = new SecureRandom();
         messageNumber = random.nextInt(APRS_MAX_MESSAGE_NUM); // Start with any Message # from 0-99999, we'll increment it by 1 each tx until restart.
@@ -455,6 +490,11 @@ public class RadioAudioService extends Service {
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
             return START_NOT_STICKY;
+        }
+
+        if (intent != null && ACTION_CANCEL_MANDOWN.equals(intent.getAction())) {
+            cancelManDownCountdown();
+            return START_STICKY;
         }
 
         // Build an ongoing notification
@@ -609,6 +649,173 @@ public class RadioAudioService extends Service {
         channel.setDescription("APRS text chat messages addressed to you");
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(channel);
+    }
+
+    // === Man-Down (2026-07-06) =================================================
+
+    public void setManDownEnabled(boolean enabled) {
+        if (enabled) {
+            fallDetectionManager.start();
+        } else {
+            fallDetectionManager.stop();
+            cancelManDownCountdown();
+        }
+    }
+
+    private int manDownCountdownSecondsFor(float peakAcceleration) {
+        // Cuenta regresiva mas corta cuanto mas fuerte el golpe (mas urgente avisar).
+        if (peakAcceleration > 60f) return 8;   // Golpe muy fuerte, ~>6G
+        if (peakAcceleration > 40f) return 15;  // Golpe fuerte, ~4-6G
+        return 30;                              // Golpe moderado, ~2.5-4G
+    }
+
+    private void onFallDetected(float peakAcceleration) {
+        if (manDownSecondsRemaining >= 0) return; // ya hay una cuenta regresiva activa
+        startManDownCountdown(manDownCountdownSecondsFor(peakAcceleration));
+    }
+
+    private final Runnable manDownTick = new Runnable() {
+        @Override
+        public void run() {
+            if (manDownSecondsRemaining < 0) return;
+            getCallbacks().manDownCountdownTick(manDownSecondsRemaining);
+            postManDownNotification(manDownSecondsRemaining);
+            if (manDownSecondsRemaining <= 0) {
+                fireManDownAlert();
+                return;
+            }
+            // Volumen fijo al maximo: Man-Down tiene que notarse siempre, sin
+            // depender del volumen de alertas de chat que el usuario haya bajado.
+            float progress = manDownTotalSeconds > 0
+                ? 1f - ((float) manDownSecondsRemaining / manDownTotalSeconds) : 1f;
+            ToneHelper.playCountdownBeep(progress, 1f);
+            manDownSecondsRemaining--;
+            handler.postDelayed(this, 1000L);
+        }
+    };
+
+    private void startManDownCountdown(int seconds) {
+        manDownTotalSeconds = seconds;
+        manDownSecondsRemaining = seconds;
+        requestManDownAudioFocus();
+        handler.removeCallbacks(manDownTick);
+        handler.post(manDownTick);
+    }
+
+    /** Cancela la cuenta regresiva de Man-Down si hay una activa (botón "ESTOY BIEN" o notificación). */
+    public void cancelManDownCountdown() {
+        if (manDownSecondsRemaining < 0) return;
+        manDownSecondsRemaining = -1;
+        handler.removeCallbacks(manDownTick);
+        releaseManDownAudioFocus();
+        getCallbacks().manDownCountdownTick(null);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.cancel(MANDOWN_NOTIFICATION_ID);
+    }
+
+    private void fireManDownAlert() {
+        manDownSecondsRemaining = -1;
+        releaseManDownAudioFocus();
+        getCallbacks().manDownCountdownTick(null);
+        transmitEmergencyAlert();
+        NotificationCompat.Builder sentNotif = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_radio)
+                .setContentTitle("⚠ Alerta de emergencia enviada")
+                .setContentText("Se transmitió tu posición por 140.970 MHz (canal Emergencia)")
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.notify(MANDOWN_NOTIFICATION_ID, sentNotif.build());
+    }
+
+    private void postManDownNotification(int secondsRemaining) {
+        Intent cancelIntent = new Intent(this, RadioAudioService.class);
+        cancelIntent.setAction(ACTION_CANCEL_MANDOWN);
+        PendingIntent pCancel = PendingIntent.getService(this, 1, cancelIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Intent openApp = new Intent(this, MainActivity.class);
+        PendingIntent pOpen = PendingIntent.getActivity(this, 1, openApp, PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_radio)
+                .setContentTitle("⚠ Detectamos una caída")
+                .setContentText("Transmitiendo alerta en " + secondsRemaining + "s si no cancelás")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(pOpen)
+                .addAction(0, "ESTOY BIEN · CANCELAR", pCancel)
+                .setOngoing(true);
+
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.notify(MANDOWN_NOTIFICATION_ID, builder.build());
+    }
+
+    private void requestManDownAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            manDownAudioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+                    .setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build())
+                    .build();
+            am.requestAudioFocus(manDownAudioFocusRequest);
+        }
+    }
+
+    private void releaseManDownAudioFocus() {
+        if (manDownAudioFocusRequest == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            am.abandonAudioFocusRequest(manDownAudioFocusRequest);
+        }
+        manDownAudioFocusRequest = null;
+    }
+
+    /**
+     * Dispara la alerta real de EMERGENCIA (Man-Down o llamada explícita) directo
+     * desde el Service, sin depender de que MainActivity esté bindeada. Espejo de
+     * la lógica que tenía MainActivity.transmitGroupAlert() para EMERGENCY.
+     */
+    @SuppressLint("MissingPermission")
+    public void transmitEmergencyAlert() {
+        String homeFreq = activeFrequencyStr;
+        String targetFreq = AlertHelper.EMERGENCY_FREQ;
+        boolean needsFreqChange = !targetFreq.equals(homeFreq);
+        if (needsFreqChange) {
+            tuneToFreq(targetFreq);
+        }
+        sendPositionBeacon();
+        handler.postDelayed(() -> {
+            String alertText = AlertHelper.buildMessage(AlertHelper.AlertType.EMERGENCY, callsign);
+            sendChatMessage("CQ", alertText);
+            if (needsFreqChange) {
+                handler.postDelayed(() -> tuneToFreq(homeFreq), 1500);
+            }
+        }, 2000);
+    }
+
+    /**
+     * 2026-07-06: notificación INDEPENDIENTE del binding de la Activity para
+     * alertas de otros miembros del grupo (EMERGENCIA/DETENCIÓN/REAGRUPAMIENTO).
+     * Antes esto solo llegaba vía getCallbacks().packetReceived(), que es un
+     * no-op si nadie está bindeado (app en segundo plano) — quedaba en silencio.
+     */
+    private void notifyIncomingAlert(String title, String body) {
+        Intent openApp = new Intent(this, MainActivity.class);
+        PendingIntent pOpen = PendingIntent.getActivity(this, 2, openApp, PendingIntent.FLAG_IMMUTABLE);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_radio)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setContentIntent(pOpen);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.notify(INCOMING_ALERT_NOTIFICATION_ID, builder.build());
     }
 
     /**
@@ -1549,6 +1756,26 @@ public class RadioAudioService extends Service {
                         INTENT_OPEN_CHAT);
                     // Send acknowledgment after a delay
                     handler.postDelayed(() -> sendAckMessage(aprsPacket.getSourceCall().toUpperCase(), msg.getMessageNumber()), 1000);
+                }
+                // 2026-07-06: alertas de grupo (van a "CQ", no a tu callsign, asi que
+                // el bloque de arriba no las agarra) -- notificacion INDEPENDIENTE del
+                // binding de la Activity, para que se note aunque la app este en
+                // segundo plano.
+                if (!msg.isAck()) {
+                    String alertBody = msg.getMessageBody();
+                    if (alertBody != null) {
+                        String alertTitle = null;
+                        if (alertBody.contains("ALERTA")) {
+                            alertTitle = "⚠ EMERGENCIA de " + aprsPacket.getSourceCall();
+                        } else if (alertBody.contains("DETENCION")) {
+                            alertTitle = "Detención de " + aprsPacket.getSourceCall();
+                        } else if (alertBody.contains("REAGRUPAMIENTO")) {
+                            alertTitle = "Reagrupamiento de " + aprsPacket.getSourceCall();
+                        }
+                        if (alertTitle != null) {
+                            notifyIncomingAlert(alertTitle, alertBody);
+                        }
+                    }
                 }
             }
             // Notify callbacks about the received packet
