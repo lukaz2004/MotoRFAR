@@ -19,11 +19,12 @@ ahí — nada lo impedía. Corregido:
 - ✅ Cartel de recordatorio al abrir la app (no al volver de segundo plano):
   explica que 140.970 es uso exclusivo M.T.T.T./ENACOM. `AlertDialog` con
   `remember` (no Saveable) — se resetea solo si la Activity se crea de cero.
-- ⬜ **Hallazgo de paso, sin resolver:** `AlertHelper.getConfirmationTitle()`/
-  `getConfirmationText()` existen (texto de confirmación antes de mandar una
-  alerta de emergencia) pero **nunca se usan** — el botón de emergencia
-  transmite directo, sin diálogo de confirmación. Código muerto o feature a
-  medio terminar; decidir si conectarlo a un `AlertDialog` real.
+- ✅ **Diálogo de confirmación conectado (2026-07-06)**: `getConfirmationTitle()`/
+  `getConfirmationText()` ahora se usan de verdad, pero solo para STOP/REGROUP
+  (un tap simple sin protección podía mandar una falsa alarma al grupo).
+  EMERGENCY queda sin tocar — ya tiene su propia confirmación deliberada
+  (`EmergencyConfirmButton`, hold de 2 segundos), un diálogo ahí sería
+  fricción redundante en una emergencia real, no una mejora de seguridad.
 - ⬜ **Tonos CTCSS por canal (Principal/Alternativo)**: pedido, no implementado
   todavía — falta definir qué tonos concretos asignar (ver "Feature —
   CTCSS/DCS por canal" más abajo, que ya tenía el caveat de que CTCSS filtra

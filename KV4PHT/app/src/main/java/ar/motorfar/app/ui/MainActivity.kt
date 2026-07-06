@@ -138,6 +138,12 @@ class MainActivity : ComponentActivity() {
 
     private var pendingAlertType: AlertHelper.AlertType? = null
 
+    // 2026-07-06: confirmacion real para STOP/REGROUP (un tap simple, sin hold,
+    // podia mandar una falsa alarma al grupo por error). EMERGENCY no pasa por
+    // aca — ya tiene su propia confirmacion deliberada (hold de 2s en
+    // EmergencyConfirmButton), agregar un dialogo ahi seria friccion redundante.
+    private val _pendingConfirmAlert = MutableStateFlow<AlertHelper.AlertType?>(null)
+
     private val _beaconIntervalFlow = MutableStateFlow(60_000L)
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -395,6 +401,26 @@ class MainActivity : ComponentActivity() {
                             TextButton(onClick = { showEmergencyReminder = false }) {
                                 Text("Entendido")
                             }
+                        }
+                    )
+                }
+
+                // 2026-07-06: confirmacion real antes de mandar STOP/REGROUP (texto ya
+                // existia en AlertHelper pero nunca se conectaba a ningun dialogo).
+                val pendingConfirmAlert by _pendingConfirmAlert.collectAsState()
+                pendingConfirmAlert?.let { type ->
+                    AlertDialog(
+                        onDismissRequest = { _pendingConfirmAlert.value = null },
+                        title = { Text(AlertHelper.getConfirmationTitle(type)) },
+                        text = { Text(AlertHelper.getConfirmationText(type)) },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                _pendingConfirmAlert.value = null
+                                requestLocationAndTransmit(type)
+                            }) { Text("Confirmar") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { _pendingConfirmAlert.value = null }) { Text("Cancelar") }
                         }
                     )
                 }
@@ -1031,8 +1057,7 @@ class MainActivity : ComponentActivity() {
 
     // ── Alert flow ────────────────────────────────────────────────────
     private fun showAlertDialog(type: AlertHelper.AlertType) {
-        pendingAlertType = type
-        requestLocationAndTransmit(type)
+        _pendingConfirmAlert.value = type
     }
 
     private fun requestLocationAndTransmit(type: AlertHelper.AlertType) {
