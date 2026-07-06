@@ -15,7 +15,7 @@ import java.util.List;
 public class ArgentinaChannels {
 
     public static final String PRELOADED_KEY   = "argentina_channels_preloaded";
-    public static final String PRELOADED_VALUE = "v7_channels_ctcss";
+    public static final String PRELOADED_VALUE = "v8_channels_principal";
 
     // 2026-07-06: tonos CTCSS por defecto para Grupo/Alternativo — dejan que
     // varios grupos compartan el mismo canal legal sin escucharse entre sí
@@ -28,7 +28,7 @@ public class ArgentinaChannels {
 
     public static List<ChannelMemory> getAll() {
         return Arrays.asList(
-            channel("GRUPO",       "139.9700", GROUP_CTCSS),
+            channel("PRINCIPAL",   "139.9700", GROUP_CTCSS),
             channel("ALTERNATIVO", "138.5100", ALTERNATIVO_CTCSS),
             channel("EMERGENCIA",  "140.9700", null)
         );

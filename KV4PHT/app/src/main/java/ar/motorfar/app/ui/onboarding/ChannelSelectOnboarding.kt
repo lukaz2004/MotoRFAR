@@ -32,7 +32,7 @@ import ar.motorfar.app.ui.compose.theme.ShareTechMono
 private data class ChannelOption(val name: String, val freq: String, val desc: String)
 
 private val ARGENTINA_CHANNELS = listOf(
-    ChannelOption("GRUPO",       "139.9700", "Canal principal del grupo"),
+    ChannelOption("PRINCIPAL",   "139.9700", "Canal principal del grupo"),
     ChannelOption("ALTERNATIVO", "138.5100", "Canal de respaldo"),
     ChannelOption("EMERGENCIA",  "140.9700", "Solo para emergencias")
 )

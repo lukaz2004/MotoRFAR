@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -117,11 +118,13 @@ fun PttButton(
             }
         }
         Text(
-            text       = if (isTransmitting) "TX" else "PTT",
+            text       = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK",
             color      = if (isTransmitting) Color.White else Color(0xFF0E0904),
             fontFamily = ShareTechMono,
-            fontSize   = 20.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            fontSize   = 13.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier   = Modifier.padding(horizontal = 12.dp)
         )
     }
 }

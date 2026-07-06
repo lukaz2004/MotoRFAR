@@ -222,6 +222,42 @@ app (`assembleDebug`).
   recorridos pasados sería una feature nueva, no estaba construida. Build
   verificado y layout confirmado visualmente en el emulador
   (`gradlew assembleDebug`).
+- ✅ **Retoques estéticos pantalla principal (2026-07-06)**: a pedido.
+  - Canal "GRUPO" renombrado a "PRINCIPAL" (hace juego con "ALTERNATIVO").
+    Cambiado en `ArgentinaChannels.java` (seed real), `ChannelRow.kt`
+    (fallback), `ChannelSelectOnboarding.kt` y `MainUiState.kt` (defaults).
+    Se bumpeó `ArgentinaChannels.PRELOADED_VALUE` a `v8_channels_principal`
+    para que los equipos ya instalados (incluido este mismo, probado toda
+    la sesión) reciban el rename solo con abrir la app de nuevo — mismo
+    mecanismo ya usado para el rollout de tonos CTCSS por defecto (v7).
+    Ojo: esto borra y reinserta `channel_memories`, así que cualquier tono
+    CTCSS ya elegido a mano se resetea a default una vez más.
+  - Emergencia ahora tiene indicador real de "estás transmitiendo acá":
+    antes el botón de canal quedaba siempre con borde rojo estuviera o no
+    activo, y el cartel de frecuencia no cambiaba en absoluto — no había
+    forma de saber si en verdad estabas en emergencia. Ahora, cuando es el
+    canal activo, el botón se rellena de rojo sólido y el cartel de
+    frecuencia (número + nombre + línea de modo) también se pone rojo,
+    en las 3 pantallas que muestran frecuencia (Portrait, Landscape, Ruta
+    Activa). Confirmado con el mismo mecanismo de `isActive` que ya
+    funcionaba para Principal/Alternativo.
+  - Tono CTCSS visible en pantalla principal: se agrega al lado de
+    "MHz · FM · SIMPLEX" (ej. "· 100 Hz"), tomado del canal activo vía
+    nueva extensión `MainUiState.activeToneLabel`.
+  - Botón PTT: "PTT"/"TX" -> "PUSH TO TALK"/"TRANSMITIENDO", fuente más
+    chica (13sp) para que entre el texto largo en el círculo.
+  - Ícono de Baqueano agregado en la barra superior de la pantalla
+    principal (no en el modo Ruta Activa, que se mantiene minimalista a
+    propósito). Al conectar `painterResource` con `R.mipmap.ic_launcher`
+    la app crasheaba (`IllegalArgumentException: Only VectorDrawables and
+    rasterized asset types are supported`) porque ese recurso es un XML de
+    ícono adaptativo, no soportado por `painterResource`. Se usa en cambio
+    `R.mipmap.ic_launcher_moto` directo (el PNG real detrás del ícono
+    adaptativo) — el nombre de archivo quedó desactualizado del rebrand
+    (dice "moto" pero la imagen ya es el escudo "BAQUEANO"), pendiente
+    renombrarlo en un pase de limpieza, no bloquea nada.
+  Build verificado (`gradlew assembleDebug`), instalado y confirmado
+  visualmente en el emulador (PRINCIPAL, ícono, PUSH TO TALK todos OK).
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no

@@ -52,6 +52,8 @@ import ar.motorfar.app.ui.compose.components.PttButton
 import ar.motorfar.app.ui.compose.components.WifiConnectBanner
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
+import ar.motorfar.app.ui.compose.state.activeToneLabel
+import ar.motorfar.app.ui.compose.state.isEmergencyActive
 import ar.motorfar.app.ui.compose.theme.AppTheme
 import ar.motorfar.app.ui.compose.theme.BorderHairline
 import ar.motorfar.app.ui.compose.theme.ControlShape
@@ -115,6 +117,15 @@ private fun TopBar(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        androidx.compose.foundation.Image(
+            painter            = androidx.compose.ui.res.painterResource(R.mipmap.ic_launcher_moto),
+            contentDescription = "Baqueano",
+            modifier           = Modifier
+                .padding(end = 6.dp)
+                .size(26.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+        )
+
         AppStatusBar(
             isTx        = state.isTxActive,
             isRx        = state.isRxActive,
@@ -287,7 +298,7 @@ private fun RouteActiveLayout(
         Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
             Text(
                 text          = state.activeChannelName,
-                color         = colors.textSecondary,
+                color         = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.textSecondary,
                 fontFamily    = ShareTechMono,
                 fontSize      = 18.sp,
                 letterSpacing = 3.sp
@@ -295,14 +306,14 @@ private fun RouteActiveLayout(
             Spacer(Modifier.height(4.dp))
             Text(
                 text       = state.activeFrequency,
-                color      = colors.textPrimary,
+                color      = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.textPrimary,
                 fontFamily = ShareTechMono,
                 fontSize   = 72.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text          = "MHz",
-                color         = colors.textSecondary,
+                text          = "MHz" + (state.activeToneLabel?.let { " · $it" } ?: ""),
+                color         = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.textSecondary,
                 fontFamily    = ShareTechMono,
                 fontSize      = 22.sp,
                 letterSpacing = 2.sp
@@ -383,9 +394,11 @@ private fun PortraitLayout(
         }
 
         FrequencyDisplayCard(
-            frequency   = state.activeFrequency,
-            channelName = state.activeChannelName,
-            sMeterLevel = state.sMeterLevel
+            frequency         = state.activeFrequency,
+            channelName       = state.activeChannelName,
+            sMeterLevel       = state.sMeterLevel,
+            tone              = state.activeToneLabel,
+            isEmergencyActive = state.isEmergencyActive
         )
         AlertBanner(
             alert     = state.activeAlert,
@@ -473,9 +486,11 @@ private fun LandscapeLayout(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 FrequencyDisplayCard(
-                    frequency   = state.activeFrequency,
-                    channelName = state.activeChannelName,
-                    sMeterLevel = state.sMeterLevel
+                    frequency         = state.activeFrequency,
+                    channelName       = state.activeChannelName,
+                    sMeterLevel       = state.sMeterLevel,
+                    tone              = state.activeToneLabel,
+                    isEmergencyActive = state.isEmergencyActive
                 )
                 Spacer(Modifier.height(6.dp))
                 ChannelRow(

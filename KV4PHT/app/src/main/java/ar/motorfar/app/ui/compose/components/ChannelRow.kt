@@ -29,7 +29,7 @@ private const val EMERGENCY_FREQ = "140.970"
 // Canales oficiales Res. M.T.T.T. 5/2015 — fallback si la DB aún no seedeó
 private data class FixedChannel(val name: String, val freq: String)
 private val FALLBACK_CHANNELS = listOf(
-    FixedChannel("GRUPO",       "139.9700"),
+    FixedChannel("PRINCIPAL",   "139.9700"),
     FixedChannel("ALTERNATIVO", "138.5100"),
     FixedChannel("EMERGENCIA",  "140.9700")
 )
@@ -58,6 +58,11 @@ fun ChannelRow(
         items.forEach { (name, freq) ->
             val isActive    = freq == activeFreq
             val isEmergency = freq.startsWith("140.97")
+            // 2026-07-06: Emergencia llevaba el mismo borde rojo este activa o
+            // no -- no había forma de distinguir "es el botón de emergencia"
+            // de "estás transmitiendo AHORA en emergencia". Solo cuando está
+            // realmente activo se rellena de rojo; si no, queda solo el borde.
+            val backgroundColor = if (isEmergency && isActive) EmergencyBorder else colors.surface
             val borderColor = when {
                 isEmergency -> EmergencyBorder
                 isActive    -> colors.borderActive
@@ -67,7 +72,7 @@ fun ChannelRow(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .background(colors.surface, ControlShape)
+                    .background(backgroundColor, ControlShape)
                     .border(if (isActive || isEmergency) BorderStrong else BorderHairline, borderColor, ControlShape)
                     .clickable { onChannelClick(freq) }
                     .padding(vertical = 10.dp, horizontal = 4.dp),
@@ -75,7 +80,8 @@ fun ChannelRow(
             ) {
                 Text(
                     text      = name,
-                    color     = if (isEmergency) ar.motorfar.app.ui.compose.theme.EmergencyText
+                    color     = if (isEmergency && isActive) androidx.compose.ui.graphics.Color.Black
+                                else if (isEmergency) ar.motorfar.app.ui.compose.theme.EmergencyText
                                 else if (isActive) colors.textPrimary
                                 else colors.textSecondary,
                     fontFamily = ShareTechMono,
