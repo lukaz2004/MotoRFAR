@@ -21,6 +21,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Observer
@@ -645,9 +646,30 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("tones") {
+                            // 2026-07-06: no depende de state.channels (cadena Room ->
+                            // LiveData -> StateFlow -> Compose, con timing variable en
+                            // una instalacion nueva de verdad) -- lee la DB directo cada
+                            // vez que se entra a esta pantalla, para no quedar en blanco.
+                            var toneScreenChannels by remember { mutableStateOf<List<ar.motorfar.app.data.ChannelMemory>>(emptyList()) }
+                            LaunchedEffect(Unit) {
+                                toneScreenChannels = withContext(Dispatchers.IO) {
+                                    RadioServiceAccessor.getAppDb(viewModel).channelMemoryDao().getAll()
+                                }
+                            }
                             ar.motorfar.app.ui.compose.TonesSettingScreen(
-                                channels       = state.channels,
-                                onToneSelected = ::updateChannelTone,
+                                channels       = toneScreenChannels,
+                                onToneSelected = { memoryId, tone ->
+                                    serviceScope.launch(Dispatchers.IO) {
+                                        val dao = RadioServiceAccessor.getAppDb(viewModel).channelMemoryDao()
+                                        dao.getById(memoryId)?.let { memory ->
+                                            memory.txTone = tone
+                                            memory.rxTone = tone
+                                            dao.update(memory)
+                                        }
+                                        val fresh = dao.getAll()
+                                        withContext(Dispatchers.Main) { toneScreenChannels = fresh }
+                                    }
+                                },
                                 onBack         = { navController.popBackStack() }
                             )
                         }
@@ -815,20 +837,6 @@ class MainActivity : ComponentActivity() {
             db.saveAppSetting(AppSetting.SETTING_USER_ALIAS, alias)
             db.saveAppSetting(AppSetting.SETTING_BEACON_INTERVAL_SEC, intervalSec.toString())
             db.saveAppSetting(AppSetting.SETTING_ALERT_VOLUME, volume.toString())
-        }
-    }
-
-    // 2026-07-06: persiste el tono CTCSS elegido para un canal (Grupo/Alternativo).
-    // txTone y rxTone quedan iguales — mismo tono para transmitir y para filtrar
-    // lo que se escucha, que es como se usa CTCSS en la práctica.
-    private fun updateChannelTone(memoryId: Int, tone: String) {
-        executor.execute {
-            val db = RadioServiceAccessor.getAppDb(viewModel)
-            val dao = db.channelMemoryDao()
-            val memory = dao.getById(memoryId) ?: return@execute
-            memory.txTone = tone
-            memory.rxTone = tone
-            dao.update(memory)
         }
     }
 
