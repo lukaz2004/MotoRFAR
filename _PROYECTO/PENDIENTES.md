@@ -316,9 +316,9 @@ ajuste chico).
 - ✅ Permisos: `CHANGE_NETWORK_STATE` + `ACCESS_NETWORK_STATE`.
 - ✅ Build: `assembleDebug` OK.
 - ⬜ **Requiere SA818 + ESP32 con FW-3a**: verificar Hello/handshake por WiFi, audio RX/TX real.
-- ⬜ UI "Conectate a MotoRFAR-HT": guiar al usuario a conectar el WiFi del teléfono a la red del AP.
-- ⬜ Config credenciales AP desde app (clave WPA2 hoy hardcodeada en firmware como `motorfar1234`).
-- ⬜ UI CTCSS/DCS por canal.
+- ✅ UI "Conectate a MotoRFAR-HT": hecho hace rato (`WifiConnectBanner.kt`, PR #9) — este bullet había quedado desactualizado.
+- ⬜ Config credenciales AP desde app: firmware ya tiene el comando (`COMMAND_HOST_SET_WIFI_PASSWORD`, 2026-07-06), falta el lado app (ver sección de auditoría de seguridad más arriba).
+- ✅ UI CTCSS/DCS por canal: hecho 2026-07-06 (`TonesSettingScreen.kt`) — este bullet había quedado desactualizado.
 - ⬜ Windowing: quitar/rediseñar en FW-3b (hoy inerte).
 
 ## ⚖️ Licencia / Venta — checklist pre-venta
