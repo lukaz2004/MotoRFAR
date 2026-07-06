@@ -249,7 +249,7 @@ Emulador: `C:\Users\lukaz\AppData\Local\Android\Sdk\emulator\emulator.exe -avd P
 
 ## LINKS RÁPIDOS
 - Release v1.0-beta1: https://github.com/lukaz2004/MotoRFAR/releases/tag/v1.0-beta1
-- Web Netlify: https://gorgeous-taffy-a6cfde.netlify.app (pass: My-Drop-Site)
+- Web Netlify: https://baqueano.netlify.app (cuenta reclamada, URL final — verificado online 2026-07-05)
 - PCB backup pre-cambios: `AppData\Local\Temp\kv4p-ht-BACKUP-pre-82mm.kicad_pcb`
 - PCB backup original: `AppData\Local\Temp\kv4p-ht-ORIGINAL.kicad_pcb`
 

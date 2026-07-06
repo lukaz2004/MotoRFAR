@@ -97,26 +97,15 @@ ajuste chico).
 - ✅ Video demo con logo Baqueano en `_PROYECTO/web/baqueano-demo.mp4`.
 - ✅ HTML sección "En acción" actualizado con grilla 3×2, hover/zoom, captions y video.
 
-## 🏗️ EST-1 — CARCASA — ESPECIFICACIONES CERRADAS (2026-06-30)
-- ✅ Dimensiones externas: **170 × 75 × 24mm**
-- ✅ Construcción: sandwich 2 tapas Al 3mm + frame 18mm corte por agua
-- ✅ Tapa: 8 tornillos M3 countersunk (3 por lado largo, 1 por lado corto)
-- ✅ Frente: botón M16 Short Body High Head LED azul (esq. sup. izq., 10mm márgenes), USB-C centrado, tapa PETG 60×20×4mm antena WiFi (parte inferior)
-- ✅ Borde superior: SMA VHF (15mm del borde der., 15mm del borde frontal)
-- ✅ Pigtail RG316 → antena varilla inox 50cm
-- ✅ Sin conector 5V separado (USB-C alimenta todo)
-- ✅ Terminaciones: arenado crudo ó anodizado negro sobre arenado
-- ⬜ Modelado en Fusion 360 (EST-1 arrancable — leer `ramas/EST_estetica.md`)
-- ⬜ Corte por agua del frame de 18mm
-- ⬜ Impresión 3D prueba antes de mecanizar aluminio
+## 🟢 EST-1 — CARCASA — CERRADO (resuelto fuera de este tracking, confirmado 2026-07-05)
+- ✅ Especificaciones (dimensiones 170×75×24mm, sandwich Al 3mm + frame 18mm, tornillería, SMA/USB-C, terminaciones) — cerradas 2026-06-30.
+- ✅ Resto del proceso (modelado, corte, impresión de prueba) resuelto por LuKaZ fuera de este chat — no queda nada pendiente de EST-1.
 
-## 🌐 WEB — PUBLICADA (2026-06-24)
+## 🌐 WEB — PUBLICADA (2026-06-24, URL confirmada online 2026-07-05)
 - ✅ Rediseño comercial completo: hero, kit, features, frecuencias, app mockup, vehículos, accesorios, specs, CTA.
 - ✅ Branding renombrado a **Baqueano** — logo escudo integrado en nav y hero.
-- ✅ Deploy en Netlify: https://gorgeous-taffy-a6cfde.netlify.app (pass: My-Drop-Site)
+- ✅ Cuenta Netlify reclamada, sitio **online en `baqueano.netlify.app`** (verificado 2026-07-05: título "Baqueano — Comunicación grupal VHF donde no hay señal", beta/waitlist funcionando).
 - ✅ `docs/index.html` + `docs/assets/` pusheados a main en GitHub.
-- ⬜ Reclamar sitio Netlify con cuenta (60 min desde deploy — si expiró, re-deployar con `netlify deploy --dir=docs --prod --allow-anonymous` desde la carpeta del repo).
-- ⬜ Renombrar URL a `baqueano.netlify.app` (desde panel Netlify tras reclamar).
 - ⬜ Dominio propio (opcional, post-lanzamiento).
 - ⬜ Reemplazar renders placeholder por fotos/CAD reales cuando estén disponibles.
 
