@@ -125,7 +125,7 @@ fun AliasSettingScreen(
                     )
                 } else {
                     Text(
-                        "Identificás tu moto en el mapa del grupo",
+                        "Te identifica a vos en el mapa del grupo",
                         color = colors.textSecondary,
                         fontFamily = ShareTechMono,
                         fontSize = 15.sp
