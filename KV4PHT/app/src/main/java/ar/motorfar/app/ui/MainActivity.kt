@@ -53,6 +53,7 @@ import ar.motorfar.app.ui.compose.state.GroupMember
 import ar.motorfar.app.ui.compose.state.ChatMessage
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
+import ar.motorfar.app.ui.compose.state.isEmergencyActive
 import ar.motorfar.app.ui.compose.theme.AppTheme
 import ar.motorfar.app.ui.compose.theme.EmergencyText
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
@@ -600,6 +601,7 @@ class MainActivity : ComponentActivity() {
                                 onFocusConsumed = { _mapFocus.value = null },
                                 isTransmitting  = state.isTxActive,
                                 listenOnly      = state.isListenOnly,
+                                isEmergency     = state.isEmergencyActive,
                                 onPttDown       = { handleAction(MainUiAction.PttPressed) },
                                 onPttUp         = { handleAction(MainUiAction.PttReleased) },
                                 triggerDownload = triggerDownload,
@@ -1158,13 +1160,24 @@ class MainActivity : ComponentActivity() {
         // 3. Transmitir por radio si está conectada
         val service = radioService
         if (service != null && uiState.value.isConnected) {
-            val homeFreq   = activeFrequencyStr  // canal de grupo donde estaba
-            val targetFreq = AlertHelper.getTargetFrequency(type, activeFrequencyStr)
+            val homeFreq        = activeFrequencyStr  // canal de grupo donde estaba
+            val homeChannelName = uiState.value.activeChannelName
+            val targetFreq       = AlertHelper.getTargetFrequency(type, activeFrequencyStr)
 
             // Solo EMERGENCY cambia de frecuencia (a 140.970). STOP/REGROUP
             // se transmiten en el canal de grupo/alternativo actual.
             val needsFreqChange = targetFreq != homeFreq
-            if (needsFreqChange) service.tuneToFreq(targetFreq)
+            if (needsFreqChange) {
+                service.tuneToFreq(targetFreq)
+                // 2026-07-06: antes solo se retunaba el hardware -- el estado
+                // de la UI (frecuencia/nombre de canal) nunca se enteraba, así
+                // que nada en pantalla (cartel rojo, botón PTT, ecualizador)
+                // reflejaba que se estaba transmitiendo en Emergencia.
+                activeFrequencyStr = targetFreq
+                _uiState.update {
+                    it.copy(activeFrequency = targetFreq, activeChannelName = "EMERGENCIA")
+                }
+            }
 
             service.sendPositionBeacon()  // baliza en la frecuencia destino
             Handler(Looper.getMainLooper()).postDelayed({
@@ -1177,7 +1190,9 @@ class MainActivity : ComponentActivity() {
                     Handler(Looper.getMainLooper()).postDelayed({
                         service.tuneToFreq(homeFreq)
                         activeFrequencyStr = homeFreq
-                        _uiState.update { it.copy(activeFrequency = homeFreq) }
+                        _uiState.update {
+                            it.copy(activeFrequency = homeFreq, activeChannelName = homeChannelName)
+                        }
                     }, 1500)
                 }
             }, 2000)

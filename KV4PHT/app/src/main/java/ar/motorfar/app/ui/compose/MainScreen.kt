@@ -330,13 +330,15 @@ private fun RouteActiveLayout(
                 enabled        = !state.isListenOnly,
                 onPttDown      = { onAction(MainUiAction.PttPressed) },
                 onPttUp        = { onAction(MainUiAction.PttReleased) },
-                diameter       = ptt
+                diameter       = ptt,
+                isEmergency    = state.isEmergencyActive
             )
         }
 
         // Solo EMERGENCIA visible — modo ruta prioriza seguridad
         EmergencyConfirmButton(
             onConfirmed = { onAction(MainUiAction.EmergencyAlert) },
+            isBlinking  = state.isEmergencyActive,
             modifier    = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
@@ -416,6 +418,7 @@ private fun PortraitLayout(
 
         ModulationVisualizer(
             isActive = state.isTxActive || state.isRxActive,
+            barColor = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else null,
             modifier = Modifier
                 .weight(1f)
                 .padding(vertical = 4.dp)
@@ -424,9 +427,10 @@ private fun PortraitLayout(
         Spacer(Modifier.height(10.dp))
 
         AlertButtonsPanel(
-            onEmergency = { onAction(MainUiAction.EmergencyAlert) },
-            onStop      = { onAction(MainUiAction.StopAlert) },
-            onRegroup   = { onAction(MainUiAction.RegroupAlert) }
+            onEmergency       = { onAction(MainUiAction.EmergencyAlert) },
+            onStop            = { onAction(MainUiAction.StopAlert) },
+            onRegroup         = { onAction(MainUiAction.RegroupAlert) },
+            isEmergencyActive = state.isEmergencyActive
         )
 
         Box(
@@ -439,7 +443,8 @@ private fun PortraitLayout(
                 isTransmitting = state.isTxActive,
                 enabled        = !state.isListenOnly,
                 onPttDown      = { onAction(MainUiAction.PttPressed) },
-                onPttUp        = { onAction(MainUiAction.PttReleased) }
+                onPttUp        = { onAction(MainUiAction.PttReleased) },
+                isEmergency    = state.isEmergencyActive
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -498,6 +503,7 @@ private fun LandscapeLayout(
                 Spacer(Modifier.height(6.dp))
                 ModulationVisualizer(
                     isActive = state.isTxActive || state.isRxActive,
+                    barColor = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else null,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
@@ -523,7 +529,8 @@ private fun LandscapeLayout(
                         enabled        = !state.isListenOnly,
                         onPttDown      = { onAction(MainUiAction.PttPressed) },
                         onPttUp        = { onAction(MainUiAction.PttReleased) },
-                        diameter       = ptt
+                        diameter       = ptt,
+                        isEmergency    = state.isEmergencyActive
                     )
                 }
             }
@@ -536,9 +543,10 @@ private fun LandscapeLayout(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AlertButtonsPanel(
-                    onEmergency = { onAction(MainUiAction.EmergencyAlert) },
-                    onStop      = { onAction(MainUiAction.StopAlert) },
-                    onRegroup   = { onAction(MainUiAction.RegroupAlert) }
+                    onEmergency       = { onAction(MainUiAction.EmergencyAlert) },
+                    onStop            = { onAction(MainUiAction.StopAlert) },
+                    onRegroup         = { onAction(MainUiAction.RegroupAlert) },
+                    isEmergencyActive = state.isEmergencyActive
                 )
             }
         }

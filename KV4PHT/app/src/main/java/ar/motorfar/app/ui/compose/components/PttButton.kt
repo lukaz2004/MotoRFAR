@@ -40,10 +40,18 @@ fun PttButton(
     onPttDown: () -> Unit,
     onPttUp: () -> Unit,
     diameter: Dp = 180.dp,
+    // 2026-07-06: durante una transmisión de Emergencia el botón y sus
+    // anillos pasan a rojo -- antes no había ninguna señal en el PTT de que
+    // se estaba transmitiendo por el canal de emergencia.
+    isEmergency: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors      = LocalMotoRFARColors.current
-    val accentColor = if (enabled) colors.accent else colors.textDisabled
+    val accentColor = when {
+        isEmergency -> ar.motorfar.app.ui.compose.theme.EmergencyBorder
+        enabled     -> colors.accent
+        else        -> colors.textDisabled
+    }
     val haptics     = LocalHapticFeedback.current
 
     // Anillos radiales — solo activos durante TX

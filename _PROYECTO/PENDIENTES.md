@@ -1,293 +1,33 @@
 # PENDIENTES — MotoRFAR MTTT
 
 > Lista viva de cosas a no olvidar durante el rewrite. Actualizar al cerrar/abrir items.
-> Última edición: 2026-07-06 (Man-Down y alertas movidas al Service — bug de
-> segundo plano corregido, ver sección de arriba).
+> Última edición: 2026-07-07. Detalle completo de lo cerrado el 2026-07-06/07
+> (Man-Down en background, restricción canal Emergencia, tonos CTCSS, auditoría
+> de seguridad, SSID único por equipo, retoques de UI, animaciones de
+> emergencia) vive en `NEXT_SESSION.md` — acá solo queda lo que sigue abierto.
 
-## 🚨 Man-Down y alertas dejaban de funcionar en segundo plano — CORREGIDO (2026-07-06)
-Pregunta del usuario: "si la app está en segundo plano y alguien manda una
-alerta, ¿hay algún aviso?" Investigando esto encontré un bug más grave: **el
-acelerómetro de Man-Down se apagaba solo** cuando la app dejaba de estar en
-pantalla.
-
-**Causa raíz:** `FallDetectionManager` (el acelerómetro) y el callback de
-alertas recibidas vivían atados al ciclo de vida de `MainActivity`
-(`onStart()`/`onStop()`), no al `RadioAudioService` (el foreground service que
-sigue corriendo con la app en segundo plano). `onStop()` literalmente hacía
-`fallDetectionManager?.stop()` y desvinculaba el callback (`unbindService`) —
-exactamente el escenario real de uso (teléfono en el bolsillo/soporte, pantalla
-apagada) desactivaba la función que más importa ahí.
-
-**Corregido, movido todo a `RadioAudioService.java`:**
-- ✅ `FallDetectionManager` vive y corre en el Service (`setManDownEnabled()`),
-  ya no se detiene al salir de la app.
-- ✅ Cuenta regresiva + disparo de la alerta real (`transmitEmergencyAlert()`)
-  corren en el Service, independiente de si `MainActivity` está abierta.
-- ✅ Notificación de alta prioridad (canal `IMPORTANCE_HIGH`, sonido+vibración
-  por default) durante la cuenta regresiva, con botón "ESTOY BIEN · CANCELAR"
-  que funciona desde la bandeja de notificaciones sin abrir la app.
-- ✅ **Alertas de OTROS integrantes (EMERGENCIA/DETENCIÓN/REAGRUPAMIENTO)
-  ahora generan notificación independiente** — antes solo llegaban vía un
-  callback que se volvía no-op si la app no estaba bindeada (silencio total
-  en segundo plano).
-- ✅ `MainActivity` sigue mostrando el overlay visual de cuenta regresiva
-  cuando está abierta (vía nuevo callback `manDownCountdownTick`), pero ya no
-  es la autoridad — es solo un espejo de UI.
-- Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
-- ✅ **Verificado en emulador (2026-07-06, Pixel_10_Pro_XL):** caída simulada
-  con `adb emu sensor set acceleration` (impacto + quietud real, no el valor
-  de gravedad ~9.8 que usé al principio y que el algoritmo NO cuenta como
-  "quieto") con la app en segundo plano. Confirmado por `dumpsys sensorservice`
-  que el listener sigue registrado tras backgroundear. Notificación de alta
-  prioridad aparece con el texto y countdown correctos. Sin cancelar, la
-  alerta se dispara sola: logs confirman envío de paquete AX25 + "Beaconing
-  position via APRS" + segundo paquete, dos corridas independientes, sin
-  crash (proceso vivo en ambas). No pude tapear el botón "ESTOY BIEN" con
-  precisión vía `adb` (el peek de la notificación colapsa rápido) — es
-  `NotificationCompat.addAction()` estándar, no código custom, pero falta
-  confirmarlo con el dedo en un dispositivo real.
-- ⬜ **Pendiente real:** probar en dispositivo físico Android (no emulador) —
-  el botón "ESTOY BIEN · CANCELAR" tocado a mano, y una alerta de otro
-  integrante llegando con la app cerrada (esto último no se pudo simular en
-  el emulador por falta de un segundo radio/peer).
-
-### Ronda 2 (mismo día): pantalla propia, potencial, y atajo de volumen
-- ✅ **Pantalla propia (full-screen intent).** La notificación de Man-Down
-  ahora abre `MainActivity` encima de la pantalla bloqueada (`setFullScreenIntent`
-  + `setShowWhenLocked`/`setTurnScreenOn`, mismo mecanismo que llamadas/alarmas).
-  Antes solo dependía de que el usuario viera/tocara la notificación.
-  ⚠️ Sigue dependiendo de que las notificaciones estén habilitadas para la app
-  a nivel sistema — si el usuario las desactiva por completo, esto también
-  queda mudo (limitación real de Android, no hay forma de saltarla del todo
-  sin permiso `SYSTEM_ALERT_WINDOW`/overlay, que es una feature aparte).
-- ✅ **Corregido bug encontrado en la propia verificación:** si `MainActivity`
-  ya estaba viva cuando Man-Down disparaba, Android reentrega el intent por
-  `onNewIntent()` en vez de recrear la Activity — el cartel de "Canal de
-  Emergencia" (que se muestra siempre al abrir la app) tapaba la cuenta
-  regresiva. Corregido moviendo el estado a un `StateFlow` de la Activity y
-  manejando `onNewIntent()` explícitamente.
-- ✅ **Atajo de volumen físico**: apretar VOLUMEN (–) 3 veces seguidas cancela
-  Man-Down — pensado para el caso real de pantalla rota/no responde al tacto
-  tras una caída, pero las teclas físicas siguen andando.
-- ✅ **Overlay de cuenta regresiva agrandado**: círculo 220dp, número 96sp,
-  botón "ESTOY BIEN · CANCELAR" a todo el ancho — pensado para usar con
-  guantes o sin precisión justo después de una caída.
-- ✅ **Copy en modo potencial**: "Detectamos una posible caída" (notificación),
-  "¿CAÍDA O ACCIDENTE?" (overlay), "asume que puede ser una caída o accidente"
-  (Ajustes) — ya no afirma como hecho lo que es una detección automática.
-- ✅ **Verificado en emulador, flujo completo**: pantalla apagada → impacto
-  simulado → pantalla se prende sola, abre la app directo en la cuenta
-  regresiva (sin el cartel de emergencia tapándola) → volumen abajo x3 →
-  cancela limpio, sin transmitir nada (confirmado por logs, sin AX25 posterior).
-  Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
-- ⬜ **Relacionado, no resuelto:** `onTaskRemoved()` sigue haciendo
-  `stopSelf()` — si el usuario desliza la app fuera de "apps recientes"
-  (gesto distinto a solo minimizarla), el Service entero se mata y Man-Down
-  se apaga igual. No se tocó en esta pasada; es una decisión de producto
-  aparte (¿Man-Down debería sobrevivir incluso a eso, como apps tipo Life360?).
-
-## ⚖️ Canal Emergencia — uso restringido a emergencias reales (2026-07-06)
-Pregunta real de un radioaficionado: ¿el balizado/alertas de la app usan el
-canal Emergencia (140.970) o los canales Principal/Alternativo? Respuesta:
-Man-Down y la alerta manual de emergencia SIEMPRE usan 140.970 (correcto, es
-una emergencia real). Pero STOP/Reagrupamiento, el chat libre y el balizado
-de rutina podían salir por 140.970 si el usuario dejaba el radio sintonizado
-ahí — nada lo impedía. Corregido:
-- ✅ Chat libre y STOP/Reagrupamiento bloqueados si el canal activo es
-  Emergencia (`MainActivity.kt`, `notifyEmergencyChannelBlocked()`).
-- ✅ Balizado APRS de rutina (el automático cada 5 min) se salta si el canal
-  resuelto es Emergencia (`RadioAudioService.java`, scheduler).
-- ✅ Nuevo método `TxWhitelist.isEmergencyFreq()` centraliza el chequeo.
-- ✅ Cartel de recordatorio al abrir la app (no al volver de segundo plano):
-  explica que 140.970 es uso exclusivo M.T.T.T./ENACOM. `AlertDialog` con
-  `remember` (no Saveable) — se resetea solo si la Activity se crea de cero.
-- ✅ **Diálogo de confirmación conectado (2026-07-06)**: `getConfirmationTitle()`/
-  `getConfirmationText()` ahora se usan de verdad, pero solo para STOP/REGROUP
-  (un tap simple sin protección podía mandar una falsa alarma al grupo).
-  EMERGENCY queda sin tocar — ya tiene su propia confirmación deliberada
-  (`EmergencyConfirmButton`, hold de 2 segundos), un diálogo ahí sería
-  fricción redundante en una emergencia real, no una mejora de seguridad.
-- ✅ **Tonos CTCSS por canal (2026-07-06)**: `ArgentinaChannels.java` ya
-  asignaba `ChannelMemory.txTone`/`rxTone` (existentes, usados hoy para
-  repetidoras — no hizo falta migración de Room). Grupo=100.0Hz,
-  Alternativo=123.0Hz. Emergencia queda SIN tono a propósito (debe ser
-  audible para cualquiera). Marcador de seed subido a `v7_channels_ctcss`
-  para que instalaciones existentes se re-seedeen solas.
-- ✅ **Pantalla de selección de tonos (2026-07-06)**: nueva
-  `TonesSettingScreen.kt`, accesible desde Ajustes → "CONFIGURAR TONOS →".
-  Muestra los 38 tonos CTCSS estándar (ya existían en `ToneHelper`) por
-  canal Grupo/Alternativo, con ícono ⓘ que explica en criollo qué hace el
-  tono y — remarcado a pedido — que TODO el grupo tiene que estar en el
-  MISMO canal Y el MISMO tono para escucharse, y que esto no evita
-  solaparse con otro grupo si transmiten al mismo tiempo. Persiste el
-  cambio via `ChannelMemoryDao.update()` (ya existía, sin migración).
-  Verificado por dump de accesibilidad (no por screenshot, tuvo timing
-  inestable en el emulador): `channels.size=3`, Grupo/Alternativo muestran
-  el tono correcto, botones "CAMBIAR →" presentes.
-- ✅ **Bug de paso corregido**: la pantalla de Ajustes (`AliasSettingScreen`)
-  no tenía scroll — con la sección nueva de tonos, el botón "GUARDAR" y los
-  links de Privacidad/Acerca de quedaban fuera de pantalla e inalcanzables.
-  Agregado `.verticalScroll()` (afecta a todo Ajustes, no solo lo nuevo).
-- ⬜ **Sin verificar en dispositivo físico**: la pantalla de tonos y el
-  scroll de Ajustes, igual que el resto de los cambios de UI de hoy.
-Build verificado: `gradlew assembleDebug` → BUILD SUCCESSFUL.
-
-## 🔒 Auditoría de seguridad — correcciones aplicadas (2026-07-06)
-Reportes completos: `AUDITORIA_SEGURIDAD_APP.md`, `AUDITORIA_SEGURIDAD_FIRMWARE.md`,
-`AUDITORIA_SEGURIDAD_WEB.md` (cada uno con su sección "Estado de correcciones").
-Resuelto: whitelist TX también en `sa818.group()` (defensa en profundidad),
-clave WPA2 única por equipo (ya no hardcodeada/compartida), deadman de PTT
-desacoplado del tráfico UDP genérico, validación de origen UDP en la app,
-fix de parsing APRS, copy de privacidad de Man-Down, headers de seguridad en
-la web, `.netlify/` fuera de git. Build verificado en firmware (`pio run`) y
-app (`assembleDebug`).
-- ✅ **Descarga de mapas offline unificada (2026-07-06)**: había dos entradas
-  para lo mismo — un ícono real en el Mapa (`CacheManager`, ya funcionaba) y
-  un botón placeholder en Ajustes que solo decía "Próximamente" sin hacer
-  nada (encontrado por el usuario probando el APK real). A pedido, se sacó
-  el ícono del Mapa y el botón de Ajustes ahora dispara la descarga real
-  (misma lógica, solo cambia desde dónde se llama — navega al Mapa y
-  arranca la descarga del área visible ahí). Build verificado.
-- ✅ **SSID renombrado a "Baqueano-HT" (2026-07-06)**: quedaba pendiente desde
-  el rebrand del 02/07 ("MotoRFAR-HT → Baqueano-HT"), nunca se había hecho.
-  Cambiado en firmware (`wifi_credentials.h`/`.example`) y app
-  (`WifiTransport.AP_SSID`, única fuente — `WifiConnectBanner`/notificación
-  ya lo referencian desde ahí, no hubo que tocar más lugares). Solo texto,
-  no afecta la lógica de conexión (matchea por IP/subred, no por SSID).
-  Build verificado en ambos lados (`pio run` y `gradlew assembleDebug`).
-- ✅ **UI para cambiar la clave WiFi del equipo (2026-07-06)**: nueva
-  `WifiSettingScreen.kt` (Ajustes → "CONFIGURAR WIFI →"). Agrega
-  `COMMAND_HOST_SET_WIFI_PASSWORD` a `Protocol.java` (mismo valor `0x0E`
-  que el firmware) + `RadioAudioService.setWifiPassword()`. Valida 8-63
-  caracteres, diálogo de confirmación explícito (avisa que el teléfono se
-  desconecta del WiFi al toque y hay que reconectarse a mano con la clave
-  nueva — y que anotarla es responsabilidad del usuario, no hay forma de
-  recuperarla si se olvida sin reflashear). Build verificado
-  (`gradlew assembleDebug`), sin probar en emulador/dispositivo real
-  todavía (necesita el equipo físico conectado para tener sentido).
-- ✅ **SSID único por equipo + configurable desde la app (2026-07-06)**:
-  motivado por una pregunta de seguridad real del usuario — ¿qué pasa si dos
-  equipos están a 20m uno del otro con el mismo SSID fijo y el teléfono se
-  conecta al equipo equivocado? Firmware: `loadOrCreateWifiSsid()` genera un
-  SSID único por defecto en el primer boot (`Baqueano-XXXX`, últimos 4 hex
-  del efuse MAC), persistido en NVS (namespace `wifinet`); nuevo comando
-  `COMMAND_HOST_SET_WIFI_SSID` (`0x0F`) para cambiarlo desde la app (1-32
-  bytes ASCII, límite 802.11). App: mismo comando espejado en
-  `Protocol.java` (`Sender.setWifiSsid`) +
-  `RadioAudioService.setWifiSsid()` + nueva sección en
-  `WifiSettingScreen.kt` (campo + confirmación, mismo patrón que la clave).
-  De paso se corrigió `WifiConnectBanner.kt` y el texto de notificación en
-  `RadioAudioService` (`radioMissing()`), que todavía mostraban el SSID fijo
-  viejo `WifiTransport.AP_SSID` como si fuera un nombre exacto — ahora
-  indican el prefijo común ("Baqueano-") ya que cada equipo tiene su propio
-  nombre. Build verificado en firmware (`pio run`) y app
-  (`gradlew assembleDebug`), sin probar en dispositivo real todavía.
-- ✅ **Ajustes de pantalla de Tonos + texto de mapas offline (2026-07-06)**:
-  a pedido, se sacó la tarjeta "EMERGENCIA — sin tono (fijo)" de
-  `TonesSettingScreen.kt` (no aportaba nada, Emergencia no es configurable).
-  El picker de tonos ahora muestra cada frecuencia en su propio recuadro con
-  texto centrado (antes era una lista de filas con texto a la izquierda).
-  También se sacó el "Próximamente" que había quedado pegado al texto de
-  Mapas Offline en `AliasSettingScreen.kt` (el botón ya dispara la descarga
-  real desde el fix anterior, pero el texto seguía sin actualizar).
-  Investigado a fondo el reporte de "el tono no cambia, queda clavado en
-  100Hz/123Hz": se instaló el build actual en el emulador y se verificó
-  contra la base SQLite real (con WAL incluido) que `dao.update()` sí
-  persiste el tono elegido y que la pantalla lo refleja correctamente al
-  reabrir el selector (el tono marcado como actual ya no era el default de
-  fábrica). El emulador antes de reinstalar el build de hoy todavía mostraba
-  el copy viejo "Identificás tu moto" (ya corregido en `cb07c4f`), lo que
-  indica que el dispositivo real del usuario estaba probando un APK más
-  viejo que varios de estos fixes — no se pudo reproducir el bug de
-  persistencia con el código actual. Build verificado
-  (`gradlew assembleDebug` y `assembleRelease`).
-- ✅ **Reordenamiento de controles del Mapa + saca "Borrar ruta" de la barra
-  superior (2026-07-06)**: a pedido, tras feedback sobre la pantalla de
-  Mapa. Se sacaron los botones +/- de zoom de `MapScreen.kt` (el pellizco
-  con dos dedos ya hace zoom — `setMultiTouchControls(true)` ya estaba
-  activo — así que eran redundantes y "molestaban en pantalla"). Los
-  controles de orientación a la ruta ("RUMBO") y centrar en mi ubicación
-  ("MI GPS") se movieron de la columna inferior derecha (donde competían
-  con el PTT y arriesgaban un toque accidental manejando) a la izquierda
-  del HUD de coordenadas, arriba — cada uno ahora con ícono + etiqueta de
-  texto corta (antes los dos usaban el mismo ícono sin texto, no se
-  distinguían). El PTT queda solo en su esquina. Se sacó también el botón
-  de "Borrar ruta guardada" (ícono de tacho) de la barra superior de la
-  pantalla principal (`MainScreen.kt`) — estaba descontextualizado ahí — y
-  se movió a Ajustes, como sección "RUTA GUARDADA" al lado de "MAPAS
-  OFFLINE" (`AliasSettingScreen.kt`), con el mismo diálogo de confirmación.
-  Nota: no existe pantalla de historial de rutas — `RoutePointDao` solo
-  guarda la sesión más reciente por alias (`getLatestSessionId`) y
-  "Borrar ruta guardada" borra todo lo guardado, no por sesión; navegar
-  recorridos pasados sería una feature nueva, no estaba construida. Build
-  verificado y layout confirmado visualmente en el emulador
-  (`gradlew assembleDebug`).
-- ✅ **Retoques estéticos pantalla principal (2026-07-06)**: a pedido.
-  - Canal "GRUPO" renombrado a "PRINCIPAL" (hace juego con "ALTERNATIVO").
-    Cambiado en `ArgentinaChannels.java` (seed real), `ChannelRow.kt`
-    (fallback), `ChannelSelectOnboarding.kt` y `MainUiState.kt` (defaults).
-    Se bumpeó `ArgentinaChannels.PRELOADED_VALUE` a `v8_channels_principal`
-    para que los equipos ya instalados (incluido este mismo, probado toda
-    la sesión) reciban el rename solo con abrir la app de nuevo — mismo
-    mecanismo ya usado para el rollout de tonos CTCSS por defecto (v7).
-    Ojo: esto borra y reinserta `channel_memories`, así que cualquier tono
-    CTCSS ya elegido a mano se resetea a default una vez más.
-  - Emergencia ahora tiene indicador real de "estás transmitiendo acá":
-    antes el botón de canal quedaba siempre con borde rojo estuviera o no
-    activo, y el cartel de frecuencia no cambiaba en absoluto — no había
-    forma de saber si en verdad estabas en emergencia. Ahora, cuando es el
-    canal activo, el botón se rellena de rojo sólido y el cartel de
-    frecuencia (número + nombre + línea de modo) también se pone rojo,
-    en las 3 pantallas que muestran frecuencia (Portrait, Landscape, Ruta
-    Activa). Confirmado con el mismo mecanismo de `isActive` que ya
-    funcionaba para Principal/Alternativo.
-  - Tono CTCSS visible en pantalla principal: se agrega al lado de
-    "MHz · FM · SIMPLEX" (ej. "· 100 Hz"), tomado del canal activo vía
-    nueva extensión `MainUiState.activeToneLabel`.
-  - Botón PTT: "PTT"/"TX" -> "PUSH TO TALK"/"TRANSMITIENDO", fuente más
-    chica (13sp) para que entre el texto largo en el círculo.
-  - Ícono de Baqueano agregado en la barra superior de la pantalla
-    principal (no en el modo Ruta Activa, que se mantiene minimalista a
-    propósito). Al conectar `painterResource` con `R.mipmap.ic_launcher`
-    la app crasheaba (`IllegalArgumentException: Only VectorDrawables and
-    rasterized asset types are supported`) porque ese recurso es un XML de
-    ícono adaptativo, no soportado por `painterResource`. Se usa en cambio
-    `R.mipmap.ic_launcher_moto` directo (el PNG real detrás del ícono
-    adaptativo) — el nombre de archivo quedó desactualizado del rebrand
-    (dice "moto" pero la imagen ya es el escudo "BAQUEANO"), pendiente
-    renombrarlo en un pase de limpieza, no bloquea nada.
-  Build verificado (`gradlew assembleDebug`), instalado y confirmado
-  visualmente en el emulador (PRINCIPAL, ícono, PUSH TO TALK todos OK).
-- ✅ **Fix real: reseed de canales no era atómico (2026-07-06)**: el usuario
-  probó el build de PRINCIPAL/tono/Emergencia en su celular real y reportó
-  dos cosas — el tono seguía sin verse, y el ícono de Baqueano quedaba
-  minúsculo. Lo del ícono era el recorte circular de 26dp sobre un logo con
-  forma de escudo (no redondo) — se subió a 40dp sin recorte. Lo del tono
-  era un bug real y más profundo: `preloadArgentinaChannelsIfNeeded()` en
-  `AppDatabase.java` hacía cada `delete()` y el `insertAll()` final como
-  operaciones sueltas, sin transacción. Como el rename GRUPO->PRINCIPAL
-  dispara ese mismo reseed (borra y reinserta `channel_memories`), la
-  LiveData de `getAll()` se invalida después de CADA operación — cualquier
-  observador (la pantalla principal) podía agarrar la tabla vacía a mitad
-  del reseed. Eso dejaba `activeChannelName` pegado en el fallback
-  "SIMPLEX" y el tono sin encontrar canal para mostrar. Se envolvió todo el
-  delete+insert en `db.runInTransaction(...)` para que la LiveData solo se
-  dispare una vez, ya con los datos completos. Confirmado en el emulador:
-  tras reinstalar y reabrir, "PRINCIPAL" y el tono (`· 79.7 Hz`, valor que
-  ya tenía guardado de pruebas anteriores) se ven bien, y Emergencia activa
-  ahora rellena de rojo el botón Y el cartel de frecuencia. Build
-  verificado (`gradlew assembleDebug`).
-- ✅ **Waypoint movido al Mapa + texto PTT con borde (2026-07-06)**: a
-  pedido, el usuario marcó dos veces que el botón de waypoint estaba fuera
-  de lugar en la pantalla principal ("es algo del mapa"). Se sacó de
-  `MainScreen.kt` (barra superior) y se agregó a `MapScreen.kt`, al lado
-  de RUMBO/MI GPS, con ícono propio (`ic_send`) para no repetir el mismo
-  ícono tres veces. Sigue disparando la misma `MainUiAction.SendWaypoint`.
-  Además, el texto "PUSH TO TALK"/"TRANSMITIENDO" del botón PTT principal
-  se perdía contra el degradé de fondo — ahora lleva un borde blanco
-  (Stroke) detrás del relleno, en negrita, para separarlo visualmente.
-  Build verificado e instalado en el emulador (waypoint en el Mapa, texto
-  PTT con borde, ambos confirmados por captura).
+## 🔓 Pendientes abiertos de la sesión 2026-07-06/07
+- ⬜ Probar en dispositivo físico: botón "ESTOY BIEN · CANCELAR" de Man-Down
+  tocado a mano, y alerta de otro integrante llegando con la app cerrada.
+- ⬜ `onTaskRemoved()` mata el Service si el usuario desliza la app fuera de
+  "recientes" — Man-Down se apaga igual. Decisión de producto pendiente.
+- ⬜ **Hallazgo real, no resuelto:** `MainViewModel.channelMemories` es un
+  snapshot cargado una sola vez (`loadData()`), no una LiveData reactiva de
+  Room — queda desincronizado del canal real que usa `ChannelRow` (que sí es
+  reactivo). `tuneToChannel()` (tocar un canal a mano) a veces muestra
+  "SIMPLEX" en vez del nombre real. No afecta el flujo automático de
+  Emergencia (usa un string literal), pero conviene unificarlo a la fuente
+  reactiva.
+- ⬜ Animaciones de emergencia (PTT rojo, ecualizador rojo, botón parpadeando)
+  verificadas por el mecanismo (mismo estado derivado, probado tocando el
+  canal Emergencia a mano) pero no por el flujo automático real de 2s hold
+  con radio conectada — requiere equipo físico.
+- ⬜ Renombrar `ic_launcher_moto.png` — dice "moto" pero ya es el escudo
+  Baqueano (rebrand viejo, solo el nombre del archivo quedó desactualizado).
+- ⬜ No existe pantalla de historial de rutas — solo se guarda/muestra la
+  última sesión por alias; "Borrar ruta guardada" borra todo, no por viaje.
+- ⬜ Sin verificar en dispositivo físico: pantalla de tonos, scroll de
+  Ajustes, UI de WiFi/SSID, retoques estéticos de pantalla principal, mapa.
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no

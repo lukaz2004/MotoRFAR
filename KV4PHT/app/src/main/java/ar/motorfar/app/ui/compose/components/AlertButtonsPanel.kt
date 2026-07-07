@@ -26,6 +26,7 @@ fun AlertButtonsPanel(
     onEmergency: () -> Unit,
     onStop: () -> Unit,
     onRegroup: () -> Unit,
+    isEmergencyActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -38,6 +39,7 @@ fun AlertButtonsPanel(
         // EMERGENCIA — hold 2s para confirmar (no dispara con tap corto)
         EmergencyConfirmButton(
             onConfirmed = onEmergency,
+            isBlinking  = isEmergencyActive,
             modifier    = Modifier.fillMaxWidth()
         )
 

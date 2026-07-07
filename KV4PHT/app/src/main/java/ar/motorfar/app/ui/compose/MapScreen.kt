@@ -66,6 +66,7 @@ fun MapScreen(
     onFocusConsumed: () -> Unit = {},
     isTransmitting: Boolean = false,
     listenOnly: Boolean = false,
+    isEmergency: Boolean = false,
     onPttDown: () -> Unit = {},
     onPttUp: () -> Unit = {},
     // 2026-07-06: el disparador de descarga de tiles se movió a Ajustes (era
@@ -396,7 +397,8 @@ fun MapScreen(
                 isTransmitting = isTransmitting,
                 listenOnly     = listenOnly,
                 onPttDown      = onPttDown,
-                onPttUp        = onPttUp
+                onPttUp        = onPttUp,
+                isEmergency    = isEmergency
             )
         }
 
@@ -490,22 +492,26 @@ private fun MapPttButton(
     isTransmitting: Boolean,
     listenOnly: Boolean,
     onPttDown: () -> Unit,
-    onPttUp: () -> Unit
+    onPttUp: () -> Unit,
+    // 2026-07-06: mismo tratamiento que el PTT principal -- texto largo con
+    // borde blanco, y rojo durante una transmisión de Emergencia.
+    isEmergency: Boolean = false
 ) {
     val haptics = LocalHapticFeedback.current
+    val accent = if (isEmergency) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.accent
     val ringColor = when {
-        isTransmitting -> colors.accent
+        isTransmitting -> accent
         listenOnly     -> colors.textDisabled
-        else           -> colors.accent
+        else           -> accent
     }
     val labelColor = when {
-        isTransmitting -> colors.background
+        isTransmitting -> androidx.compose.ui.graphics.Color.White
         listenOnly     -> colors.textDisabled
-        else           -> colors.accent
+        else           -> accent
     }
     Surface(
         shape  = CircleShape,
-        color  = if (isTransmitting) colors.accent else colors.surface,
+        color  = if (isTransmitting) accent else colors.surface,
         border = BorderStroke(if (isTransmitting) 2.dp else 1.5.dp, ringColor),
         modifier = Modifier
             .size(110.dp)
@@ -521,13 +527,31 @@ private fun MapPttButton(
                 )
             }
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        val label = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK"
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        ) {
             androidx.compose.material3.Text(
-                text       = if (isTransmitting) "TX" else "PTT",
+                text = label,
+                style = androidx.compose.ui.text.TextStyle(
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize   = 9.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+                    color      = androidx.compose.ui.graphics.Color.White,
+                    drawStyle  = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = 3f, join = androidx.compose.ui.graphics.StrokeJoin.Round
+                    )
+                )
+            )
+            androidx.compose.material3.Text(
+                text       = label,
                 color      = labelColor,
                 fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                fontSize   = 22.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                fontSize   = 9.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                textAlign  = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
     }

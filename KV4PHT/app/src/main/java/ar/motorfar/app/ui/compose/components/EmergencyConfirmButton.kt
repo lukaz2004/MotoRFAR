@@ -1,7 +1,11 @@
 package ar.motorfar.app.ui.compose.components
 
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -18,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -41,6 +46,10 @@ private const val HOLD_STEP_MS    = 50L
 @Composable
 fun EmergencyConfirmButton(
     onConfirmed: () -> Unit,
+    // 2026-07-06: parpadea mientras se está transmitiendo de verdad en el
+    // canal de Emergencia (los ~3.5s del flujo de alerta), para que quede
+    // claro en pantalla que el equipo está en emergencia ahora mismo.
+    isBlinking: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var isHolding by remember { mutableStateOf(false) }
@@ -51,6 +60,17 @@ fun EmergencyConfirmButton(
         targetValue   = if (isHolding) 1f else 0f,
         animationSpec = tween(durationMillis = CONFIRM_HOLD_MS.toInt(), easing = LinearEasing),
         label         = "emergency_btn_arc"
+    )
+
+    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "emergency_blink")
+    val blinkAlpha by infiniteTransition.animateFloat(
+        initialValue  = 1f,
+        targetValue   = if (isBlinking) 0.25f else 1f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation  = tween(400, easing = LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "blink_alpha"
     )
 
     LaunchedEffect(isHolding) {
@@ -76,6 +96,7 @@ fun EmergencyConfirmButton(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
+            .alpha(blinkAlpha)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {

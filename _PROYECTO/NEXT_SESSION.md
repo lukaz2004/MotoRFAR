@@ -1,6 +1,98 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-06/07 — background fix Man-Down, restricción Emergencia, seguridad, SSID único, retoques UI, animaciones de emergencia
+Sesión larga con muchas rondas de feedback en vivo probando el APK. Resumen
+por tema (detalle histórico completo estaba en `PENDIENTES.md`, recortado
+de ahí tras este cierre):
+
+- **Man-Down dejaba de funcionar en segundo plano — bug real corregido:**
+  `FallDetectionManager` y el callback de alertas vivían atados al ciclo de
+  vida de `MainActivity`, no al `RadioAudioService` (foreground service).
+  Con la app minimizada, `onStop()` apagaba el acelerómetro — exactamente el
+  escenario real de uso (teléfono guardado, pantalla apagada). Movido todo
+  al Service: countdown, disparo de alerta, notificación de alta prioridad
+  con "ESTOY BIEN · CANCELAR", alertas de otros integrantes ahora generan
+  notificación propia (antes se perdían en silencio si la app no estaba
+  bindeada). Sumado: pantalla propia vía full-screen intent (bypassa
+  pantalla bloqueada), atajo de volumen físico (3x VOLUMEN- cancela, pensado
+  para pantalla rota tras una caída), countdown escalado según fuerza G del
+  golpe, copy en modo potencial ("posible caída", no "caída detectada").
+  Verificado en emulador con inyección de sensor real (impacto + quietud).
+  ⬜ **Falta:** probar en dispositivo físico — botón "ESTOY BIEN" tocado a
+  mano, alerta de otro integrante con la app cerrada (no simulable en
+  emulador sin un segundo radio/peer). `onTaskRemoved()` sigue matando el
+  Service si el usuario desliza la app fuera de "recientes" — decisión de
+  producto pendiente (¿debería sobrevivir a eso, tipo Life360?).
+
+- **Canal Emergencia restringido a uso real:** chat libre, STOP/Reagrupamiento
+  y el balizado de rutina ahora se bloquean si el canal activo es 140.970
+  (antes nada lo impedía). Tonos CTCSS por defecto para Principal/Alternativo
+  (Emergencia sin tono a propósito). Pantalla de selección de tonos nueva
+  (`TonesSettingScreen.kt`) con explicación en criollo de cómo funciona el
+  tono y sus límites reales.
+
+- **Auditoría de seguridad aplicada:** whitelist TX también en `sa818.group()`
+  (defensa en profundidad), clave WPA2 única por equipo (ya no hardcodeada),
+  deadman de PTT desacoplado del tráfico UDP genérico, validación de origen
+  UDP, fix parsing APRS, copy de privacidad Man-Down, headers de seguridad
+  en la web. **SSID único por equipo** (`Baqueano-XXXX`, derivado del efuse
+  MAC) para que dos equipos cercanos no se confundan de red — motivado por
+  pregunta real de seguridad del usuario (dos motos a 20m con el mismo SSID
+  fijo). Configurable desde la app (Ajustes > WiFi) junto con la clave.
+
+- **Retoques de UI pedidos en vivo probando el APK real** (varias rondas de
+  feedback, cada una encontró algo real):
+  - Descarga de mapas offline unificada (había dos entradas, una placeholder).
+  - Canal "GRUPO" renombrado a "PRINCIPAL" (juega con "ALTERNATIVO").
+  - Mapa: sacados los botones +/- de zoom (redundantes, el pellizco ya
+    hacía zoom); RUMBO/MI GPS movidos junto al HUD de coordenadas arriba
+    (antes competían con el PTT, riesgo de toque accidental manejando);
+    WAYPOINT movido ahí también (estaba fuera de lugar en pantalla principal).
+  - "Borrar ruta guardada" movido de la barra superior a Ajustes.
+  - Emergencia activa ahora se nota de verdad: botón de canal se rellena de
+    rojo sólido, cartel de frecuencia se pone rojo, botón PTT y sus anillos
+    se ponen rojos, ecualizador se pone rojo, botón de confirmación
+    ("⚠ EMERGENCIA") parpadea — todo sincronizado a un solo estado derivado
+    (`MainUiState.isEmergencyActive`). Esto reveló un bug real: el flujo
+    automático de alerta (mantener 2s) solo retunaba el hardware, nunca
+    avisaba a la UI — corregido en `transmitGroupAlert()`.
+  - Botón PTT: "PTT"/"TX" → "PUSH TO TALK"/"TRANSMITIENDO", con borde blanco
+    detrás del texto (se perdía contra el degradé de fondo). Mismo
+    tratamiento en el PTT compacto del Mapa.
+  - Ícono de Baqueano agregado a la barra superior (mipmap real, no el XML
+    de ícono adaptativo — eso crasheaba `painterResource`).
+  - Tono CTCSS visible en pantalla principal junto a "MHz · FM · SIMPLEX".
+  - **Bug real encontrado en producción (probado en celular):** el reseed de
+    canales (`preloadArgentinaChannelsIfNeeded`) hacía cada `delete()` y el
+    `insertAll()` como operaciones sueltas sin transacción — la LiveData de
+    `getAll()` se invalidaba después de cada una, y la pantalla principal
+    podía agarrar la tabla vacía a mitad del reseed (nombre de canal caía a
+    "SIMPLEX", tono sin canal para mostrar). Corregido con
+    `db.runInTransaction(...)`.
+  - Build verificado (`gradlew assembleDebug`/`assembleRelease`) y
+    confirmado visualmente en emulador en cada ronda.
+
+- ⬜ **Hallazgo nuevo, no resuelto:** `MainViewModel.channelMemories` es un
+  snapshot cargado una sola vez (`loadData()`), no una LiveData reactiva de
+  Room — queda desincronizado del canal real que usa `ChannelRow` (que sí
+  es reactivo). Esto hace que `tuneToChannel()` (al tocar un canal a mano)
+  a veces muestre "SIMPLEX" en vez del nombre real. No afecta el flujo
+  automático de Emergencia (usa un string literal, no este lookup), pero
+  conviene unificarlo a la fuente reactiva en una próxima sesión.
+- ⬜ **Animaciones de emergencia sin probar con radio real conectada:** el
+  flujo automático (mantener 2s el botón "⚠ EMERGENCIA") requiere
+  `uiState.isConnected == true`, que el emulador no tiene sin hardware real
+  — se verificó el mecanismo (mismo estado derivado) tocando manualmente el
+  canal Emergencia, que sí disparó todo correctamente, pero falta confirmar
+  el flujo automático de punta a punta en dispositivo físico con equipo.
+- ⬜ Renombrar `ic_launcher_moto.png` → el archivo dice "moto" pero la imagen
+  ya es el escudo Baqueano (rebrand viejo, solo el nombre del archivo quedó
+  desactualizado). Cosmético, no bloquea nada.
+- ⬜ No existe pantalla de historial de rutas — solo se guarda/muestra la
+  última sesión por alias; "Borrar ruta guardada" borra todo, no por viaje.
+  Sería feature nueva si se pide.
+
 ## ⚡ CIERRE 2026-07-05 (tercera parte) — diseño navegación + limpieza de pendientes + keystore + push
 - **Navegación turn-by-turn propia — diseño aprobado, sin código todavía:**
   spec completo en `_PROYECTO/NAV_TURN_BY_TURN_DISENO.md`. Motor elegido:

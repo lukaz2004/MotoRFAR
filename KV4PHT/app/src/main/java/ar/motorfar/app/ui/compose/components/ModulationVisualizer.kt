@@ -42,6 +42,8 @@ private const val BAR_COUNT = 24
 @Composable
 fun ModulationVisualizer(
     isActive: Boolean,
+    // 2026-07-06: pasa a rojo durante una transmisión de Emergencia.
+    barColor: androidx.compose.ui.graphics.Color? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -89,7 +91,7 @@ fun ModulationVisualizer(
                 phase     = phase,
                 phaseSlow = phaseSlow,
                 isActive  = isActive,
-                barColor  = colors.accent,
+                barColor  = barColor ?: colors.accent,
                 baseAlpha = if (isActive) 0.95f else 0.45f
             )
         }
