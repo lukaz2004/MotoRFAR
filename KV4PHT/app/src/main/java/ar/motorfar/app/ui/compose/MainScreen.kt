@@ -120,12 +120,16 @@ private fun TopBar(
         androidx.compose.foundation.Image(
             painter            = androidx.compose.ui.res.painterResource(R.mipmap.ic_launcher_moto),
             contentDescription = "Baqueano",
-            // 2026-07-06: era 26dp recortado en círculo -- el logo es un escudo,
-            // no algo redondo, así que quedaba minúsculo y cortado. Más grande
-            // y sin recorte para que se vea el escudo completo.
+            // 2026-07-07: seguía viéndose diminuto -- el PNG es la capa
+            // "foreground" de un ícono adaptativo, que por convención de
+            // Android trae ~33% de margen transparente en cada lado (zona
+            // segura del recorte de máscara). Con tamaño fijo se veía la
+            // insignia real mucho más chica que la caja. ContentScale.Crop
+            // hace zoom hasta recortar ese margen vacío y llenar la caja.
+            contentScale       = androidx.compose.ui.layout.ContentScale.Crop,
             modifier           = Modifier
                 .padding(end = 8.dp)
-                .size(40.dp)
+                .size(48.dp)
         )
 
         AppStatusBar(
