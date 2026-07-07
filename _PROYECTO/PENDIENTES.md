@@ -7,6 +7,29 @@
 > emergencia) vive en `NEXT_SESSION.md` — acá solo queda lo que sigue abierto.
 
 ## 🔓 Pendientes abiertos de la sesión 2026-07-06/07
+- ✅ **Ícono de Baqueano seguía diminuto (2026-07-07)**: el PNG usado
+  (`ic_launcher_moto.png`) es la capa foreground de un ícono adaptativo —
+  trae ~33% de margen transparente en cada lado por convención de Android
+  (zona segura del recorte de máscara), así que a tamaño fijo el escudo real
+  se veía mucho más chico que la caja. Se agregó `ContentScale.Crop` (zoom
+  que recorta el margen vacío) + subida de 40dp a 48dp. Confirmado
+  visualmente en el emulador.
+- ✅ **PTT "a veces no responde" (2026-07-07)**: causa real encontrada —
+  `RadioAudioService.startPtt()` rechazaba el press en silencio (solo un
+  `Log.w`, sin ningún aviso) si el módulo todavía no había vuelto a modo RX
+  (ej. justo después de un timeout de runaway TX) o `isTxAllowed()` daba
+  false en ese instante — exactamente el patrón intermitente reportado.
+  Cambiado a `boolean` (devuelve si arrancó de verdad) y se agregó Toast
+  "RADIO OCUPADA · esperá un segundo y probá de nuevo" cuando se rechaza,
+  mismo patrón ya usado para modo escucha/canal Emergencia bloqueados. No
+  se pudo reproducir ni verificar en el emulador (requiere el estado real
+  del módulo de radio con equipo conectado) — pendiente confirmar que el
+  aviso aparece en el dispositivo real cuando pasa.
+- ⬜ **Hallazgo nuevo, sin tocar:** la pantalla de onboarding (Términos +
+  Alias, primer inicio de la app) todavía dice "MotoRFAR" y "GRUPO" en vez
+  de "Baqueano"/"PRINCIPAL" — quedó afuera del rebrand y de los renames de
+  esta sesión porque son strings separados de las pantallas de Ajustes que
+  sí se corrigieron. Encontrado navegando el onboarding para probar el ícono.
 - ⬜ Probar en dispositivo físico: botón "ESTOY BIEN · CANCELAR" de Man-Down
   tocado a mano, y alerta de otro integrante llegando con la app cerrada.
 - ⬜ `onTaskRemoved()` mata el Service si el usuario desliza la app fuera de

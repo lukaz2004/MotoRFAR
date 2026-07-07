@@ -876,7 +876,7 @@ class MainActivity : ComponentActivity() {
                 ToneHelper.playPttDown(vol)
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
-                    svc.startPtt()
+                    if (!svc.startPtt()) notifyPttNotAllowed()
                 } else {
                     // Modo simulación: sin radio, solo feedback visual (anillos TX)
                     _uiState.update { it.copy(isTxActive = true) }
@@ -1010,6 +1010,19 @@ class MainActivity : ComponentActivity() {
         android.widget.Toast.makeText(
             this,
             getString(R.string.listen_only_blocked),
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    /**
+     * 2026-07-07: startPtt() rechaza el press en silencio si el módulo todavía
+     * no volvió a RX (timeout de runaway TX, etc.) -- antes no había ningún
+     * aviso, se sentía como que el botón PTT a veces no respondía.
+     */
+    private fun notifyPttNotAllowed() {
+        android.widget.Toast.makeText(
+            this,
+            getString(R.string.ptt_not_allowed),
             android.widget.Toast.LENGTH_SHORT
         ).show()
     }

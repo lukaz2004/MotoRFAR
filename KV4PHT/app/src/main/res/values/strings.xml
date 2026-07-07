@@ -168,4 +168,5 @@
     <string name="emergency_channel_blocked">CANAL EMERGENCIA · uso exclusivo M.T.T.T., cambiá de canal para chatear</string>
     <string name="waypoint_sent">WAYPOINT · posición enviada al grupo</string>
     <string name="waypoint_no_radio">Sin radio · waypoint no transmitido</string>
+    <string name="ptt_not_allowed">RADIO OCUPADA · esperá un segundo y probá de nuevo</string>
 </resources>

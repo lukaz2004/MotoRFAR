@@ -1053,11 +1053,19 @@ public class RadioAudioService extends Service {
         handler.postDelayed(txTimeoutHandler, RUNAWAY_TX_TIMEOUT_SEC * 1000L);
     }
 
-    public void startPtt() {
+    /**
+     * 2026-07-07: devuelve si la TX arrancó de verdad -- antes esto era void y
+     * un press "no permitido" (radio en medio de un timeout de runaway TX,
+     * mode todavía no volvió a RX, etc.) quedaba en un log silencioso, sin
+     * ningún aviso al usuario. Se sentía como "el PTT a veces no responde".
+     * @return true si arrancó la transmisión, false si se rechazó (el
+     *         llamador puede avisar al usuario en ese caso).
+     */
+    public boolean startPtt() {
         if (hostToEsp32 == null) {
             Log.e(TAG, "Attempted to start PTT but hostToEsp32 is null. USB connection likely failed.");
             radioMissing();
-            return;
+            return false;
         }
         if (mode == RadioMode.RX && isTxAllowed()) {
             setMode(RadioMode.TX);
@@ -1067,8 +1075,10 @@ public class RadioAudioService extends Service {
             audioTrackVolume = 0.0f;
             Optional.ofNullable(audioTrack).ifPresent(t -> t.setVolume(0.0f));
             getCallbacks().txStarted();
+            return true;
         } else {
             Log.w(TAG, "Attempted to start PTT when not allowed", new Throwable());
+            return false;
         }
     }
 
