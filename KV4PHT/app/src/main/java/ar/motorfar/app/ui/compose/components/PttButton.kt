@@ -117,14 +117,34 @@ fun PttButton(
                 )
             }
         }
-        Text(
-            text       = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK",
-            color      = if (isTransmitting) Color.White else Color(0xFF0E0904),
-            fontFamily = ShareTechMono,
-            fontSize   = 13.sp,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier   = Modifier.padding(horizontal = 12.dp)
-        )
+        // 2026-07-06: texto plano se perdía contra el degradé del fondo --
+        // se dibuja un borde blanco detrás (Stroke) y el relleno encima para
+        // separarlo del fondo, en vez de un solo Text de un color.
+        val label = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK"
+        val fillColor = if (isTransmitting) Color.White else Color(0xFF0E0904)
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding(horizontal = 12.dp)
+        ) {
+            Text(
+                text = label,
+                style = androidx.compose.ui.text.TextStyle(
+                    fontFamily = ShareTechMono,
+                    fontSize   = 13.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+                    color      = Color.White,
+                    drawStyle  = Stroke(width = 5f, join = androidx.compose.ui.graphics.StrokeJoin.Round)
+                )
+            )
+            Text(
+                text       = label,
+                color      = fillColor,
+                fontFamily = ShareTechMono,
+                fontSize   = 13.sp,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                textAlign  = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
     }
 }

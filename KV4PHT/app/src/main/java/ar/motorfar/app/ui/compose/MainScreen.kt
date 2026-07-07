@@ -156,14 +156,8 @@ private fun TopBar(
             )
         }
 
-        // WAYPOINT: transmite posición GPS al grupo en un toque
-        IconButton(onClick = { onAction(MainUiAction.SendWaypoint) }) {
-            Icon(
-                painter            = painterResource(R.drawable.ic_pin),
-                contentDescription = "Enviar waypoint",
-                tint               = colors.textSecondary
-            )
-        }
+        // 2026-07-06: WAYPOINT se movió a la pantalla de Mapa -- el usuario
+        // lo marcó dos veces como fuera de lugar acá ("es algo del mapa").
 
         // Selector de tema (Verde / Ámbar / Día)
         Box {

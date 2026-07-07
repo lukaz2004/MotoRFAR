@@ -603,7 +603,8 @@ class MainActivity : ComponentActivity() {
                                 onPttDown       = { handleAction(MainUiAction.PttPressed) },
                                 onPttUp         = { handleAction(MainUiAction.PttReleased) },
                                 triggerDownload = triggerDownload,
-                                onDownloadTriggerConsumed = { _triggerMapDownload.value = false }
+                                onDownloadTriggerConsumed = { _triggerMapDownload.value = false },
+                                onSendWaypoint  = { handleAction(MainUiAction.SendWaypoint) }
                             )
                         }
                         composable("settings") {

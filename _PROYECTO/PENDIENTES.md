@@ -277,6 +277,17 @@ app (`assembleDebug`).
   ya tenía guardado de pruebas anteriores) se ven bien, y Emergencia activa
   ahora rellena de rojo el botón Y el cartel de frecuencia. Build
   verificado (`gradlew assembleDebug`).
+- ✅ **Waypoint movido al Mapa + texto PTT con borde (2026-07-06)**: a
+  pedido, el usuario marcó dos veces que el botón de waypoint estaba fuera
+  de lugar en la pantalla principal ("es algo del mapa"). Se sacó de
+  `MainScreen.kt` (barra superior) y se agregó a `MapScreen.kt`, al lado
+  de RUMBO/MI GPS, con ícono propio (`ic_send`) para no repetir el mismo
+  ícono tres veces. Sigue disparando la misma `MainUiAction.SendWaypoint`.
+  Además, el texto "PUSH TO TALK"/"TRANSMITIENDO" del botón PTT principal
+  se perdía contra el degradé de fondo — ahora lleva un borde blanco
+  (Stroke) detrás del relleno, en negrita, para separarlo visualmente.
+  Build verificado e instalado en el emulador (waypoint en el Mapa, texto
+  PTT con borde, ambos confirmados por captura).
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no

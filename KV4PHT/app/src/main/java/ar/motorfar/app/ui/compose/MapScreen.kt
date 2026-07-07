@@ -73,6 +73,9 @@ fun MapScreen(
     // "Próximamente" sin hacer nada — quedaba confuso tener dos entradas).
     triggerDownload: Boolean = false,
     onDownloadTriggerConsumed: () -> Unit = {},
+    // 2026-07-06: se movió acá desde la pantalla principal -- el usuario lo
+    // marcó como fuera de lugar ahí ("es algo del mapa").
+    onSendWaypoint: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -326,6 +329,13 @@ fun MapScreen(
                         mapView.controller.setZoom(INITIAL_ZOOM)
                     }
                 }
+            )
+            // Enviar waypoint: transmite tu posición GPS al grupo en un toque
+            MapControlButton(
+                iconRes = R.drawable.ic_send,
+                label   = "WAYPOINT",
+                colors  = colors,
+                onClick = onSendWaypoint
             )
         }
 
