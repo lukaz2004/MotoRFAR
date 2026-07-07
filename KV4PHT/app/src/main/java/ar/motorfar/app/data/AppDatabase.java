@@ -106,19 +106,22 @@ public abstract class AppDatabase extends RoomDatabase {
                     return;
                 }
 
-                // Limpiar canales anteriores (por si había datos viejos)
-                List<ChannelMemory> existing = db.channelMemoryDao().getAll();
-                if (!existing.isEmpty()) {
+                // 2026-07-06: delete+insert en una sola transacción -- si no, cada
+                // delete() y el insertAll() disparan la LiveData de getAll() por
+                // separado, y cualquier observador (pantalla principal) puede
+                // agarrar la tabla momentáneamente vacía a mitad del reseed
+                // (bug real: nombre de canal caía a "SIMPLEX" y el tono
+                // desaparecía justo después de un rename como GRUPO->PRINCIPAL).
+                List<ChannelMemory> channels = ArgentinaChannels.getAll();
+                db.runInTransaction(() -> {
+                    List<ChannelMemory> existing = db.channelMemoryDao().getAll();
                     for (ChannelMemory ch : existing) {
                         db.channelMemoryDao().delete(ch);
                     }
-                }
-
-                // Insertar todos los canales argentinos
-                List<ChannelMemory> channels = ArgentinaChannels.getAll();
-                db.channelMemoryDao().insertAll(
-                    channels.toArray(new ChannelMemory[0])
-                );
+                    db.channelMemoryDao().insertAll(
+                        channels.toArray(new ChannelMemory[0])
+                    );
+                });
 
                 // Marcar como precargado
                 db.saveAppSetting(

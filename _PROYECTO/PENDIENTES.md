@@ -258,6 +258,25 @@ app (`assembleDebug`).
     renombrarlo en un pase de limpieza, no bloquea nada.
   Build verificado (`gradlew assembleDebug`), instalado y confirmado
   visualmente en el emulador (PRINCIPAL, ícono, PUSH TO TALK todos OK).
+- ✅ **Fix real: reseed de canales no era atómico (2026-07-06)**: el usuario
+  probó el build de PRINCIPAL/tono/Emergencia en su celular real y reportó
+  dos cosas — el tono seguía sin verse, y el ícono de Baqueano quedaba
+  minúsculo. Lo del ícono era el recorte circular de 26dp sobre un logo con
+  forma de escudo (no redondo) — se subió a 40dp sin recorte. Lo del tono
+  era un bug real y más profundo: `preloadArgentinaChannelsIfNeeded()` en
+  `AppDatabase.java` hacía cada `delete()` y el `insertAll()` final como
+  operaciones sueltas, sin transacción. Como el rename GRUPO->PRINCIPAL
+  dispara ese mismo reseed (borra y reinserta `channel_memories`), la
+  LiveData de `getAll()` se invalida después de CADA operación — cualquier
+  observador (la pantalla principal) podía agarrar la tabla vacía a mitad
+  del reseed. Eso dejaba `activeChannelName` pegado en el fallback
+  "SIMPLEX" y el tono sin encontrar canal para mostrar. Se envolvió todo el
+  delete+insert en `db.runInTransaction(...)` para que la LiveData solo se
+  dispare una vez, ya con los datos completos. Confirmado en el emulador:
+  tras reinstalar y reabrir, "PRINCIPAL" y el tono (`· 79.7 Hz`, valor que
+  ya tenía guardado de pruebas anteriores) se ven bien, y Emergencia activa
+  ahora rellena de rojo el botón Y el cartel de frecuencia. Build
+  verificado (`gradlew assembleDebug`).
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no
