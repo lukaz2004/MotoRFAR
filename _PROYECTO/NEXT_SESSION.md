@@ -1,6 +1,42 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-09 — mapas offline (diseño pipeline) + testing real Huawei P9 commiteado
+- **Mapas offline por provincia:** diseño del pipeline de generación aprobado
+  (`docs/superpowers/specs/2026-07-08-mapas-offline-por-provincia-design.md`
+  — GitHub Releases, Mapsforge `.map` por provincia vía osmium-tool + Osmosis,
+  sin costo de hosteo). **Sin código todavía** — requiere instalar herramientas
+  (no están en esta máquina) y correr el pipeline como sesión larga/desatendida
+  aparte. Sub-proyecto 2 (ventana in-app con links) espera las URLs reales que
+  produzca ese pipeline.
+- **Working tree de varias sesiones (probado en Huawei P9 real, nunca
+  commiteado) — ahora en 3 commits:**
+  1. Fix crash real: "Descargar mapa de Argentina" tiraba `TileSourcePolicyException`
+     sin capturar (Mapnik bloquea descarga masiva, `FLAG_NO_BULK`) — ahora avisa
+     con Toast. + PTT del Mapa unificado visualmente con el de la pantalla
+     principal (`PttVisual` compartido).
+  2. **minSdk bajado de 26 a 24** para soportar Android 7 (probado en Huawei P9
+     real) — encontró varios crashes reales que el emulador nunca mostró
+     (`NoClassDefFoundError`/`AbstractMethodError` en APIs 26+/30+, guardados
+     detrás de `SDK_INT` checks). De paso: Man-Down usaba
+     `TYPE_ACCELEROMETER` (incluye gravedad, el umbral de quietud nunca se
+     cumplía con el teléfono quieto) → `TYPE_LINEAR_ACCELERATION`; umbral de
+     impacto 25→50 (disparaba con vibración de motor); WakeLock propio para
+     la cuenta regresiva; GPS a veces devolvía (0,0) cacheado sin fix real;
+     `isConnected` se marcaba true antes de terminar el handshake real
+     (PTT se rechazaba en silencio en esa ventana); race entre reseed de
+     canales y carga inicial (`MainViewModel.loadData()`) que podía cachear
+     la tabla vacía para siempre.
+  3. UI adaptada a pantalla chica real (360×640dp): PTT y DETENCIÓN/REAGRUPAR
+     quedaban tapados por la barra de navegación, texto de canales/alertas
+     cortado en horizontal. Cartel "Sin conexión con el equipo" movido de la
+     pantalla principal a Ajustes > WiFi.
+- ⬜ **Nada de esto se probó en moto real** — todo lo de arriba fue verificado
+  en el Huawei P9 físico pero en mano, no andando. Sigue pendiente lo de
+  siempre (Man-Down en uso real, umbrales de calibración).
+- ⬜ Ver si el Huawei P9 fue el único dispositivo de prueba — si hay más
+  equipos viejos dando vueltas, valdría la pena repetir el smoke test ahí.
+
 ## ⚡ CIERRE 2026-07-06/07 — background fix Man-Down, restricción Emergencia, seguridad, SSID único, retoques UI, animaciones de emergencia
 Sesión larga con muchas rondas de feedback en vivo probando el APK. Resumen
 por tema (detalle histórico completo estaba en `PENDIENTES.md`, recortado
