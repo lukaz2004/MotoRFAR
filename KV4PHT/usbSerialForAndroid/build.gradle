@@ -7,7 +7,7 @@ android {
     compileSdkVersion 35
 
     defaultConfig {
-        minSdkVersion 26
+        minSdkVersion 24
         consumerProguardFiles 'proguard-rules.pro'
         
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

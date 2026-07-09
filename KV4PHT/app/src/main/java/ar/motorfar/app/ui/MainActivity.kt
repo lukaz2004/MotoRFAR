@@ -29,15 +29,28 @@ import ar.motorfar.app.data.AppSetting
 import ar.motorfar.app.data.ChannelMemory
 import ar.motorfar.app.radio.RadioAudioService
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.compose.NavHost
@@ -80,6 +93,13 @@ import ar.motorfar.app.ui.OnboardingHelper
 import ar.motorfar.app.ui.onboarding.OnboardingActivity
 import android.view.WindowManager
 import java.util.concurrent.Executors
+
+// 2026-07-09: LocationManager.getLastKnownLocation() puede devolver un fix
+// cacheado en (0.0, 0.0) en vez de null cuando el GPS todavía no tuvo una
+// lectura real -- eso pasaba el chequeo "!= null" y aparecía como
+// "POS: 0.00000, 0.00000" en el chat de alertas. (0,0) es un punto real
+// (Golfo de Guinea) pero implausible para este uso, así que se descarta.
+fun isUsableLocation(lat: Double, lon: Double): Boolean = !(lat == 0.0 && lon == 0.0)
 
 class MainActivity : ComponentActivity() {
 
@@ -167,31 +187,45 @@ class MainActivity : ComponentActivity() {
     }
 
     // Listener de GPS para alimentar SmartBeaconing con velocidad y rumbo reales
-    private val movementListener = android.location.LocationListener { loc ->
-        // speed viene en m/s → km/h
-        currentSpeedKmh = (loc.speed * 3.6).toDouble()
-        if (loc.hasBearing() && loc.speed > 0.5f) {
-            currentHeadingDeg = loc.bearing.toDouble()
-            _uiState.update { it.copy(headingDeg = loc.bearing) }
-        }
+    // 2026-07-07: LocationListener por SAM/lambda depende de que onProviderEnabled/
+    // onProviderDisabled/onStatusChanged sean "default" en la interfaz -- eso recien
+    // existe desde API 30. En Android 7 (minSdk 24) esos metodos son abstractos de
+    // verdad y el framework SI los llama, así que la clase generada por el lambda
+    // (que solo implementa onLocationChanged) explota con AbstractMethodError apenas
+    // el sistema dispara onProviderDisabled. object explícito con los 4 métodos
+    // implementados anda en cualquier API.
+    private val movementListener = object : android.location.LocationListener {
+        override fun onLocationChanged(loc: android.location.Location) {
+            // speed viene en m/s → km/h
+            currentSpeedKmh = (loc.speed * 3.6).toDouble()
+            if (loc.hasBearing() && loc.speed > 0.5f) {
+                currentHeadingDeg = loc.bearing.toDouble()
+                _uiState.update { it.copy(headingDeg = loc.bearing) }
+            }
 
-        // Registro de ruta: guarda punto si te moviste > 20m del último
-        if (uiState.value.isRouteActive) {
-            saveRoutePoint(loc.latitude, loc.longitude)
-        }
+            // Registro de ruta: guarda punto si te moviste > 20m del último
+            if (uiState.value.isRouteActive) {
+                saveRoutePoint(loc.latitude, loc.longitude)
+            }
 
-        // Modo Ruta: si la velocidad baja de 3 km/h, programa la auto-desactivación
-        if (uiState.value.isRouteActive) {
-            if (currentSpeedKmh < 3.0) {
-                if (stationaryStartMs == 0L) {
-                    stationaryStartMs = System.currentTimeMillis()
-                    routeAutoOffHandler.postDelayed(routeAutoOffRunnable, 60_000L)
+            // Modo Ruta: si la velocidad baja de 3 km/h, programa la auto-desactivación
+            if (uiState.value.isRouteActive) {
+                if (currentSpeedKmh < 3.0) {
+                    if (stationaryStartMs == 0L) {
+                        stationaryStartMs = System.currentTimeMillis()
+                        routeAutoOffHandler.postDelayed(routeAutoOffRunnable, 60_000L)
+                    }
+                } else {
+                    stationaryStartMs = 0L
+                    routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
                 }
-            } else {
-                stationaryStartMs = 0L
-                routeAutoOffHandler.removeCallbacks(routeAutoOffRunnable)
             }
         }
+
+        override fun onProviderEnabled(provider: String) {}
+        override fun onProviderDisabled(provider: String) {}
+        @Deprecated("Deprecated in API 29+, pero sigue siendo abstracto en API < 30")
+        override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -219,7 +253,14 @@ class MainActivity : ComponentActivity() {
             radioServiceBound = true
             RadioServiceAccessor.setCallbacks(service, serviceCallbacks)
             service.start() // CRITICAL: Start the service connection controller
-            _uiState.update { it.copy(isConnected = true) }
+            // 2026-07-07: NO seteamos isConnected=true acá -- esto solo confirma que
+            // el Service de Android está bindeado, no que el radio terminó el
+            // handshake (HELLO, validación de firmware, mode->RX). isConnected
+            // gatea si se llama a svc.startPtt() en el handler de PTT; seteado acá
+            // dejaba la UI mostrando "conectado" mientras el radio todavía no
+            // podía transmitir, y cualquier press en esa ventana se rechazaba en
+            // silencio (o con el toast RADIO OCUPADA). radioConnected() ya lo marca
+            // true en el momento correcto, cuando el handshake realmente terminó.
             // 2026-07-06: Man-Down vive en el Service (sigue en segundo plano) --
             // se activa acá según el setting guardado, no atado a onStart().
             serviceScope.launch(Dispatchers.IO) {
@@ -496,36 +537,58 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route ?: "main"
                 val isLandscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
+                // 2026-07-07: el overlay de Man-Down vivía adentro de MainScreen
+                // (solo la ruta "main") -- en Mapa/Chat/Ajustes solo sonaba el beep
+                // (que corre en el Service, independiente de la UI) pero no se veía
+                // ningún cartel. Envuelto en un Box afuera del Scaffold para que se
+                // vea sin importar en qué pantalla estés.
+                androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
                 Scaffold(
                     containerColor = colors.background,
                     bottomBar = {
                         // En horizontal la navegación va en un NavigationRail lateral (libera alto)
+                        // ponytail: NavigationBar de Material3 fuerza 80dp de alto fijo pase lo
+                        // que pase adentro -- eso era el espacio vacío debajo de MAPA/CHAT. Row
+                        // simple sin ese piso, altura real de contenido (52dp).
                         if (!isLandscape) {
-                        NavigationBar(containerColor = colors.surface) {
-                            if (currentRoute != "main") {
-                                NavigationBarItem(
-                                    selected = false,
-                                    onClick  = { navController.navigate("main") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT") },
-                                    label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
-                                )
+                        // ponytail: el verde tiene que pintar también debajo, atrás de la
+                        // barra gestual -- background()+navigationBarsPadding() en el mismo
+                        // Row no alcanzaba (el Scaffold no le da crédito del inset). Column
+                        // con el fondo afuera + un Spacer del alto exacto del inset resuelve
+                        // sin ambigüedad: el verde cubre Row + inset, sin cortarse.
+                        Column(modifier = Modifier.fillMaxWidth().background(colors.surface)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                listOf(
+                                    Triple("main", R.drawable.ic_mic, "PTT"),
+                                    Triple("map", R.drawable.ic_pin, "MAPA"),
+                                    Triple("chat", R.drawable.ic_text_chat_mode, "CHAT")
+                                ).forEach { (route, iconRes, label) ->
+                                    if (currentRoute != route) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement  = Arrangement.Center,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                                .clickable { navController.navigate(route) { launchSingleTop = true } }
+                                        ) {
+                                            Icon(painterResource(iconRes), contentDescription = label, tint = colors.textSecondary, modifier = Modifier.size(22.dp))
+                                            androidx.compose.material3.Text(label, color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 11.sp)
+                                        }
+                                    }
+                                }
                             }
-                            if (currentRoute != "map") {
-                                NavigationBarItem(
-                                    selected = false,
-                                    onClick  = { navController.navigate("map") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
-                                    label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
-                                )
-                            }
-                            if (currentRoute != "chat") {
-                                NavigationBarItem(
-                                    selected = false,
-                                    onClick  = { navController.navigate("chat") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT") },
-                                    label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
-                                )
-                            }
+                            Spacer(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                            )
                         }
                         }
                     }
@@ -544,7 +607,7 @@ class MainActivity : ComponentActivity() {
                                 NavigationRailItem(
                                     selected = false,
                                     onClick  = { navController.navigate("main") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT") },
+                                    icon     = { Icon(painterResource(R.drawable.ic_mic), contentDescription = "PTT", modifier = Modifier.size(30.dp)) },
                                     label    = { androidx.compose.material3.Text("PTT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
@@ -552,7 +615,7 @@ class MainActivity : ComponentActivity() {
                                 NavigationRailItem(
                                     selected = false,
                                     onClick  = { navController.navigate("map") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
+                                    icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA", modifier = Modifier.size(30.dp)) },
                                     label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
@@ -560,7 +623,7 @@ class MainActivity : ComponentActivity() {
                                 NavigationRailItem(
                                     selected = false,
                                     onClick  = { navController.navigate("chat") { launchSingleTop = true } },
-                                    icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT") },
+                                    icon     = { Icon(painterResource(R.drawable.ic_text_chat_mode), contentDescription = "CHAT", modifier = Modifier.size(30.dp)) },
                                     label    = { androidx.compose.material3.Text("CHAT", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
                             }
@@ -573,10 +636,11 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable("main") {
                             MainScreen(
-                                state          = state,
-                                onAction       = ::handleAction,
-                                onDismissAlert = { _uiState.update { it.copy(activeAlert = null) } },
-                                onOpenSettings = { navController.navigate("settings") { launchSingleTop = true } }
+                                state              = state,
+                                onAction           = ::handleAction,
+                                onDismissAlert     = { _uiState.update { it.copy(activeAlert = null) } },
+                                onOpenSettings     = { navController.navigate("settings") { launchSingleTop = true } },
+                                onOpenWifiSettings = { navController.navigate("wifi") { launchSingleTop = true } }
                             )
                         }
                         composable("map") {
@@ -705,6 +769,14 @@ class MainActivity : ComponentActivity() {
                     }
                     }
                 }
+
+                state.fallCountdown?.let { seconds ->
+                    ar.motorfar.app.ui.compose.components.FallCountdownOverlay(
+                        secondsLeft = seconds,
+                        onCancel    = { cancelFallCountdown() }
+                    )
+                }
+                }
             }
         }
     }
@@ -805,7 +877,16 @@ class MainActivity : ComponentActivity() {
             .putExtra(AppSetting.SETTING_CALLSIGN, effectiveCallsign)
             .putExtra("activeMemoryId", activeMemoryId)
             .putExtra("activeFrequencyStr", activeFrequencyStr)
-        startForegroundService(intent)
+        // 2026-07-07: Context.startForegroundService() es API 26+ -- no existe
+        // como método en Android 7 (NoSuchMethodError, crasheaba la app al toque
+        // en el Huawei P9). Pre-O, startService() ya alcanza: la promoción a
+        // foreground la hace el propio Service llamando a startForeground()
+        // (ese método sí existe desde mucho antes de API 26).
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
@@ -1100,8 +1181,9 @@ class MainActivity : ComponentActivity() {
         if (!hasPerm) return null
         return try {
             val lm = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
-            lm.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+            val loc = lm.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                 ?: lm.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+            loc?.takeIf { isUsableLocation(it.latitude, it.longitude) }
         } catch (e: Exception) {
             null
         }

@@ -54,6 +54,13 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     private void loadData() {
+        // 2026-07-07: AppDatabase.getInstance() dispara el seed de canales en SU
+        // PROPIO executor (fire-and-forget) -- sin esto, esta lectura corría en
+        // otro executor sin ninguna sincronización entre ambos, y si ganaba la
+        // carrera leía la tabla vacía y la cacheaba para siempre en el
+        // MutableLiveData (nunca se vuelve a leer). Llamar acá, sincrónico y
+        // ANTES de leer, garantiza el orden sin importar qué thread sea más rápido.
+        AppDatabase.ensureArgentinaChannelsSeeded(getAppDb());
         channelMemories.postValue(getAppDb().channelMemoryDao().getAll());
         aprsMessages.postValue(getAppDb().aprsMessageDao().getAll());
         loaded.set(true);

@@ -17,11 +17,19 @@ class FallDetectionManager(
 ) : SensorEventListener {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    // 2026-07-07: TYPE_ACCELEROMETER incluye la gravedad (~9.8 m/s² en reposo),
+    // así que QUIET_THRESHOLD (1.5f) nunca se cumplía con el celular quieto --
+    // el Man-Down se cancelaba solo después de cada golpe. LINEAR_ACCELERATION
+    // resta la gravedad (reposo real ~0), que es lo que el umbral de quietud
+    // necesita para funcionar.
+    private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
 
     private var lastImpactTime = 0L
-    private val IMPACT_THRESHOLD = 25f // Aprox 2.5G
-    private val QUIET_THRESHOLD = 1.5f // Movimiento mínimo
+    // ponytail: 25 (2.5G) disparaba con un golpe de mesa y seguro con vibración
+    // de motor de moto en marcha -- subido a ~5G, umbral real de calibración de
+    // campo (probar andando en moto y ajustar según falsos positivos/negativos).
+    private val IMPACT_THRESHOLD = 50f // Aprox 5G
+    private val QUIET_THRESHOLD = 1.5f // Movimiento mínimo (linear accel, sin gravedad)
     private val WAIT_AFTER_IMPACT_MS = 2000L // Esperar 2s para ver si quedó quieto
 
     private var isMonitoringQuiet = false

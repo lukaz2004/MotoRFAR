@@ -159,6 +159,13 @@ public class RadioAudioService extends Service {
     private int manDownSecondsRemaining = -1; // -1 = sin cuenta regresiva activa
     private int manDownTotalSeconds = 0;
     private AudioFocusRequest manDownAudioFocusRequest;
+    // 2026-07-07: el `wakeLock` de arriba solo se sostiene con el radio conectado
+    // o en TX -- si el equipo no está conectado (radio apagado/fuera de rango) y
+    // la pantalla se apaga, el handler.postDelayed() de la cuenta regresiva podía
+    // quedar en pausa (CPU dormida) y el beep sonaba una sola vez y se cortaba.
+    // WakeLock propio, independiente del estado del radio, mientras haya una
+    // cuenta regresiva de Man-Down activa.
+    private PowerManager.WakeLock manDownWakeLock;
 
     public enum RadioModuleType {UNKNOWN, VHF, UHF}
 
@@ -438,6 +445,9 @@ public class RadioAudioService extends Service {
         wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "RadioAudioService::Playback");
         wakeLock.setReferenceCounted(false);
+        manDownWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "RadioAudioService::ManDown");
+        manDownWakeLock.setReferenceCounted(false);
 
         // Create channel for the persistent notification user can interact with
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -644,12 +654,18 @@ public class RadioAudioService extends Service {
     }
 
     private void createNotificationChannels() {
-        // Notification channel for APRS text chat messages
-        NotificationChannel channel = new NotificationChannel(MESSAGE_NOTIFICATION_CHANNEL_ID,
-            "Chat messages", NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setDescription("APRS text chat messages addressed to you");
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        notificationManager.createNotificationChannel(channel);
+        // 2026-07-07: NotificationChannel es API 26+ -- sin este guard, esto
+        // tiraba NoClassDefFoundError al arrancar el Service en Android < 8
+        // (minSdk bajado a 24 para soportar equipos viejos). Pre-O las
+        // notificaciones no usan canal, así que simplemente no hace falta nada.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Notification channel for APRS text chat messages
+            NotificationChannel channel = new NotificationChannel(MESSAGE_NOTIFICATION_CHANNEL_ID,
+                "Chat messages", NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("APRS text chat messages addressed to you");
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     /**
@@ -692,10 +708,13 @@ public class RadioAudioService extends Service {
     }
 
     private int manDownCountdownSecondsFor(float peakAcceleration) {
-        // Cuenta regresiva mas corta cuanto mas fuerte el golpe (mas urgente avisar).
-        if (peakAcceleration > 60f) return 8;   // Golpe muy fuerte, ~>6G
-        if (peakAcceleration > 40f) return 15;  // Golpe fuerte, ~4-6G
-        return 30;                              // Golpe moderado, ~2.5-4G
+        // 2026-07-07: recalibrado junto con IMPACT_THRESHOLD de FallDetectionManager
+        // (25->50, ~5G piso minimo para siquiera empezar a monitorear). Tramos
+        // ajustados para arriba de ese nuevo piso -- mismo criterio: cuanto mas
+        // fuerte el golpe, mas urgente, cuenta mas corta.
+        if (peakAcceleration > 90f) return 8;   // Golpe muy fuerte, ~>9G
+        if (peakAcceleration > 70f) return 15;  // Golpe fuerte, ~7-9G
+        return 30;                              // Golpe moderado, ~5-7G
     }
 
     private void onFallDetected(float peakAcceleration) {
@@ -727,6 +746,9 @@ public class RadioAudioService extends Service {
         manDownTotalSeconds = seconds;
         manDownSecondsRemaining = seconds;
         requestManDownAudioFocus();
+        // Timeout de seguridad (todo el ciclo dura como mucho 30s) para no dejar
+        // la CPU despierta para siempre si algún camino se salteara el release.
+        manDownWakeLock.acquire(60_000);
         handler.removeCallbacks(manDownTick);
         handler.post(manDownTick);
     }
@@ -737,6 +759,7 @@ public class RadioAudioService extends Service {
         manDownSecondsRemaining = -1;
         handler.removeCallbacks(manDownTick);
         releaseManDownAudioFocus();
+        if (manDownWakeLock.isHeld()) manDownWakeLock.release();
         getCallbacks().manDownCountdownTick(null);
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.cancel(MANDOWN_NOTIFICATION_ID);
@@ -745,6 +768,7 @@ public class RadioAudioService extends Service {
     private void fireManDownAlert() {
         manDownSecondsRemaining = -1;
         releaseManDownAudioFocus();
+        if (manDownWakeLock.isHeld()) manDownWakeLock.release();
         getCallbacks().manDownCountdownTick(null);
         transmitEmergencyAlert();
         NotificationCompat.Builder sentNotif = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
@@ -1019,10 +1043,16 @@ public class RadioAudioService extends Service {
             .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build();
-        audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(audioAttributes)
-            .build();
-        audioTrack = new AudioTrack.Builder()
+        // 2026-07-07: AudioFocusRequest es API 26+ -- sin este guard, esto tiraba
+        // NoClassDefFoundError al arrancar el Service en Android < 8 (minSdk
+        // bajado a 24). Mismo criterio que requestManDownAudioFocus(): pre-O
+        // directamente no se pide audio focus (no es esencial para la radio).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(audioAttributes)
+                .build();
+        }
+        AudioTrack.Builder audioTrackBuilder = new AudioTrack.Builder()
             .setAudioAttributes(audioAttributes)
             .setAudioFormat(new AudioFormat.Builder()
                 .setEncoding(RX_AUDIO_FORMAT)
@@ -1030,9 +1060,14 @@ public class RadioAudioService extends Service {
                 .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                 .build())
             .setTransferMode(AudioTrack.MODE_STREAM)
-            .setBufferSizeInBytes(RX_AUDIO_MIN_BUFFER_SIZE)
-            .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
-            .build();
+            .setBufferSizeInBytes(RX_AUDIO_MIN_BUFFER_SIZE);
+        // 2026-07-07: AudioTrack.Builder.setPerformanceMode() es API 26+ --
+        // NoSuchMethodError en Android 7 (minSdk bajado a 24). Pre-O el
+        // AudioTrack anda igual, solo sin pedir modo de baja latencia.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioTrackBuilder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
+        }
+        audioTrack = audioTrackBuilder.build();
         audioTrack.setVolume(0.0f);
         audioTrackVolume = 0.0f;
         audioTrack.setAuxEffectSendLevel(0.0f);
@@ -1751,9 +1786,15 @@ public class RadioAudioService extends Service {
         int decoded = opusDecoder.decode(param.array(), offset, len, pcmFloat);
 
         if ((getMode() == RadioMode.RX || getMode() == RadioMode.SCAN) && audioTrack != null) {
-            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
             audioTrack.write(pcmFloat, 0, decoded, AudioTrack.WRITE_NON_BLOCKING);
-            audioManager.requestAudioFocus(audioFocusRequest);
+            // 2026-07-07: requestAudioFocus(AudioFocusRequest) es API 26+ y
+            // audioFocusRequest queda null pre-O (ver initAudioTrack) -- esto se
+            // llama en CADA paquete RX, así que sin guard crasheaba la app apenas
+            // entraba tráfico de radio en Android < 8 (minSdk bajado a 24).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                audioManager.requestAudioFocus(audioFocusRequest);
+            }
             ensureAudioPlaying();
         }
     }
