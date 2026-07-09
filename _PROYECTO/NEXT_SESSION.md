@@ -1,7 +1,43 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
-## ⚡ CIERRE 2026-07-09 — mapas offline (diseño pipeline) + testing real Huawei P9 commiteado
+## ⚡ CIERRE 2026-07-09 (segunda parte) — pipeline de mapas offline EJECUTADO, release publicado
+- **Mapas offline por provincia — pipeline corrido de punta a punta** (ya no es
+  solo diseño, contradice la entrada de más abajo que decía "sin código
+  todavía" — esa quedó vieja en cuestión de horas). 24/24 provincias (23 +
+  CABA) generadas como `.map` Mapsforge y publicadas en GitHub Release
+  `mapas-v1` de `lukaz2004/MotoRFAR` (**público, no draft** — assets
+  descargables sin auth). Manifest provincia→URL→tamaño en
+  `_PROYECTO/mapas_offline/provincias.json` (commit `47ecfc8`). Total 24
+  archivos, ~366MB.
+- **Herramientas:** Osmosis (portable, requiere Java 17+, instalado Temurin 21
+  aparte en `C:\Users\lukaz\jdk21` — el `JAVA_HOME` que usa Gradle para la app
+  Android NO se tocó) + plugin `mapsforge-map-writer`. Límites de provincia
+  vía Overpass (`admin_level=4`) — `polygons.openstreetmap.org` (la fuente
+  típica de `.poly`) está caída, se armó un conversor propio desde geometría
+  cruda de Overpass. Buenos Aires (570 anillos, delta del Paraná) hacía que el
+  filtro de Osmosis no convergiera — se agregó simplificación Douglas-Peucker.
+  Todo el detalle de bloqueos/soluciones en el historial de la sesión (no
+  repetido acá).
+- ⚠️ **Hallazgo sin explicar, anotar para la próxima sesión:** el release
+  `mapas-v1` en GitHub tenía `createdAt: 2026-07-07` (dos días antes de que
+  arrancara esta sesión) aunque se publicó (`publishedAt`) recién hoy a las
+  15:39, horas antes de que se lanzara el pipeline de esta sesión. Alguien o
+  algo ya había corrido este mismo pipeline y dejado un release armado sin que
+  quedara anotado acá. El pipeline de esta sesión generó su propio set de 24
+  `.map` (verificados, tamaños ~5-10% distintos pero plausibles) y detectó el
+  release preexistente a mitad de camino — se borró el duplicado propio y el
+  manifest apunta al que ya estaba. **No identificado quién/qué lo publicó.**
+  Antes de asumir que `mapas-v1` es confiable para producción, confirmar el
+  origen de ese release previo.
+- **Sub-proyecto 2 (ventana in-app):** ahora sí tiene URLs reales para
+  consumir (`_PROYECTO/mapas_offline/provincias.json`). Arrancable cuando se
+  retome.
+- Carpeta de trabajo `C:\Users\lukaz\mapas-baqueano-build\` (fuera de
+  OneDrive, ~1.3GB: extracto de Argentina + extractos por provincia + los
+  `.map` generados) quedó sin borrar por si hace falta reprocesar algo.
+
+## ⚡ CIERRE 2026-07-09 (primera parte) — mapas offline (diseño pipeline) + testing real Huawei P9 commiteado
 - **Mapas offline por provincia:** diseño del pipeline de generación aprobado
   (`docs/superpowers/specs/2026-07-08-mapas-offline-por-provincia-design.md`
   — GitHub Releases, Mapsforge `.map` por provincia vía osmium-tool + Osmosis,

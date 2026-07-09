@@ -62,14 +62,17 @@
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
 
-## 🗺️ Mapas offline por provincia — diseño aprobado, sin código (2026-07-08/09)
-Pipeline de generación (osmium-tool + Osmosis, .map Mapsforge por provincia,
-GitHub Releases) diseñado en `docs/superpowers/specs/2026-07-08-mapas-offline-por-provincia-design.md`.
-Falta instalar herramientas y correrlo como sesión larga aparte. Ventana
-in-app (sub-proyecto 2) espera esas URLs. Detalle completo en
-`NEXT_SESSION.md` (CIERRE 2026-07-09), junto con 3 commits de testing real en
-Huawei P9 (Android 7, Man-Down recalibrado, UI pantalla chica) que quedaron
-sin subir varias sesiones.
+## 🗺️ Mapas offline por provincia — pipeline CORRIDO, release publicado (2026-07-09)
+✅ Las 24 provincias (23 + CABA) generadas como `.map` Mapsforge y publicadas
+en GitHub Release `mapas-v1` de `lukaz2004/MotoRFAR` (público, ~366MB total).
+Manifest provincia→URL en `_PROYECTO/mapas_offline/provincias.json`.
+⚠️ El release tenía `createdAt` de dos días antes de que se lanzara el
+pipeline de esta sesión — algo/alguien ya lo había corrido y publicado sin
+quedar anotado acá. **Sin identificar el origen** — confirmar antes de asumir
+que el contenido es confiable para producción (ver detalle en
+`NEXT_SESSION.md`, CIERRE 2026-07-09 segunda parte).
+- ⬜ Sub-proyecto 2 (ventana in-app que consume el manifest) — arrancable
+  ahora que hay URLs reales, todavía sin construir.
 
 ## 🧭 Navegación turn-by-turn propia — diseño aprobado (2026-07-05)
 Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`: motor **BRouter** (Java puro,
