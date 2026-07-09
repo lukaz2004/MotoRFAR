@@ -1,0 +1,226 @@
+{
+  "generated_at": "2026-07-09",
+  "source": "OpenStreetMap via Geofabrik south-america/argentina-latest.osm.pbf, boundaries via Overpass admin_level=4",
+  "format": "Mapsforge .map (vectorial)",
+  "release_repo": "lukaz2004/MotoRFAR",
+  "release_tag": "mapas-v1",
+  "release_status": "published (not draft) - assets are publicly downloadable without auth",
+  "provinces": [
+    {
+      "iso3166_2": "AR-A",
+      "name": "Salta",
+      "osm_relation_id": 2405230,
+      "asset_filename": "salta.map",
+      "size_bytes": 11285261,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/salta.map"
+    },
+    {
+      "iso3166_2": "AR-B",
+      "name": "Buenos Aires",
+      "osm_relation_id": 1632167,
+      "asset_filename": "buenos-aires.map",
+      "size_bytes": 82419677,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/buenos-aires.map"
+    },
+    {
+      "iso3166_2": "AR-C",
+      "name": "Ciudad Autónoma de Buenos Aires",
+      "osm_relation_id": 3082668,
+      "asset_filename": "ciudad-autonoma-de-buenos-aires.map",
+      "size_bytes": 7764134,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/ciudad-autonoma-de-buenos-aires.map"
+    },
+    {
+      "iso3166_2": "AR-D",
+      "name": "San Luis",
+      "osm_relation_id": 153538,
+      "asset_filename": "san-luis.map",
+      "size_bytes": 10110284,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/san-luis.map"
+    },
+    {
+      "iso3166_2": "AR-E",
+      "name": "Entre Ríos",
+      "osm_relation_id": 153551,
+      "asset_filename": "entre-rios.map",
+      "size_bytes": 14806287,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/entre-rios.map"
+    },
+    {
+      "iso3166_2": "AR-F",
+      "name": "La Rioja",
+      "osm_relation_id": 153536,
+      "asset_filename": "la-rioja.map",
+      "size_bytes": 4704588,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/la-rioja.map"
+    },
+    {
+      "iso3166_2": "AR-G",
+      "name": "Santiago del Estero",
+      "osm_relation_id": 153544,
+      "asset_filename": "santiago-del-estero.map",
+      "size_bytes": 10686163,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santiago-del-estero.map"
+    },
+    {
+      "iso3166_2": "AR-H",
+      "name": "Chaco",
+      "osm_relation_id": 153554,
+      "asset_filename": "chaco.map",
+      "size_bytes": 7232540,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/chaco.map"
+    },
+    {
+      "iso3166_2": "AR-J",
+      "name": "San Juan",
+      "osm_relation_id": 153539,
+      "asset_filename": "san-juan.map",
+      "size_bytes": 21570763,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/san-juan.map"
+    },
+    {
+      "iso3166_2": "AR-K",
+      "name": "Catamarca",
+      "osm_relation_id": 153545,
+      "asset_filename": "catamarca.map",
+      "size_bytes": 6781941,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/catamarca.map"
+    },
+    {
+      "iso3166_2": "AR-L",
+      "name": "La Pampa",
+      "osm_relation_id": 153541,
+      "asset_filename": "la-pampa.map",
+      "size_bytes": 14580734,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/la-pampa.map"
+    },
+    {
+      "iso3166_2": "AR-M",
+      "name": "Mendoza",
+      "osm_relation_id": 153540,
+      "asset_filename": "mendoza.map",
+      "size_bytes": 13683414,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/mendoza.map"
+    },
+    {
+      "iso3166_2": "AR-N",
+      "name": "Misiones",
+      "osm_relation_id": 153553,
+      "asset_filename": "misiones.map",
+      "size_bytes": 27600452,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/misiones.map"
+    },
+    {
+      "iso3166_2": "AR-P",
+      "name": "Formosa",
+      "osm_relation_id": 2849847,
+      "asset_filename": "formosa.map",
+      "size_bytes": 11086540,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/formosa.map"
+    },
+    {
+      "iso3166_2": "AR-Q",
+      "name": "Neuquén",
+      "osm_relation_id": 1606727,
+      "asset_filename": "neuquen.map",
+      "size_bytes": 24114949,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/neuquen.map"
+    },
+    {
+      "iso3166_2": "AR-R",
+      "name": "Río Negro",
+      "osm_relation_id": 153547,
+      "asset_filename": "rio-negro.map",
+      "size_bytes": 15836210,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/rio-negro.map"
+    },
+    {
+      "iso3166_2": "AR-S",
+      "name": "Santa Fe",
+      "osm_relation_id": 153543,
+      "asset_filename": "santa-fe.map",
+      "size_bytes": 26836327,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santa-fe.map"
+    },
+    {
+      "iso3166_2": "AR-T",
+      "name": "Tucumán",
+      "osm_relation_id": 153558,
+      "asset_filename": "tucuman.map",
+      "size_bytes": 6006313,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/tucuman.map"
+    },
+    {
+      "iso3166_2": "AR-U",
+      "name": "Chubut",
+      "osm_relation_id": 153548,
+      "asset_filename": "chubut.map",
+      "size_bytes": 16069757,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/chubut.map"
+    },
+    {
+      "iso3166_2": "AR-V",
+      "name": "Tierra del Fuego",
+      "osm_relation_id": 153550,
+      "asset_filename": "tierra-del-fuego.map",
+      "size_bytes": 7826230,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/tierra-del-fuego.map"
+    },
+    {
+      "iso3166_2": "AR-W",
+      "name": "Corrientes",
+      "osm_relation_id": 153552,
+      "asset_filename": "corrientes.map",
+      "size_bytes": 14161460,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/corrientes.map"
+    },
+    {
+      "iso3166_2": "AR-X",
+      "name": "Córdoba",
+      "osm_relation_id": 3592494,
+      "asset_filename": "cordoba.map",
+      "size_bytes": 33528148,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/cordoba.map"
+    },
+    {
+      "iso3166_2": "AR-Y",
+      "name": "Jujuy",
+      "osm_relation_id": 153556,
+      "asset_filename": "jujuy.map",
+      "size_bytes": 7395598,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/jujuy.map"
+    },
+    {
+      "iso3166_2": "AR-Z",
+      "name": "Santa Cruz",
+      "osm_relation_id": 153549,
+      "asset_filename": "santa-cruz.map",
+      "size_bytes": 21554449,
+      "release_tag": "mapas-v1",
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santa-cruz.map"
+    }
+  ]
+}
