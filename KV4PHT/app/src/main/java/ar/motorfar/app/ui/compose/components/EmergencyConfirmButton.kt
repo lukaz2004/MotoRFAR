@@ -11,7 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -95,7 +95,10 @@ fun EmergencyConfirmButton(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
+            // ponytail: mismo fix que ChannelRow -- altura fija forzaba el
+            // recuadro más alto que el texto. Padding en vez de height, se
+            // achica solo al contenido real.
+            .padding(vertical = 9.dp)
             .alpha(blinkAlpha)
             .pointerInput(Unit) {
                 detectTapGestures(

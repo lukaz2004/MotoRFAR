@@ -30,7 +30,6 @@ import ar.motorfar.app.ui.compose.theme.crtScreen
 @Composable
 fun FrequencyDisplayCard(
     frequency: String,
-    channelName: String,
     sMeterLevel: Int,
     // 2026-07-06: sin esto no hay forma de saber en que Hz estas sintonizado
     // desde la pantalla principal; se muestra al lado del modo.
@@ -38,10 +37,17 @@ fun FrequencyDisplayCard(
     // Resalta en rojo cuando el canal activo es Emergencia -- antes el unico
     // indicador era el borde del botón del canal, poco visible manejando.
     isEmergencyActive: Boolean = false,
+    // 2026-07-08: en horizontal la tarjeta comparte ancho con PTT y alertas --
+    // el mismo tamaño de portrait (pensado a ancho completo) hacía que
+    // "139.9700" se cortara en dos líneas. rememberUiScale() no alcanza para
+    // esto porque escala con el ancho TOTAL de pantalla, no con la columna
+    // real que le toca acá.
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
     val emphasisColor = if (isEmergencyActive) EmergencyBorder else colors.textPrimary
+    val uiScale = ar.motorfar.app.ui.compose.theme.rememberUiScale()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -53,26 +59,20 @@ fun FrequencyDisplayCard(
             )
             .clip(PanelShape)
             .crtScreen(colors)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text  = channelName,
-            color = if (isEmergencyActive) EmergencyBorder else colors.textSecondary,
-            fontFamily = ShareTechMono,
-            fontSize = 14.sp,
-            letterSpacing = 0.15.sp
-        )
-        Spacer(Modifier.height(2.dp))
+        // ponytail: nombre de canal removido -- ya se ve resaltado en ChannelRow
+        // debajo, mostrarlo acá arriba era redundante y quitaba una línea entera.
         Text(
             text  = frequency,
             color = emphasisColor,
             fontFamily = ShareTechMono,
-            fontSize = 48.sp,
+            fontSize = ((if (compact) 24f else 36f) * uiScale).sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
         )
         Text(
-            text  = "MHz · FM · SIMPLEX" + (tone?.let { " · $it" } ?: ""),
+            text  = "MHz · FM" + (tone?.let { " · $it" } ?: ""),
             color = if (isEmergencyActive) EmergencyBorder else colors.textGhost,
             fontFamily = ShareTechMono,
             fontSize = 14.sp

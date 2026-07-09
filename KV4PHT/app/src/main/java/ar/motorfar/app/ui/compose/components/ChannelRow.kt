@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -39,6 +38,9 @@ fun ChannelRow(
     channels: List<ChannelMemory>,
     activeFreq: String,
     onChannelClick: (String) -> Unit,
+    // 2026-07-08: en horizontal los 3 botones comparten una columna angosta --
+    // a 14sp el texto no entraba y se veía cortado ("PRINC", "ALTER", "EMERG").
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -71,11 +73,13 @@ fun ChannelRow(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()
+                    // ponytail: sin fillMaxHeight -- el recuadro forzaba la altura fija
+                    // del Row entero aunque el texto solo necesitara una fracción,
+                    // dejando aire vacío debajo. Ahora el alto sale del padding.
                     .background(backgroundColor, ControlShape)
                     .border(if (isActive || isEmergency) BorderStrong else BorderHairline, borderColor, ControlShape)
                     .clickable { onChannelClick(freq) }
-                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                    .padding(vertical = if (compact) 4.dp else 6.dp, horizontal = if (compact) 1.dp else 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -85,7 +89,7 @@ fun ChannelRow(
                                 else if (isActive) colors.textPrimary
                                 else colors.textSecondary,
                     fontFamily = ShareTechMono,
-                    fontSize  = 14.sp,
+                    fontSize  = if (compact) 7.sp else 14.sp,
                     textAlign = TextAlign.Center,
                     maxLines  = 1
                 )

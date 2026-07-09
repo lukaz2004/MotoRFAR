@@ -1,5 +1,7 @@
 package ar.motorfar.app.ui.compose
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
@@ -24,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,10 +59,12 @@ fun WifiSettingScreen(
 
     val isValid = password.length in 8..63
     val isSsidValid = ssid.length in 1..32
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -86,17 +93,42 @@ fun WifiSettingScreen(
         )
 
         if (!isConnected) {
+            // 2026-07-07: el cartel largo que antes vivía en la pantalla principal
+            // se movió acá -- este screen ya tiene scroll y lugar para explicar
+            // bien qué red buscar, en vez de ocupar espacio fijo en el HUD.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, EmergencyBorder, RoundedCornerShape(4.dp))
-                    .padding(12.dp)
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "Sin conexión con el equipo — conectate primero para poder cambiar la clave.",
+                    text = "SIN RADIO — conectate primero para poder cambiar la clave o el SSID.",
                     color = EmergencyBorder,
                     fontFamily = ShareTechMono,
                     fontSize = 13.sp
+                )
+                Text(
+                    text = "Conectá el WiFi del teléfono a la red que empieza con \"Baqueano-\" " +
+                           "(o la que le pusiste vos acá abajo). El equipo no tiene internet, " +
+                           "es una red local directa entre el teléfono y la radio.",
+                    color = colors.textSecondary,
+                    fontFamily = ShareTechMono,
+                    fontSize = 13.sp
+                )
+                Text(
+                    text     = "ABRIR AJUSTES WIFI DE ANDROID  ›",
+                    color    = colors.accent,
+                    fontFamily = ShareTechMono,
+                    fontSize = 13.sp,
+                    modifier = Modifier.clickable {
+                        context.startActivity(
+                            Intent(Settings.ACTION_WIFI_SETTINGS).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    }
                 )
             }
         }

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ fun AppStatusBar(
     isTx: Boolean,
     isRx: Boolean,
     isConnected: Boolean = true,
+    onOpenWifiSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -40,8 +42,12 @@ fun AppStatusBar(
         ),
         label = "led_alpha"
     )
+    // 2026-07-07: "SIN RADIO" en gris apagado se perdía de vista -- ahora rojo
+    // titilante (como una alarma real) y clickeable para ir directo a la config
+    // de WiFi del equipo, en vez de un indicador mudo que no llevaba a ningún lado.
+    val disconnectedColor = Color(0xFFE24B4A)
     val ledColor = when {
-        !isConnected -> Color(0xFF666666).copy(alpha = pulse) // gris pulsante = buscando radio
+        !isConnected -> disconnectedColor.copy(alpha = pulse)
         isTx         -> Color(0xFFE24B4A)                    // rojo = transmitiendo
         isRx         -> Color(0xFF4FBD3B).copy(alpha = pulse) // verde pulsante = recibiendo
         else         -> colors.accent.copy(alpha = 0.5f)      // acento tenue = listo/silencio
@@ -55,6 +61,7 @@ fun AppStatusBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onOpenWifiSettings)
             .padding(horizontal = 12.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -64,7 +71,7 @@ fun AppStatusBar(
         }
         Text(
             text       = statusLabel,
-            color      = if (!isConnected) colors.textSecondary.copy(alpha = 0.6f)
+            color      = if (!isConnected) disconnectedColor.copy(alpha = pulse)
                          else colors.textSecondary,
             fontFamily = ShareTechMono,
             fontSize   = 14.sp

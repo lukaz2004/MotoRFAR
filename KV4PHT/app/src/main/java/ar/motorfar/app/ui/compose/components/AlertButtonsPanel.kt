@@ -27,6 +27,9 @@ fun AlertButtonsPanel(
     onStop: () -> Unit,
     onRegroup: () -> Unit,
     isEmergencyActive: Boolean = false,
+    // 2026-07-08: en horizontal esta columna es angosta -- a 13sp "DETENCIÓN"
+    // y "REAGRUPAR" (la mitad del ancho cada uno) se partían en dos líneas.
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -55,14 +58,14 @@ fun AlertButtonsPanel(
                         .background(colors.surface, ControlShape)
                         .border(BorderHairline, colors.borderActive, ControlShape)
                         .clickable(onClick = action)
-                        .padding(vertical = 12.dp),
+                        .padding(vertical = if (compact) 6.dp else 9.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text       = label,
                         color      = colors.textPrimary,
                         fontFamily = ShareTechMono,
-                        fontSize   = 13.sp,
+                        fontSize   = if (compact) 10.sp else 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }

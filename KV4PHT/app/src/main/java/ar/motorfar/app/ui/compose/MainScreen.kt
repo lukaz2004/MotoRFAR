@@ -13,12 +13,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -45,11 +46,9 @@ import ar.motorfar.app.ui.compose.components.AlertButtonsPanel
 import ar.motorfar.app.ui.compose.components.AppStatusBar
 import ar.motorfar.app.ui.compose.components.ChannelRow
 import ar.motorfar.app.ui.compose.components.EmergencyConfirmButton
-import ar.motorfar.app.ui.compose.components.FallCountdownOverlay
 import ar.motorfar.app.ui.compose.components.FrequencyDisplayCard
 import ar.motorfar.app.ui.compose.components.ModulationVisualizer
 import ar.motorfar.app.ui.compose.components.PttButton
-import ar.motorfar.app.ui.compose.components.WifiConnectBanner
 import ar.motorfar.app.ui.compose.state.MainUiAction
 import ar.motorfar.app.ui.compose.state.MainUiState
 import ar.motorfar.app.ui.compose.state.activeToneLabel
@@ -73,6 +72,7 @@ fun MainScreen(
     onAction: (MainUiAction) -> Unit,
     onDismissAlert: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    onOpenWifiSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -83,22 +83,19 @@ fun MainScreen(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
-            .systemBarsPadding()
+            // ponytail: sin systemBarsPadding acá -- el Scaffold en MainActivity
+            // ya aplica el inset de status bar via innerPadding; duplicarlo
+            // dejaba una franja vacía extra arriba de toda la pantalla.
     ) {
         if (state.isRouteActive) {
             RouteActiveLayout(state, onAction)
         } else if (isLandscape) {
-            LandscapeLayout(state, onAction, onDismissAlert, onOpenSettings)
+            LandscapeLayout(state, onAction, onDismissAlert, onOpenSettings, onOpenWifiSettings)
         } else {
-            PortraitLayout(state, onAction, onDismissAlert, onOpenSettings)
+            PortraitLayout(state, onAction, onDismissAlert, onOpenSettings, onOpenWifiSettings)
         }
-
-        state.fallCountdown?.let { seconds ->
-            FallCountdownOverlay(
-                secondsLeft = seconds,
-                onCancel = { onAction(MainUiAction.CancelFallCountdown) }
-            )
-        }
+        // 2026-07-07: el overlay de Man-Down se movió a MainActivity (afuera del
+        // Scaffold) para que se vea en Mapa/Chat/Ajustes también, no solo acá.
     }
 }
 
@@ -108,6 +105,7 @@ private fun TopBar(
     state: MainUiState,
     onAction: (MainUiAction) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenWifiSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalMotoRFARColors.current
@@ -133,10 +131,11 @@ private fun TopBar(
         )
 
         AppStatusBar(
-            isTx        = state.isTxActive,
-            isRx        = state.isRxActive,
-            isConnected = state.isConnected,
-            modifier    = Modifier.weight(1f)
+            isTx               = state.isTxActive,
+            isRx               = state.isRxActive,
+            isConnected        = state.isConnected,
+            onOpenWifiSettings = onOpenWifiSettings,
+            modifier           = Modifier.weight(1f)
         )
 
         // RUTA: modo pantalla siempre-on con UI simplificada
@@ -380,24 +379,30 @@ private fun PortraitLayout(
     state: MainUiState,
     onAction: (MainUiAction) -> Unit,
     onDismissAlert: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenWifiSettings: () -> Unit = {}
 ) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            // 2026-07-07: en pantallas chicas (Huawei P9, 640dp de alto) el
+            // contenido fijo no entraba entero -- PTT y DETENCION/REAGRUPAR
+            // quedaban invisibles, tapados por la barra de navegación (confirmado
+            // con captura real). Scroll como red de seguridad: en pantallas
+            // normales/grandes no se nota (todo entra sin gestos), en las chicas
+            // permite bajar un toque en vez de perder acceso al PTT.
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TopBar(state, onAction, onOpenSettings)
+        TopBar(state, onAction, onOpenSettings, onOpenWifiSettings)
 
-        // WiFi connection guide — visible when the radio module is not connected.
-        if (!state.isConnected) {
-            WifiConnectBanner(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
-            )
-        }
+        // 2026-07-07: el cartel largo "SIN RADIO" se movió a Ajustes > WiFi del
+        // equipo (WifiSettingScreen) -- ahí hay lugar para más info y scroll.
+        // Acá solo queda el indicador compacto del TopBar (rojo titilante,
+        // clickeable) para no ocupar tanto espacio fijo en la pantalla principal.
 
         FrequencyDisplayCard(
             frequency         = state.activeFrequency,
-            channelName       = state.activeChannelName,
             sMeterLevel       = state.sMeterLevel,
             tone              = state.activeToneLabel,
             isEmergencyActive = state.isEmergencyActive
@@ -409,26 +414,33 @@ private fun PortraitLayout(
         )
         if (state.isListenOnly) ListenOnlyTag()
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         ChannelRow(
             channels       = state.channels,
             activeFreq     = state.activeFrequency,
-            onChannelClick = { freq -> onAction(MainUiAction.ChannelSelected(freq)) },
-            modifier       = Modifier.height(56.dp)
+            onChannelClick = { freq -> onAction(MainUiAction.ChannelSelected(freq)) }
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
 
+        // 2026-07-07: 150dp fijo se veía perfecto en el emulador (pantalla enorme)
+        // pero en el Huawei P9 (640dp de alto total) hacía que el resto de la
+        // columna -- PTT, DETENCION/REAGRUPAR -- quedara totalmente fuera de
+        // pantalla, tapado por la barra de navegación (confirmado con captura
+        // real). Altura proporcional al alto real del dispositivo, con piso
+        // (nunca invisible) y techo (nunca exagerado en pantallas gigantes).
+        val visualizerHeight = (LocalConfiguration.current.screenHeightDp * 0.12f)
+            .dp.coerceIn(48.dp, 150.dp)
         ModulationVisualizer(
             isActive = state.isTxActive || state.isRxActive,
             barColor = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else null,
             modifier = Modifier
-                .weight(1f)
-                .padding(vertical = 4.dp)
+                .height(visualizerHeight)
+                .padding(vertical = 2.dp)
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
 
         AlertButtonsPanel(
             onEmergency       = { onAction(MainUiAction.EmergencyAlert) },
@@ -440,7 +452,12 @@ private fun PortraitLayout(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(170.dp),
+                // 2026-07-07: weight(1f) necesita una Column de alto acotado --
+                // no es compatible con el scroll que se agregó arriba (crashea:
+                // "Vertically scrollable component was measured with an infinity
+                // maximum height"). Alto fijo en su lugar; en pantallas grandes
+                // sigue viéndose centrado con aire alrededor.
+                .height(196.dp),
             contentAlignment = Alignment.Center
         ) {
             PttButton(
@@ -451,7 +468,7 @@ private fun PortraitLayout(
                 isEmergency    = state.isEmergencyActive
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
     }
 }
 
@@ -461,16 +478,13 @@ private fun LandscapeLayout(
     state: MainUiState,
     onAction: (MainUiAction) -> Unit,
     onDismissAlert: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onOpenWifiSettings: () -> Unit = {}
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        TopBar(state, onAction, onOpenSettings)
-        // En landscape el banner es más compacto para no consumir altura.
-        if (!state.isConnected) {
-            WifiConnectBanner(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-        }
+        TopBar(state, onAction, onOpenSettings, onOpenWifiSettings)
+        // 2026-07-07: el cartel "SIN RADIO" se movió a Ajustes > WiFi -- el
+        // indicador compacto del TopBar (rojo titilante, clickeable) alcanza acá.
         AlertBanner(
             alert     = state.activeAlert,
             onDismiss = onDismissAlert,
@@ -492,19 +506,19 @@ private fun LandscapeLayout(
             ) {
                 FrequencyDisplayCard(
                     frequency         = state.activeFrequency,
-                    channelName       = state.activeChannelName,
                     sMeterLevel       = state.sMeterLevel,
                     tone              = state.activeToneLabel,
-                    isEmergencyActive = state.isEmergencyActive
+                    isEmergencyActive = state.isEmergencyActive,
+                    compact           = true
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(4.dp))
                 ChannelRow(
                     channels       = state.channels,
                     activeFreq     = state.activeFrequency,
                     onChannelClick = { freq -> onAction(MainUiAction.ChannelSelected(freq)) },
-                    modifier       = Modifier.height(46.dp)
+                    compact        = true
                 )
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(4.dp))
                 ModulationVisualizer(
                     isActive = state.isTxActive || state.isRxActive,
                     barColor = if (state.isEmergencyActive) ar.motorfar.app.ui.compose.theme.EmergencyBorder else null,
@@ -513,21 +527,31 @@ private fun LandscapeLayout(
                         .fillMaxWidth()
                 )
             }
-            // Columna 2: PTT — control principal, ocupa toda la altura disponible
+            // Espacio lateral -- antes acá vivía la columna del PTT solo; ahora
+            // el PTT se movió abajo de las alertas, este aire queda como
+            // separación entre la info y los controles.
+            Spacer(Modifier.weight(0.5f))
+            // Columna 2: alertas arriba, PTT abajo, todo apilado
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1.3f)
                     .fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (state.isListenOnly) ListenOnlyTag()
+                AlertButtonsPanel(
+                    onEmergency       = { onAction(MainUiAction.EmergencyAlert) },
+                    onStop            = { onAction(MainUiAction.StopAlert) },
+                    onRegroup         = { onAction(MainUiAction.RegroupAlert) },
+                    isEmergencyActive = state.isEmergencyActive
+                )
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    val ptt = (minOf(maxWidth, maxHeight) - 8.dp).coerceIn(110.dp, 230.dp)
+                    val ptt = (minOf(maxWidth, maxHeight) - 8.dp).coerceIn(90.dp, 190.dp)
                     PttButton(
                         isTransmitting = state.isTxActive,
                         enabled        = !state.isListenOnly,
@@ -537,21 +561,6 @@ private fun LandscapeLayout(
                         isEmergency    = state.isEmergencyActive
                     )
                 }
-            }
-            // Columna 3: alertas (centradas verticalmente)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                AlertButtonsPanel(
-                    onEmergency       = { onAction(MainUiAction.EmergencyAlert) },
-                    onStop            = { onAction(MainUiAction.StopAlert) },
-                    onRegroup         = { onAction(MainUiAction.RegroupAlert) },
-                    isEmergencyActive = state.isEmergencyActive
-                )
             }
         }
     }
