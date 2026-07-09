@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -283,8 +282,17 @@ fun MapScreen(
                 border = BorderStroke(1.dp, colors.borderSubtle)
             ) {
                 Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                    // 2026-07-08: lat/lon apiladas en vez de una sola línea ancha --
+                    // en vertical ese ancho no dejaba lugar para el botón WAYPOINT,
+                    // que terminaba fuera de pantalla.
                     androidx.compose.material3.Text(
-                        text       = hudCoord(hudLat, hudLon),
+                        text       = hudLatLine(hudLat),
+                        color      = colors.textPrimary,
+                        fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                        fontSize   = 15.sp
+                    )
+                    androidx.compose.material3.Text(
+                        text       = hudLonLine(hudLon),
                         color      = colors.textPrimary,
                         fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
                         fontSize   = 15.sp
@@ -345,6 +353,22 @@ fun MapScreen(
         // triggerDownload/onDownloadTriggerConsumed). Misma lógica, solo
         // cambió desde dónde se llama.
         fun startTileDownload() {
+            // 2026-07-08: Mapnik (el tile source que usa el mapa) tiene la política
+            // FLAG_NO_BULK -- OSM prohíbe la descarga masiva de tiles de su servidor
+            // público. CacheManager la detecta y tira TileSourcePolicyException
+            // dentro del AsyncTask, sin capturarla -- eso crasheaba la app entera
+            // en vez de simplemente avisar que la descarga no está disponible acá.
+            val tileSource = mapView.tileProvider.tileSource
+            val policyOk = (tileSource as? org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase)
+                ?.tileSourcePolicy?.acceptsBulkDownload() ?: false
+            if (!policyOk) {
+                android.widget.Toast.makeText(
+                    context,
+                    "Este mapa no permite descarga offline masiva (política del servidor). Probá con menos zoom o un área más chica.",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                return
+            }
             val cm = CacheManager(mapView)
             cacheManagerRef = cm
             downloadProgress = 0f
@@ -493,68 +517,41 @@ private fun MapPttButton(
     listenOnly: Boolean,
     onPttDown: () -> Unit,
     onPttUp: () -> Unit,
-    // 2026-07-06: mismo tratamiento que el PTT principal -- texto largo con
-    // borde blanco, y rojo durante una transmisión de Emergencia.
+    // 2026-07-08: mismo look que el PTT de la pantalla principal (gradiente +
+    // anillos de TX vía PttVisual) -- antes era un círculo plano distinto,
+    // el usuario lo marcó como inconsistente entre pantallas.
     isEmergency: Boolean = false
 ) {
     val haptics = LocalHapticFeedback.current
-    val accent = if (isEmergency) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.accent
-    val ringColor = when {
-        isTransmitting -> accent
-        listenOnly     -> colors.textDisabled
-        else           -> accent
+    val accentColor = when {
+        isEmergency -> ar.motorfar.app.ui.compose.theme.EmergencyBorder
+        listenOnly  -> colors.textDisabled
+        else        -> colors.accent
     }
-    val labelColor = when {
-        isTransmitting -> androidx.compose.ui.graphics.Color.White
-        listenOnly     -> colors.textDisabled
-        else           -> accent
-    }
-    Surface(
-        shape  = CircleShape,
-        color  = if (isTransmitting) accent else colors.surface,
-        border = BorderStroke(if (isTransmitting) 2.dp else 1.5.dp, ringColor),
-        modifier = Modifier
-            .size(110.dp)
-            .pointerInput(listenOnly) {
-                detectTapGestures(
-                    onPress = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onPttDown()
-                        tryAwaitRelease()
-                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onPttUp()
-                    }
-                )
-            }
-    ) {
-        val label = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK"
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        ) {
-            androidx.compose.material3.Text(
-                text = label,
-                style = androidx.compose.ui.text.TextStyle(
-                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                    fontSize   = 9.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
-                    color      = androidx.compose.ui.graphics.Color.White,
-                    drawStyle  = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = 3f, join = androidx.compose.ui.graphics.StrokeJoin.Round
-                    )
-                )
-            )
-            androidx.compose.material3.Text(
-                text       = label,
-                color      = labelColor,
-                fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
-                fontSize   = 9.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                textAlign  = androidx.compose.ui.text.style.TextAlign.Center
+    val label = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK"
+
+    ar.motorfar.app.ui.compose.components.PttVisual(
+        // 2026-07-08: mismo diámetro que el PTT de la pantalla principal en
+        // vertical (180dp) -- antes quedaba visiblemente más chico acá.
+        diameter       = 180.dp,
+        accentColor    = accentColor,
+        isTransmitting = isTransmitting,
+        label          = label,
+        // 2026-07-07: el tap siempre dispara (a diferencia del PTT principal, que
+        // se deshabilita entero) -- en modo escucha el caller igual necesita el
+        // evento para avisar con un Toast que el PTT está bloqueado.
+        modifier = Modifier.pointerInput(listenOnly) {
+            detectTapGestures(
+                onPress = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onPttDown()
+                    tryAwaitRelease()
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onPttUp()
+                }
             )
         }
-    }
+    )
 }
 
 /**
@@ -642,11 +639,16 @@ private fun darkTacticalTileFilter(): android.graphics.ColorMatrixColorFilter {
     return android.graphics.ColorMatrixColorFilter(invert)
 }
 
-/** Formatea coordenadas para el HUD: "S 34.6037°   O 58.3816°". */
-private fun hudCoord(lat: Double, lon: Double): String {
+/** Formatea la latitud para el HUD: "S 34.6037°". */
+private fun hudLatLine(lat: Double): String {
     val ns = if (lat >= 0) "N" else "S"
+    return "%s %.4f°".format(ns, kotlin.math.abs(lat))
+}
+
+/** Formatea la longitud para el HUD: "O 58.3816°". */
+private fun hudLonLine(lon: Double): String {
     val eo = if (lon >= 0) "E" else "O"
-    return "%s %.4f\u00b0   %s %.4f\u00b0".format(ns, kotlin.math.abs(lat), eo, kotlin.math.abs(lon))
+    return "%s %.4f\u00b0".format(eo, kotlin.math.abs(lon))
 }
 
 /** Marcador de "foco": un blanco/crosshair para la ubicación de una alerta. */

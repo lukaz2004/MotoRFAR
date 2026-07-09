@@ -8,15 +8,18 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,7 +56,42 @@ fun PttButton(
         else        -> colors.textDisabled
     }
     val haptics     = LocalHapticFeedback.current
+    val label       = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK"
 
+    PttVisual(
+        diameter       = diameter,
+        accentColor    = accentColor,
+        isTransmitting = isTransmitting,
+        label          = label,
+        modifier = modifier.pointerInput(enabled) {
+            if (!enabled) return@pointerInput
+            detectTapGestures(
+                onPress = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onPttDown()
+                    tryAwaitRelease()
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onPttUp()
+                }
+            )
+        }
+    )
+}
+
+/**
+ * Círculo con gradiente + anillos de TX + chip de texto, sin lógica de tap propia --
+ * el caller decide cómo/cuándo dispara onPttDown/onPttUp (ver [PttButton] y el PTT
+ * compacto de MapScreen, que necesita seguir avisando en modo escucha en vez de
+ * bloquear el tap entero).
+ */
+@Composable
+fun PttVisual(
+    diameter: Dp,
+    accentColor: Color,
+    isTransmitting: Boolean,
+    label: String,
+    modifier: Modifier = Modifier
+) {
     // Anillos radiales — solo activos durante TX
     val infiniteTransition = rememberInfiniteTransition(label = "ptt_rings")
     val ringPhase by infiniteTransition.animateFloat(
@@ -68,25 +106,14 @@ fun PttButton(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .size(diameter)
-            .pointerInput(enabled) {
-                if (!enabled) return@pointerInput
-                detectTapGestures(
-                    onPress = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onPttDown()
-                        tryAwaitRelease()
-                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onPttUp()
-                    }
-                )
-            }
+        modifier = modifier.size(diameter)
     ) {
         Canvas(modifier = Modifier.size(diameter)) {
             val center   = Offset(size.width / 2f, size.height / 2f)
-            // El botón ocupa ~70% del canvas; el 30% restante deja lugar a los anillos
-            val baseRadius = size.minDimension / 2f * 0.7f
+            // ponytail: 0.78 en vez de 0.7 -- menos margen muerto alrededor del
+            // círculo, dejando lo justo para que el anillo de TX (1.42x) no se
+            // corte contra el borde del canvas.
+            val baseRadius = size.minDimension / 2f * 0.78f
 
             // Anillos expansivos durante TX (contenidos dentro del canvas)
             if (isTransmitting) {
@@ -125,33 +152,24 @@ fun PttButton(
                 )
             }
         }
-        // 2026-07-06: texto plano se perdía contra el degradé del fondo --
-        // se dibuja un borde blanco detrás (Stroke) y el relleno encima para
-        // separarlo del fondo, en vez de un solo Text de un color.
-        val label = if (isTransmitting) "TRANSMITIENDO" else "PUSH TO TALK"
-        val fillColor = if (isTransmitting) Color.White else Color(0xFF0E0904)
+        // ponytail: el blanco desentonaba con la paleta CRT (verde/ámbar/rojo) --
+        // en vez de un halo blanco, un chip oscuro fijo detrás del texto en el
+        // color de acento; se lee igual en cualquier tema, sin desentonar.
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 12.dp)
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color.Black.copy(alpha = 0.55f))
+                .padding(horizontal = 12.dp, vertical = 4.dp)
         ) {
             Text(
-                text = label,
-                style = androidx.compose.ui.text.TextStyle(
-                    fontFamily = ShareTechMono,
-                    fontSize   = 13.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
-                    color      = Color.White,
-                    drawStyle  = Stroke(width = 5f, join = androidx.compose.ui.graphics.StrokeJoin.Round)
-                )
-            )
-            Text(
-                text       = label,
-                color      = fillColor,
-                fontFamily = ShareTechMono,
-                fontSize   = 13.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                textAlign  = androidx.compose.ui.text.style.TextAlign.Center
+                text          = label,
+                color         = accentColor,
+                fontFamily    = ShareTechMono,
+                fontSize      = 13.sp,
+                fontWeight    = androidx.compose.ui.text.font.FontWeight.Bold,
+                textAlign     = androidx.compose.ui.text.style.TextAlign.Center,
+                letterSpacing = 1.sp
             )
         }
     }
