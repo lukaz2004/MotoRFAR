@@ -546,6 +546,13 @@ public class RadioAudioService extends Service {
                 .setContentText("Starting up...")
                 .setContentIntent(pi)
                 .setDeleteIntent(pStopSelf)
+                // 2026-07-09: setDeleteIntent() solo dispara si la notificacion
+                // se descarta con swipe, pero setOngoing(true) ya bloquea ese
+                // gesto en la mayoria de versiones/OEMs -- sin este boton no
+                // habia NINGUNA forma real de que el usuario parara el radio
+                // a proposito (antes dependia de que onTaskRemoved() lo matara
+                // solo, que es justo lo que se saco por peligroso).
+                .addAction(0, "DESCONECTAR RADIO", pStopSelf)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
@@ -564,6 +571,7 @@ public class RadioAudioService extends Service {
                 .setContentText(text)
                 .setContentIntent(buildPendingIntent())
                 .setDeleteIntent(pStopSelf)
+                .addAction(0, "DESCONECTAR RADIO", pStopSelf)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
@@ -650,7 +658,17 @@ public class RadioAudioService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        stopSelf();
+        // 2026-07-09: antes esto mataba el Service completo -- deteccion de
+        // caida, recepcion de alertas de otros integrantes, y transmision,
+        // las tres juntas -- con solo deslizar la app fuera de "recientes".
+        // Gesto habitual y no malicioso: la mayoria de usuarios lo hace para
+        // liberar RAM sin saber que corta el monitoreo de seguridad, sin
+        // ningun aviso de que paso. Un foreground service con notificacion
+        // persistente esta pensado justamente para sobrevivir esto -- ahora
+        // se queda vivo hasta que el usuario lo pare a proposito (boton
+        // "DESCONECTAR RADIO" en la notificacion, ver
+        // buildForegroundNotification()/updateForegroundNotification()) o el
+        // sistema lo mate por memoria (START_STICKY ya lo reinicia en ese caso).
     }
 
     private void createNotificationChannels() {
