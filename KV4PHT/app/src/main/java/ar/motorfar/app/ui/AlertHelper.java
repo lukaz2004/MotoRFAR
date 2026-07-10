@@ -18,9 +18,12 @@ import ar.motorfar.app.radio.TxWhitelist;
  *   REGROUP      — Parada voluntaria, esperar al grupo (verde)
  *
  * EMERGENCY se transmite SIEMPRE en 140.970 MHz (canal exclusivo de
- * emergencias Res. 5/2015) -- es la frecuencia legal reservada, NO implica
- * que haya alguien escuchando ahí en ese momento. Ni siquiera tu propio
- * grupo la escucha si no tiene un radio sintonizado justo en ese canal.
+ * emergencias Res. 5/2015). Tu propio grupo NO la escucha si no tiene un
+ * radio sintonizado justo en ese canal en ese momento -- eso es un hecho
+ * verificado en el código (no hay modo de escaneo accesible desde la UI).
+ * Que algún radioaficionado ajeno al grupo esté monitoreando esa frecuencia
+ * por convención es posible pero no está verificado ni garantizado -- no
+ * afirmar ninguna de las dos cosas como certeza en el copy de cara al usuario.
  */
 public class AlertHelper {
 
@@ -66,8 +69,8 @@ public class AlertHelper {
             case EMERGENCY:
                 return "Se enviará tu posición GPS y una alerta de emergencia al grupo.\n\n"
                      + "⚠ Se transmite por 140.970 MHz, la frecuencia de emergencias M.T.T.T.\n"
-                     + "— pero nadie la escucha si no tiene su radio en ese canal justo en\n"
-                     + "este momento. No hay confirmación de que alguien la reciba.\n\n"
+                     + "— tu grupo solo la recibe si su radio está sintonizada a ese canal\n"
+                     + "justo en este momento. No hay garantía de eso.\n\n"
                      + "¿Confirmar?";
             case STOP:
                 return "Se enviará tu posición GPS y un aviso de detención al grupo.\n\n¿Confirmar?";
