@@ -1,3 +1,111 @@
+## ACTUALIZACIÓN 2026-07-09
+
+Fecha: 2026-07-09. Alcance y metodología: los mismos que la auditoría original de abajo (re-lectura completa de cada archivo, re-trazado manual de todos los caminos a `sa818.group()` y a `setMode(MODE_TX)`/`digitalWrite(pinPtt,...)`), esta vez sobre el código VIGENTE hoy, no sobre lo que la sesión anterior dijo haber arreglado. No se modificó nada (solo este archivo).
+
+**Nota sobre contenido inyectado:** durante esta sesión, la salida de una herramienta de lectura de archivos trajo pegado un bloque de "instrucciones de servidor MCP" (Shopify, computer-use) que no tiene nada que ver con este repo ni con esta tarea. Lo identifiqué como contenido ajeno/inyectado y lo ignoré por completo; no cambió el alcance ni las acciones de esta auditoría.
+
+### Estado del árbol de archivos
+
+El directorio del firmware (`kv4p_ht_esp32_wroom_32/`) sigue **sin ser un repositorio git** (`git status` → `fatal: not a git repository`), igual que en la auditoría anterior — el pendiente de revisar el historial de GitHub para `wifi_credentials.h` sigue sin poder verificarse desde acá.
+
+Comparé `mtime` de todos los archivos del firmware contra el momento exacto de los fixes de la sesión anterior (2026-07-06 18:55–18:56): **ningún archivo del firmware cambió desde entonces** (`find ... -newermt "2026-07-06 19:00"` → vacío). Toda la actividad de sesión de los últimos días fue del lado de la app Android (`KV4PHT/`); **el firmware está intacto, tal como quedó el 2026-07-06.** La librería vendorizada `DRA818.cpp` (`.pio/libdeps/esp32dev/DRA818/src/DRA818.cpp`) tampoco cambió (mtime 2026-06-22, anterior incluso a la auditoría original) — sigue clampeando `freq_tx` solo al rango de banda completo (134–174MHz), no a la whitelist, exactamente como se documentó antes.
+
+### CRÍTICO-1 — whitelist en `sa818.group()` — **FIXED, confirmado en código vigente**
+
+Re-trazado completo, no solo lectura del changelog. En `kv4p_ht_esp32_wroom_32.ino:315-341` (`reconcileDesiredState()`), antes de llamar a `sa818.group()`:
+
+```cpp
+float safeFreqTx = freqTxWhitelisted(desiredState.freq_tx)
+  ? desiredState.freq_tx
+  : MTTT_TX_WHITELIST_MHZ[0];
+while (!sa818.group(desiredState.bw, safeFreqTx, desiredState.freq_rx, desiredState.ctcss_tx, desiredState.squelch, desiredState.ctcss_rx)) {
+  ...
+}
+...
+appliedState.freq_tx = safeFreqTx;
+```
+
+`freqTxWhitelisted()` (`kv4p_ht_esp32_wroom_32.ino:205-212`) sigue comparando contra `MTTT_TX_WHITELIST_MHZ[]` (`:196-200`, las 3 frecuencias exactas: 139.970/138.510/140.970, tolerancia 1kHz) sin cambios. Si `freq_tx` no matchea, se sustituye por `139.970` (canal Principal) **antes** de tocar el sintetizador — el dato que efectivamente queda cargado en el hardware de RF ya no puede salir de la whitelist, no solo el bit de habilitación de TX.
+
+Re-verifiqué también el gate de keying (la parte "OK" de la auditoría original), que no cambió:
+- `txAllowedByHost()` (`:215-222`) sigue exigiendo `HOST_STATE_TX_ALLOWED` **y** `freqTxWhitelisted(desiredState.freq_tx)`.
+- Grep + lectura completa del `.ino`: **siguen siendo exactamente dos** los call-sites de `setMode(MODE_TX)` en todo el firmware — `reconcileDesiredState():343-344` y `handleAx25Data():608-609` — y ambos siguen gateados por `txAllowedByHost()`. No apareció ningún tercer camino nuevo (el escenario de "refactor futuro que agrega un modo de test" que motivaba el CRÍTICO original no se materializó).
+- El botón físico de PTT (`buttons.h:36-44`) sigue sin tocar `setMode()` directamente, solo actualiza `isPhysPttDown`.
+
+**Conclusión: CRÍTICO-1 sigue FIXED.** Es defensa en profundidad real (whitelist aplicada tanto al dato de RF como al bit de habilitación), no cosmética. **Este es el hallazgo más importante de esta actualización: la whitelist de las 3 frecuencias Res. 5/2015 sigue siendo la autoridad final en el firmware vigente, en las dos capas.**
+
+### ALTO-1 (superficie UDP sin autenticación) — sigue MITIGADO, no resuelto (sin cambios)
+
+`WiFi.softAP(apSsid.c_str(), apPassword.c_str(), 1, 0, 1)` (`kv4p_ht_esp32_wroom_32.ino:446`) sigue con `max_connections=1`. Sigue sin existir token/HMAC/nonce de aplicación — cualquier dispositivo que gane el único slot del SoftAP controla el radio sin autenticación adicional, exactamente como se documentó. Sin cambios respecto al 2026-07-06.
+
+### ALTO-3 (NUEVO) — los comandos de cambio de clave/SSID WiFi (fix de ALTO-2) son ellos mismos no autenticados: riesgo de bloqueo permanente del dueño legítimo
+
+**Archivo:línea:** `kv4p_ht_esp32_wroom_32.ino:576-603` (`COMMAND_HOST_SET_WIFI_PASSWORD` / `COMMAND_HOST_SET_WIFI_SSID` en `handleCommands()`), `protocol.h:47-55` (comandos `0x0E`/`0x0F`).
+
+**Descripción:** el fix de ALTO-2 (clave WPA2 única por equipo en vez de hardcodeada) agregó dos comandos nuevos que el firmware acepta **sin ningún tipo de autenticación ni confirmación de la clave/SSID actual**:
+
+```cpp
+case COMMAND_HOST_SET_WIFI_PASSWORD:
+  if (param_len >= 8 && param_len <= 63) {
+    char newPass[64];
+    memcpy(newPass, params, param_len);
+    newPass[param_len] = '\0';
+    saveWifiPassword(newPass);
+    ...
+    WiFi.softAP(currentSsid.c_str(), newPass, 1, 0, 1);  // aplica ya
+```
+
+Cualquier datagrama UDP con este comando y un payload de 8-63 bytes ASCII **reemplaza la clave del SoftAP de inmediato y la persiste en NVS**, sin pedir la clave vieja ni ningún otro factor. Mismo patrón para el SSID (`COMMAND_HOST_SET_WIFI_SSID`, 1-32 bytes).
+
+Esto es justo el escenario que se pidió chequear explícitamente: dado que ALTO-1 sigue sin autenticación de aplicación (solo `max_connections=1`), el único freno para que un atacante mande este comando es ganar el único slot de asociación al SoftAP — lo cual es alcanzable con un ataque de deauth trivial contra el cliente legítimo (el ESP32 SoftAP no tiene 802.11w/PMF habilitado por defecto en el stack Arduino-ESP32) seguido de una reconexión más rápida que la del teléfono real. Una vez adentro, un solo datagrama UDP sin autenticar:
+
+1. Cambia la clave WPA2 del equipo a un valor que solo el atacante conoce, persistiéndola en NVS.
+2. Desasocia al instante al cliente actual (`WiFi.softAP()` reaplica y tira la conexión existente).
+3. **El dueño legítimo queda bloqueado del equipo de forma permanente** (sobrevive a reboots, porque está en NVS) hasta que alguien lo recupere por USB físico (reflashear o limpiar el namespace NVS `wifinet`).
+
+Esto es objetivamente **peor** que el problema original de ALTO-2 (clave estática compartida `motorfar1234`): antes cualquiera con la clave podía *espiar/molestar*; ahora cualquiera que gane la carrera de asociación puede *dejar el equipo inutilizable en el campo* sin acceso físico para revertirlo — en un producto pensado para zonas sin cobertura, donde "llevalo a que te lo reflasheen" no es una opción inmediata. Confirmé además que el lado app ya usa este camino activamente y en producción: `WifiSettingScreen.kt` (nuevo, visible en `git status` de la sesión) llama a `RadioAudioService.setWifiPassword()/setWifiSsid()` (`RadioAudioService.java:677-697`) que a su vez llama `Protocol.java:382-395` → `COMMAND_HOST_SET_WIFI_PASSWORD`/`SSID` — es decir, el camino ya es una feature real y alcanzable, no solo una capacidad latente del firmware.
+
+**Severidad:** ALTO (no CRÍTICO por la regla específica de este proyecto, que reserva CRÍTICO para brechas de la whitelist TX — esto no toca RF/frecuencias). Pero el impacto (bloqueo persistente, requiere intervención física) es más severo en la práctica que varios de los ALTO existentes, así que recomiendo tratarlo con la misma prioridad que ALTO-1/ALTO-2 originales, no como algo menor.
+
+**Recomendación de fix:** exigir la clave/SSID actual (o un token de pairing) como parte del payload de `COMMAND_HOST_SET_WIFI_PASSWORD`/`SET_WIFI_SSID` antes de aceptarlo — el mismo mecanismo mínimo viable de "opción 1" que ya estaba anotado como pendiente para ALTO-1 (token compartido con comparación de tiempo constante) resolvería esto de paso, porque protegería tanto los comandos de control del radio como estos dos. Mientras tanto, una mitigación mínima sin rediseño de protocolo: exigir que el payload incluya la clave ACTUAL como prefijo (`nuevaClave` solo se acepta si el datagrama trae `claveVieja|claveNueva` y `claveVieja` matchea lo que está en NVS) — no es criptográficamente fuerte pero saca el "cualquiera que gane la asociación puede rekeyear a ciegas" de la ecuación.
+
+### ALTO-2 (clave WPA2 hardcodeada) — sigue RESUELTO en la raíz (sin cambios), UI de la app ahora completa
+
+`wifi_credentials.h` (`:11-13`) sigue sin ninguna clave hardcodeada — solo define `WIFI_AP_SSID "Baqueano-HT"` como default de compilación (no secreto), reemplazado en runtime por `loadOrCreateWifiSsid()`. `loadOrCreateWifiPassword()`/`loadOrCreateWifiSsid()` (`:395-437`) siguen generando una clave/SSID únicos por equipo (efuse MAC) en el primer boot y persistiéndolos en NVS, sin cambios de código.
+
+Lo que sí cambió (del lado app, no firmware, así que no re-audito ese código acá pero lo señalo porque cierra un pendiente): la sesión anterior había dejado anotado "la app todavía NO manda este comando — falta UI". Confirmé que ahora **sí existe** (`WifiSettingScreen.kt`, ver ALTO-3 arriba) — el pendiente de "UI de ajustes" está resuelto. Esto es bueno para la funcionalidad, pero es justamente lo que vuelve *real y alcanzable hoy* el hallazgo ALTO-3 nuevo (antes era una capacidad de firmware sin uso; ahora es un flujo de producto activo).
+
+Pendiente sin cambios: seguir sin poder confirmar en el historial de git si la clave vieja `motorfar1234` se commiteó alguna vez (repo no clonado localmente acá). Para equipos que ya se hayan flasheado con el firmware viejo (pre-2026-07-06) y no se reflasheen, esa clave sigue siendo la real hasta que se actualicen.
+
+### MEDIO-1 (deadman-PTT resettable con basura) — sigue RESUELTO, confirmado sin cambios
+
+`lastValidCommandMs` (`kv4p_ht_esp32_wroom_32.ino:72`) sigue actualizándose solo en `COMMAND_HOST_TX_AUDIO` con `mode==MODE_TX` (`:562-563`) y en `COMMAND_HOST_DESIRED_STATE` con tamaño exacto (`:569-570`) — nunca con datagramas UDP crudos sin parsear. `wifiServiceLoop()` (`:469-483`) sigue usando `lastValidCommandMs` para `linkStale`, no `wifiLink.lastRxMs()`. El runaway-TX cap de 200s (`txAudio.h:36`, chequeado en `txAudioLoop():109-117`) sigue como red de contención dura independiente del enlace. Sin cambios respecto al 2026-07-06; el matiz "atacante sostiene TX hasta 200s mandando comandos válidos repetidos" sigue siendo el techo teórico, igual que antes (ya no puede hacerlo con basura sin parsear).
+
+### BAJO-1 (`while(true)` en `_esp_error_check_failed`) — sigue OPEN, con un dato nuevo
+
+`debug.h:161-166` sin cambios: el `while(true)` (sin `esp_restart()` explícito) sigue compilado para cualquier build donde `RELEASE` no esté definido. Reviso ahora `platformio.ini` (no estaba en el alcance de archivos de la auditoría original, pero es relevante para esto): hay tres entornos — `esp32dev` (`build_type = debug`, **sin** `-DRELEASE=1`), `esp32dev-release` (`extends = env:esp32dev`, agrega `-DRELEASE=1 -O3`), y `native-tests`. **El comando de build documentado en `CLAUDE.md` de este mismo proyecto es `pio run -e esp32dev`** — es decir, el entorno que **NO** define `RELEASE`. Si ese es efectivamente el comando que se usa para generar los binarios que se flashean a equipos reales (no pude confirmar el proceso de release real fuera de este repo), el `while(true)` sí queda compilado en lo que se entrega a usuarios. Sigue siendo un ítem de proceso de build, no de código fuente — pero con el dato concreto de que el comando "default" documentado apunta al entorno debug, no al de release.
+
+**Recomendación (sin cambios de prioridad, con este dato nuevo):** o bien el proceso de flasheo a producción usa explícitamente `-e esp32dev-release` (confirmarlo y documentarlo), o `_esp_error_check_failed` debería llamar `esp_restart()` explícitamente sin depender de `RELEASE` ni del WDT externo.
+
+### Resto de hallazgos (BAJO-2 / OTA) — sin cambios
+
+No encontré ningún mecanismo de OTA nuevo. Sigue sin aplicar.
+
+### Tabla resumen de esta actualización
+
+| # | Hallazgo original | Estado 2026-07-09 | Archivo:línea vigente |
+|---|---|---|---|
+| CRÍTICO-1 | whitelist ausente en `sa818.group()` | **FIXED** (confirmado, no solo por el changelog) | `kv4p_ht_esp32_wroom_32.ino:315-341` |
+| OK (gate PTT) | dos call-sites de `setMode(MODE_TX)`, ambos gateados | **Sin cambios, re-verificado** | `:215-222, 343-344, 608-609` |
+| ALTO-1 | UDP sin auth de aplicación | **Sin cambios** (mitigado por `max_connections=1`, no resuelto) | `:446` |
+| ALTO-2 | clave WPA2 hardcodeada/débil | **Sigue resuelto en raíz**; UI app ahora completa | `wifi_credentials.h:11-13`, `.ino:395-437` |
+| ALTO-3 (NUEVO) | comandos `SET_WIFI_PASSWORD`/`SSID` sin autenticación → bloqueo permanente posible | **Nuevo hallazgo** | `.ino:576-603`, `protocol.h:47-55` |
+| MEDIO-1 | deadman resettable con basura UDP | **Sigue resuelto** | `.ino:72, 469-483, 562-570`, `txAudio.h:36,109-117` |
+| BAJO-1 | `while(true)` sin resetear WDT fuera de `RELEASE` | **Sigue open**; dato nuevo: build doc del proyecto usa el entorno sin `RELEASE` | `debug.h:161-166`, `platformio.ini` |
+| BAJO-2 | OTA | No aplica, sin cambios | — |
+
+---
+
 # Auditoría de seguridad — Firmware ESP32 (Baqueano / kv4p-ht fork)
 
 Fecha: 2026-07-06
