@@ -770,15 +770,30 @@ public class RadioAudioService extends Service {
         releaseManDownAudioFocus();
         if (manDownWakeLock.isHeld()) manDownWakeLock.release();
         getCallbacks().manDownCountdownTick(null);
-        transmitEmergencyAlert();
-        NotificationCompat.Builder sentNotif = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
+        // 2026-07-09: antes esto mostraba "enviada" incondicionalmente, aunque
+        // el radio nunca hubiera estado conectado (ej. probando la app solo
+        // con el telefono, sin el equipo emparejado) -- confirmacion falsa en
+        // la peor feature posible para mentir. isRadioConnected()/isTxAllowed()
+        // es lo unico que se puede saber de forma sincronica antes de
+        // transmitir. No confirma que alguien haya escuchado (eso requeriria
+        // un ack de RF que el protocolo no tiene), pero corta el caso mas
+        // grave: decir "enviada" cuando no salio ni un bit.
+        boolean canAttemptTx = isRadioConnected() && isTxAllowed();
+        NotificationCompat.Builder notif = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_radio)
-                .setContentTitle("⚠ Alerta de emergencia enviada")
-                .setContentText("Se transmitió tu posición por 140.970 MHz (canal Emergencia)")
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
+        if (canAttemptTx) {
+            transmitEmergencyAlert();
+            notif.setContentTitle("⚠ Alerta transmitida por 140.970 MHz")
+                 .setContentText("Sin confirmación de que alguien la haya escuchado.");
+        } else {
+            notif.setContentTitle("⚠ No se pudo transmitir la alerta")
+                 .setContentText("Radio no conectada. Buscá ayuda por otra vía si podés.")
+                 .setCategory(NotificationCompat.CATEGORY_ALARM);
+        }
         NotificationManager nm = getSystemService(NotificationManager.class);
-        nm.notify(MANDOWN_NOTIFICATION_ID, sentNotif.build());
+        nm.notify(MANDOWN_NOTIFICATION_ID, notif.build());
     }
 
     private void postManDownNotification(int secondsRemaining) {

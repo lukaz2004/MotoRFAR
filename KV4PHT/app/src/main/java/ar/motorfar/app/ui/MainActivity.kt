@@ -1248,13 +1248,19 @@ class MainActivity : ComponentActivity() {
         val lat = loc?.latitude
         val lon = loc?.longitude
 
-        // 2. Siempre registrar la alerta en el chat (con o sin radio)
+        // 2. Siempre registrar la alerta en el chat local (es tu propio registro
+        // de que apretaste el botón), pero el aviso real de éxito/fracaso al
+        // usuario depende de si había radio conectada -- antes esto no se
+        // distinguía y quedaba la falsa impresión de que siempre se transmitió.
         addAlertToChat(type, userAlias, outgoing = true, lat = lat, lon = lon)
         ToneHelper.playEmergencyBeep(alertVolume / 100f)
 
         // 3. Transmitir por radio si está conectada
         val service = radioService
         if (service != null && uiState.value.isConnected) {
+            android.widget.Toast.makeText(
+                this, AlertHelper.getSentConfirmation(type), android.widget.Toast.LENGTH_SHORT
+            ).show()
             val homeFreq        = activeFrequencyStr  // canal de grupo donde estaba
             val homeChannelName = uiState.value.activeChannelName
             val targetFreq       = AlertHelper.getTargetFrequency(type, activeFrequencyStr)
@@ -1291,6 +1297,10 @@ class MainActivity : ComponentActivity() {
                     }, 1500)
                 }
             }, 2000)
+        } else {
+            android.widget.Toast.makeText(
+                this, getString(R.string.alert_not_transmitted), android.widget.Toast.LENGTH_LONG
+            ).show()
         }
     }
 }

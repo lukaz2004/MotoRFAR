@@ -169,4 +169,5 @@
     <string name="waypoint_sent">WAYPOINT · posición enviada al grupo</string>
     <string name="waypoint_no_radio">Sin radio · waypoint no transmitido</string>
     <string name="ptt_not_allowed">RADIO OCUPADA · esperá un segundo y probá de nuevo</string>
+    <string name="alert_not_transmitted">Sin radio conectada · la alerta NO se transmitió, no llegó a nadie</string>
 </resources>
