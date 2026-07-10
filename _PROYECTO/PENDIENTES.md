@@ -66,11 +66,10 @@
 ✅ Las 24 provincias (23 + CABA) generadas como `.map` Mapsforge y publicadas
 en GitHub Release `mapas-v1` de `lukaz2004/MotoRFAR` (público, ~366MB total).
 Manifest provincia→URL en `_PROYECTO/mapas_offline/provincias.json`.
-⚠️ El release tenía `createdAt` de dos días antes de que se lanzara el
-pipeline de esta sesión — algo/alguien ya lo había corrido y publicado sin
-quedar anotado acá. **Sin identificar el origen** — confirmar antes de asumir
-que el contenido es confiable para producción (ver detalle en
-`NEXT_SESSION.md`, CIERRE 2026-07-09 segunda parte).
+El release tenía `createdAt` de dos días antes de que se lanzara el pipeline
+de esta sesión — confirmado con LuKaZ que viene de otra sesión de chat previa
+que ya lo había corrido (ver detalle en `NEXT_SESSION.md`, CIERRE 2026-07-09
+segunda parte).
 - ⬜ Sub-proyecto 2 (ventana in-app que consume el manifest) — arrancable
   ahora que hay URLs reales, todavía sin construir.
 

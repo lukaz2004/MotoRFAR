@@ -19,17 +19,14 @@
   filtro de Osmosis no convergiera — se agregó simplificación Douglas-Peucker.
   Todo el detalle de bloqueos/soluciones en el historial de la sesión (no
   repetido acá).
-- ⚠️ **Hallazgo sin explicar, anotar para la próxima sesión:** el release
-  `mapas-v1` en GitHub tenía `createdAt: 2026-07-07` (dos días antes de que
-  arrancara esta sesión) aunque se publicó (`publishedAt`) recién hoy a las
-  15:39, horas antes de que se lanzara el pipeline de esta sesión. Alguien o
-  algo ya había corrido este mismo pipeline y dejado un release armado sin que
-  quedara anotado acá. El pipeline de esta sesión generó su propio set de 24
-  `.map` (verificados, tamaños ~5-10% distintos pero plausibles) y detectó el
-  release preexistente a mitad de camino — se borró el duplicado propio y el
-  manifest apunta al que ya estaba. **No identificado quién/qué lo publicó.**
-  Antes de asumir que `mapas-v1` es confiable para producción, confirmar el
-  origen de ese release previo.
+- ✅ **Aclarado con LuKaZ:** el release `mapas-v1` preexistente (`createdAt`
+  dos días antes de esta sesión, publicado horas antes de lanzar el pipeline)
+  viene de otra sesión de chat previa que corrió este mismo pipeline —
+  confirmado, no es contenido de origen desconocido. El pipeline de esta
+  sesión generó su propio set de 24 `.map` en paralelo (tamaños ~5-10%
+  distintos pero plausibles, mismo relation id de OSM), lo detectó a mitad de
+  camino, borró su duplicado y el manifest quedó apuntando al release ya
+  existente.
 - **Sub-proyecto 2 (ventana in-app):** ahora sí tiene URLs reales para
   consumir (`_PROYECTO/mapas_offline/provincias.json`). Arrancable cuando se
   retome.
