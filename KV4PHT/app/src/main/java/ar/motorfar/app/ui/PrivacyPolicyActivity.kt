@@ -65,7 +65,7 @@ private fun PrivacyPolicyScreen(onBack: () -> Unit) {
             Body("Aplicación de radio VHF para motociclistas y 4x4 en Argentina. Opera en frecuencias libres de la Resolución 5/2015 (M.T.T.T.): 138.510, 139.970 y 140.970 MHz.")
 
             Section("DATOS QUE USA LA APP")
-            Bullet("Ubicación GPS — mostrar tu posición en el mapa y compartirla con tu grupo por radio. No se envía a internet.")
+            Bullet("Ubicación GPS — mostrar tu posición en el mapa y transmitirla sin cifrar por VHF. No se envía a internet, pero cualquiera con un equipo sintonizado al mismo canal puede escucharla y decodificarla, no solo tu grupo.")
             Bullet("Audio del micrófono — transmitir voz por PTT a través del módulo de radio. No se graba ni almacena.")
             Bullet("Frecuencia de operación — sintonizar el transceiver en los canales permitidos.")
             Bullet("Alias / indicativo — identificarte dentro del grupo.")

@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ar.motorfar.app.ui.compose.theme.EmergencyBorder
@@ -139,6 +140,9 @@ fun WifiSettingScreen(
             label = { Text("Clave nueva (8-63 caracteres)") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            // 2026-07-09: sin esto la clave WPA2 del grupo se veia en claro en
+            // pantalla mientras se tipeaba (hombro-espia / captura de pantalla).
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor   = colors.borderActive,

@@ -5,6 +5,7 @@
   "release_repo": "lukaz2004/MotoRFAR",
   "release_tag": "mapas-v1",
   "release_status": "published (not draft) - assets are publicly downloadable without auth",
+  "integrity": "sha256 per province copied directly from GitHub's own release asset digest (gh release view --json assets) on 2026-07-09 -- verify the downloaded file's SHA-256 against this field before feeding it to the Mapsforge parser; do not trust size_bytes alone",
   "provinces": [
     {
       "iso3166_2": "AR-A",
@@ -13,7 +14,8 @@
       "asset_filename": "salta.map",
       "size_bytes": 11285261,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/salta.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/salta.map",
+      "sha256": "sha256:64cf4f438b96abdf383316b5928217898acd2c3abe51a2201d073bd9aeb547df"
     },
     {
       "iso3166_2": "AR-B",
@@ -22,7 +24,8 @@
       "asset_filename": "buenos-aires.map",
       "size_bytes": 82419677,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/buenos-aires.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/buenos-aires.map",
+      "sha256": "sha256:ee023d3e7d3e6bfab825bc613f4852f7300d45925ef98343330d14a1ad970a4a"
     },
     {
       "iso3166_2": "AR-C",
@@ -31,7 +34,8 @@
       "asset_filename": "ciudad-autonoma-de-buenos-aires.map",
       "size_bytes": 7764134,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/ciudad-autonoma-de-buenos-aires.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/ciudad-autonoma-de-buenos-aires.map",
+      "sha256": "sha256:9f47dc9aa39371a55992ab1ab481bf2b64a555ac37aa6bb0e44bb9e899dcff10"
     },
     {
       "iso3166_2": "AR-D",
@@ -40,7 +44,8 @@
       "asset_filename": "san-luis.map",
       "size_bytes": 10110284,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/san-luis.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/san-luis.map",
+      "sha256": "sha256:906af7fa137fea03b2cfe30bdca24f0acfb52c41b8c68176c1fd85e01eddd78a"
     },
     {
       "iso3166_2": "AR-E",
@@ -49,7 +54,8 @@
       "asset_filename": "entre-rios.map",
       "size_bytes": 14806287,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/entre-rios.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/entre-rios.map",
+      "sha256": "sha256:d0a1eb5ff1b6f36c55939da51b6174094155ffff4e0cfe8cb58a536ceb7feff1"
     },
     {
       "iso3166_2": "AR-F",
@@ -58,7 +64,8 @@
       "asset_filename": "la-rioja.map",
       "size_bytes": 4704588,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/la-rioja.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/la-rioja.map",
+      "sha256": "sha256:5f70e709ab6620b1846e27ac03c019d72927bc224e6f7d0560dd25f0804d3d83"
     },
     {
       "iso3166_2": "AR-G",
@@ -67,7 +74,8 @@
       "asset_filename": "santiago-del-estero.map",
       "size_bytes": 10686163,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santiago-del-estero.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santiago-del-estero.map",
+      "sha256": "sha256:c2165a84795da28e94b39164335330c547c1df765f4040835a0ee4249f51bcc0"
     },
     {
       "iso3166_2": "AR-H",
@@ -76,7 +84,8 @@
       "asset_filename": "chaco.map",
       "size_bytes": 7232540,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/chaco.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/chaco.map",
+      "sha256": "sha256:cbf27a0e2edcc1a157b3079af93ca03efb81bc8dfab1c9074f58b1877ab3a229"
     },
     {
       "iso3166_2": "AR-J",
@@ -85,7 +94,8 @@
       "asset_filename": "san-juan.map",
       "size_bytes": 21570763,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/san-juan.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/san-juan.map",
+      "sha256": "sha256:0a413b79dbb7041b364b718b9c9fd497f0d0341733eebb57e8a7eea9cef0a6fc"
     },
     {
       "iso3166_2": "AR-K",
@@ -94,7 +104,8 @@
       "asset_filename": "catamarca.map",
       "size_bytes": 6781941,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/catamarca.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/catamarca.map",
+      "sha256": "sha256:af55a45ec3cdb0b757fdca13bdbe99107745255ee41f7e504ec08653e47d0179"
     },
     {
       "iso3166_2": "AR-L",
@@ -103,7 +114,8 @@
       "asset_filename": "la-pampa.map",
       "size_bytes": 14580734,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/la-pampa.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/la-pampa.map",
+      "sha256": "sha256:542a400a2d4543f76dc0115b120b6a697630a2ae806951a82758473eadf4bad1"
     },
     {
       "iso3166_2": "AR-M",
@@ -112,7 +124,8 @@
       "asset_filename": "mendoza.map",
       "size_bytes": 13683414,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/mendoza.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/mendoza.map",
+      "sha256": "sha256:e8c83702edc7634c10a1c80167a4df6241cc244dfbe93745c9176c71d9bbf30a"
     },
     {
       "iso3166_2": "AR-N",
@@ -121,7 +134,8 @@
       "asset_filename": "misiones.map",
       "size_bytes": 27600452,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/misiones.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/misiones.map",
+      "sha256": "sha256:110ed5ded7cd2b5bd211a68b4f51aedc1e29d77198f8a2b2f06193efe582bfb6"
     },
     {
       "iso3166_2": "AR-P",
@@ -130,7 +144,8 @@
       "asset_filename": "formosa.map",
       "size_bytes": 11086540,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/formosa.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/formosa.map",
+      "sha256": "sha256:c2530787abd65105e5a92e6c095abacf9ef3f2bf5b31979b309c839ab87a93e2"
     },
     {
       "iso3166_2": "AR-Q",
@@ -139,7 +154,8 @@
       "asset_filename": "neuquen.map",
       "size_bytes": 24114949,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/neuquen.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/neuquen.map",
+      "sha256": "sha256:b0a5fdbea209b40a003136db9a057e3437b7ef1c983ca86a5db56e31ef52f2a8"
     },
     {
       "iso3166_2": "AR-R",
@@ -148,7 +164,8 @@
       "asset_filename": "rio-negro.map",
       "size_bytes": 15836210,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/rio-negro.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/rio-negro.map",
+      "sha256": "sha256:764ca1825cfaaf35389b0867d4e8d5446cd02cb6f89d7c6a725e1bb478903af0"
     },
     {
       "iso3166_2": "AR-S",
@@ -157,7 +174,8 @@
       "asset_filename": "santa-fe.map",
       "size_bytes": 26836327,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santa-fe.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santa-fe.map",
+      "sha256": "sha256:c3a7ac5f1e45181044b16e3cfcc0233ba0ff6c4d07eeec68a907ea338f5941e7"
     },
     {
       "iso3166_2": "AR-T",
@@ -166,7 +184,8 @@
       "asset_filename": "tucuman.map",
       "size_bytes": 6006313,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/tucuman.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/tucuman.map",
+      "sha256": "sha256:90c2e106c9c0beb345c6d52a973caffaed0a583854b66d6e0e91a01108b303d7"
     },
     {
       "iso3166_2": "AR-U",
@@ -175,7 +194,8 @@
       "asset_filename": "chubut.map",
       "size_bytes": 16069757,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/chubut.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/chubut.map",
+      "sha256": "sha256:ccd9c55c7a104eff348ec01047637172a3a9b9426bc94032ff488d9938aa90d9"
     },
     {
       "iso3166_2": "AR-V",
@@ -184,7 +204,8 @@
       "asset_filename": "tierra-del-fuego.map",
       "size_bytes": 7826230,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/tierra-del-fuego.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/tierra-del-fuego.map",
+      "sha256": "sha256:002efd20a623547442110e4fcbe3f4907f958c9e72ef3d86e0543048075d6e9e"
     },
     {
       "iso3166_2": "AR-W",
@@ -193,7 +214,8 @@
       "asset_filename": "corrientes.map",
       "size_bytes": 14161460,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/corrientes.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/corrientes.map",
+      "sha256": "sha256:fd21fc2a9eca96f483e7a5567fc15cdff3f02df5a1547b4a921493039fdd2872"
     },
     {
       "iso3166_2": "AR-X",
@@ -202,7 +224,8 @@
       "asset_filename": "cordoba.map",
       "size_bytes": 33528148,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/cordoba.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/cordoba.map",
+      "sha256": "sha256:a4244d05a1db513cf1ce14ecd9183dbd3cada24a9ef944c646fe6c286fa075fe"
     },
     {
       "iso3166_2": "AR-Y",
@@ -211,7 +234,8 @@
       "asset_filename": "jujuy.map",
       "size_bytes": 7395598,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/jujuy.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/jujuy.map",
+      "sha256": "sha256:136fe08bce94ae55967772cc207b7e1e51627bc2349fed3cbd3048f2ae574518"
     },
     {
       "iso3166_2": "AR-Z",
@@ -220,7 +244,8 @@
       "asset_filename": "santa-cruz.map",
       "size_bytes": 21554449,
       "release_tag": "mapas-v1",
-      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santa-cruz.map"
+      "download_url": "https://github.com/lukaz2004/MotoRFAR/releases/download/mapas-v1/santa-cruz.map",
+      "sha256": "sha256:6727e314b6fade87221c6d2f1ca0900720aaedf9f2933e4e6ebcb27907707a97"
     }
   ]
 }
