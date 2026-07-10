@@ -900,7 +900,7 @@ public class RadioAudioService extends Service {
      * Antes esto solo llegaba vía getCallbacks().packetReceived(), que es un
      * no-op si nadie está bindeado (app en segundo plano) — quedaba en silencio.
      */
-    private void notifyIncomingAlert(String title, String body) {
+    private void notifyIncomingAlert(String title, String body, boolean isEmergency) {
         Intent openApp = new Intent(this, MainActivity.class);
         PendingIntent pOpen = PendingIntent.getActivity(this, 2, openApp, PendingIntent.FLAG_IMMUTABLE);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, ALERT_NOTIFICATION_CHANNEL_ID)
@@ -911,6 +911,18 @@ public class RadioAudioService extends Service {
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setAutoCancel(true)
                 .setContentIntent(pOpen);
+        // 2026-07-10: antes esto era solo una notificacion IMPORTANCE_HIGH normal
+        // -- sonido default (silenciable por No Molestar), sin cartel forzado.
+        // El canal (ALERT_NOTIFICATION_CHANNEL_ID) ya existe, esto solo cambia el
+        // tratamiento cuando es EMERGENCIA real (no DETENCION/REAGRUPAMIENTO):
+        // cartel de pantalla completa igual que el propio countdown de Man-Down
+        // (mismo mecanismo, atraviesa pantalla bloqueada), + sonido de alarma
+        // explicito via ToneHelper -- no depende de que la Activity este
+        // bindeada, corre directo desde el Service.
+        if (isEmergency) {
+            builder.setFullScreenIntent(pOpen, true);
+            ar.motorfar.app.ui.ToneHelper.playEmergencyBeep(1.0f);
+        }
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.notify(INCOMING_ALERT_NOTIFICATION_ID, builder.build());
     }
@@ -1889,15 +1901,17 @@ public class RadioAudioService extends Service {
                     String alertBody = msg.getMessageBody();
                     if (alertBody != null) {
                         String alertTitle = null;
+                        boolean isEmergency = false;
                         if (alertBody.contains("ALERTA")) {
                             alertTitle = "⚠ EMERGENCIA de " + aprsPacket.getSourceCall();
+                            isEmergency = true;
                         } else if (alertBody.contains("DETENCION")) {
                             alertTitle = "Detención de " + aprsPacket.getSourceCall();
                         } else if (alertBody.contains("REAGRUPAMIENTO")) {
                             alertTitle = "Reagrupamiento de " + aprsPacket.getSourceCall();
                         }
                         if (alertTitle != null) {
-                            notifyIncomingAlert(alertTitle, alertBody);
+                            notifyIncomingAlert(alertTitle, alertBody, isEmergency);
                         }
                     }
                 }
