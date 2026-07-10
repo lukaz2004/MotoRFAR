@@ -32,8 +32,8 @@
   sí se corrigieron. Encontrado navegando el onboarding para probar el ícono.
 - ⬜ Probar en dispositivo físico: botón "ESTOY BIEN · CANCELAR" de Man-Down
   tocado a mano, y alerta de otro integrante llegando con la app cerrada.
-- ⬜ `onTaskRemoved()` mata el Service si el usuario desliza la app fuera de
-  "recientes" — Man-Down se apaga igual. Decisión de producto pendiente.
+- ✅ **`onTaskRemoved()` ya no mata el Service (2026-07-10)** — ver CIERRE
+  2026-07-10 en `NEXT_SESSION.md` para el detalle completo.
 - ⬜ **Hallazgo real, no resuelto:** `MainViewModel.channelMemories` es un
   snapshot cargado una sola vez (`loadData()`), no una LiveData reactiva de
   Room — queda desincronizado del canal real que usa `ChannelRow` (que sí es
@@ -61,6 +61,29 @@
   que quede un `while(true)` sin resetear WDT en el binario de producción).
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
+
+## 🚨 Confiabilidad de alertas — 10 fixes cerrados (2026-07-10), detalle en NEXT_SESSION.md
+Toda la cadena de Man-Down/EMERGENCIA revisada de punta a punta tras una
+auditoría profunda (`AUDITORIA_CONFIABILIDAD_ALERTAS.md`,
+`AUDITORIA_FALLAS_SILENCIOSAS.md`). 10 commits, build verde en cada uno,
+resumen completo en `NEXT_SESSION.md` CIERRE 2026-07-10.
+
+- ⬜ **Sin verificar en dispositivo físico, todo lo de hoy**: igual que el
+  resto del proyecto, nada de esto se probó con equipo real conectado.
+  Puntual: el timeout de 15s del aviso de "enlace colgado" es un punto de
+  partida sin calibrar (ver `STALE_CONNECTION_TIMEOUT_MS` en
+  `RadioAudioService.java`) — podría dar falsos avisos o tardar de más,
+  ajustar con uso real.
+- ⬜ **El problema de fondo sigue abierto a propósito**: nadie garantiza
+  tener la radio en 140.970 en el momento de una EMERGENCIA real — no es
+  un bug de código, es una limitación de hardware (SA818 escucha una sola
+  frecuencia a la vez) + de uso. Un modo "scan por defecto" es una feature
+  nueva de verdad (afecta timing de recepción — el burst de EMERGENCIA
+  dura ~3.5s, hay que ver si el ciclo de scan actual lo puede perder,
+  consumo de batería, calibración con equipo real) — necesita su propia
+  sesión de diseño, no meterse a codear a ciegas. Mitigado por ahora con
+  protocolo humano escrito en el propio cartel de alerta (parar, llamar
+  por los 3 canales, escalar a emergencias reales si no hay respuesta).
 
 ## 💡 Web/marketing — video explicando el protocolo de respuesta a EMERGENCIA (2026-07-10)
 Propuesta sin construir, dicha por LuKaZ: una vez que la funcionalidad de

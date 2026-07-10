@@ -1,6 +1,83 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-10 — auditoría profunda + 10 fixes de confiabilidad de alertas
+Arrancó con un pedido de auditoría de seguridad de rutina y terminó en un
+hallazgo grande: **Man-Down/EMERGENCIA podía transmitir al vacío y la app
+igual decía "enviada".** Trazado end-to-end (`transmitEmergencyAlert()`
+fuerza el cambio a 140.970 para transmitir, pero no hay ningún modo de
+escaneo alcanzable desde la UI — el grupo normalmente NO está parado en
+ese canal, por diseño, ya que el chat libre está bloqueado ahí). Se
+lanzaron 3 auditorías paralelas en background (app, firmware, y una nueva
+de confiabilidad de alertas + fallas silenciosas) que confirmaron el
+patrón: **en ningún punto de la cadena de alertas el emisor sabía si algo
+realmente salió, y en cada punto la UI igual decía que sí.** Reportes
+completos en `AUDITORIA_SEGURIDAD_APP.md` (actualización),
+`AUDITORIA_SEGURIDAD_FIRMWARE.md` (actualización — **CRÍTICO-1 de la
+whitelist TX confirmado FIJO**), `AUDITORIA_SEGURIDAD_MAPAS_OFFLINE.md`
+(nuevo), `AUDITORIA_CONFIABILIDAD_ALERTAS.md` (nuevo),
+`AUDITORIA_FALLAS_SILENCIOSAS.md` (nuevo), `AUDITORIA_BRECHAS_DE_PRODUCTO.md`
+(nuevo, hallazgos de negocio/legal — cero validación real en hardware, sin
+backup del keystore, sin plan de continuidad, marketing que promete más de
+lo que el producto entrega para usuario solo).
+
+**10 commits de fixes, paso a paso, build verde en cada uno:**
+1. **Corta la confirmación falsa de "alerta enviada"** en Man-Down
+   (`fireManDownAlert()`) y en los botones manuales (`transmitGroupAlert()`)
+   — ahora chequean conexión real antes de decidir qué notificación mostrar,
+   y usan `AlertHelper.getSentConfirmation()` (existía en el código, nunca
+   se llamaba). Texto de "monitoreado por entidades" corregido (era falso).
+2. **`onTaskRemoved()` ya no mata el Service** al deslizar la app de
+   recientes — antes apagaba detección de caída, recepción, y envío juntos,
+   sin aviso. Se agregó un botón real "DESCONECTAR RADIO" en la
+   notificación (el único mecanismo previo, `setDeleteIntent`, era código
+   muerto porque `setOngoing(true)` bloquea el swipe-to-dismiss).
+3. **Pide excepción de optimización de batería** al activar Man-Down
+   (contextual, no a ciegas al abrir la app).
+4. **"CONECTADO" ahora avisa si el equipo lleva 15s sin responder** — antes
+   solo confirmaba que el socket existía, no que el ESP32 seguía
+   respondiendo. Implementado como AVISO, no bloqueo (sin hardware real no
+   se puede calibrar un timeout que corte PTT/alertas sin riesgo de falso
+   positivo).
+5. **Pide `POST_NOTIFICATIONS` en runtime** al activar Man-Down (ya estaba
+   en el manifest, pero eso no alcanza en Android 13+).
+6. **Alerta entrante de EMERGENCIA: cartel de pantalla completa + sonido de
+   alarma** — antes solo una notificación normal silenciable por No
+   Molestar. DETENCIÓN/REAGRUPAMIENTO no llevan este tratamiento (correcto,
+   no son emergencias reales).
+7. **Copy de 140.970 corregido dos veces** — primero de "monitoreado por
+   entidades" (falso) a "nadie la escucha" (también una afirmación fuerte
+   sin verificar), después a algo honesto: el grupo la recibe solo si tiene
+   el radio en ese canal en ese momento, sin garantía. Ninguna certeza
+   afirmada en ninguna dirección.
+8. **Protocolo de respuesta escrito en el cartel de EMERGENCIA** (pedido
+   explícito de LuKaZ): "Parate a revisar. Llamalo por los 3 canales. Sin
+   respuesta: pedí ayuda o avisá a emergencias/autoridades." Puesto en el
+   momento exacto en que alguien lo necesita, no enterrado en Ajustes.
+9. **PTT físico ahora confirma con sonido** — crítico para el caso que
+   justifica que exista un botón físico: pantalla rota tras una caída,
+   usuario operando a ciegas. `forcedPttStart()/forcedPttEnd()` eran
+   callbacks default no-op nunca implementados — el botón transmitía sin
+   ningún aviso.
+10. **Tono distinto para PTT aceptado vs. rechazado**, físico y en
+    pantalla — mismo criterio que un HT real (pedido explícito de LuKaZ).
+    Antes sonaba el mismo tono para "transmitiendo" y para "rechazado".
+
+**Lo que queda abierto, a propósito, sin codear a ciegas:**
+- El problema de fondo (nadie garantiza estar en 140.970) sigue sin
+  resolver — es rediseño de protocolo/UX (scan por defecto vs. transmitir
+  en el canal actual), necesita su propia sesión de diseño. Ver detalle en
+  `PENDIENTES.md`.
+- Nada de lo de hoy se probó en dispositivo físico — mismo pendiente de
+  siempre. El timeout de 15s del aviso de enlace colgado es un punto de
+  partida sin calibrar.
+- ALTO-1/ALTO-3 de seguridad (protocolo UDP del firmware sin
+  autenticación) sigue igual — ya anotado como su propia sesión de diseño
+  desde el 2026-07-09.
+- Idea sin construir: video para la web explicando el protocolo de
+  respuesta a EMERGENCIA, una vez que la funcionalidad de la app esté
+  resuelta y estable (orden explícito de LuKaZ, no adelantar).
+
 ## ⚡ CIERRE 2026-07-09 (segunda parte) — pipeline de mapas offline EJECUTADO, release publicado
 - **Mapas offline por provincia — pipeline corrido de punta a punta** (ya no es
   solo diseño, contradice la entrada de más abajo que decía "sin código
