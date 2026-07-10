@@ -1,5 +1,9 @@
 package ar.motorfar.app.ui.compose
 
+import android.content.Intent
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -237,6 +242,52 @@ fun AliasSettingScreen(
                     uncheckedTrackColor = colors.surface
                 )
             )
+        }
+
+        // 2026-07-09: Man-Down corre en RadioAudioService (foreground service);
+        // Android igual puede matarlo por optimizacion de batería en varios
+        // fabricantes (Huawei/Xiaomi/Samsung son particularmente agresivos)
+        // aunque el Service este bien declarado. Pedir la excepcion es la unica
+        // mitigacion real contra eso -- sin esto, Man-Down puede dejar de
+        // monitorear en segundo plano sin ningun aviso al usuario.
+        // ponytail: el estado se re-chequea al recomponer esta pantalla, no en
+        // vivo mientras el usuario esta en Ajustes de Android -- alcanza para
+        // este caso (la pantalla se vuelve a componer al volver acá).
+        val context = LocalContext.current
+        val batteryUnrestricted = remember(manDown) {
+            (context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager)
+                .isIgnoringBatteryOptimizations(context.packageName)
+        }
+        if (manDown && !batteryUnrestricted) {
+            Spacer(Modifier.height(8.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, EmergencyBorder, RoundedCornerShape(4.dp))
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Android puede apagar el monitoreo de Man-Down en segundo plano para ahorrar batería, sin avisarte. Para evitarlo, sacale la restricción de batería a la app.",
+                    color = EmergencyBorder,
+                    fontFamily = ShareTechMono,
+                    fontSize = 13.sp
+                )
+                Text(
+                    text     = "PERMITIR SIN RESTRICCIÓN DE BATERÍA  ›",
+                    color    = colors.accent,
+                    fontFamily = ShareTechMono,
+                    fontSize = 13.sp,
+                    modifier = Modifier.clickable {
+                        context.startActivity(
+                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
+                    }
+                )
+            }
         }
 
         Spacer(Modifier.height(4.dp))

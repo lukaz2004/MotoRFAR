@@ -19,6 +19,12 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 2026-07-09: sin esto, Android puede matar RadioAudioService por
+         optimizacion de bateria en segundo plano (Huawei/Xiaomi/Samsung son
+         agresivos con esto) y Man-Down deja de monitorear sin ningun aviso.
+         Se pide explicitamente desde AliasSettingScreen.kt cuando el usuario
+         activa Man-Down, no automaticamente al abrir la app. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- 2026-07-06: permite que la notificacion de Man-Down abra la pantalla
          propia de la app aunque el telefono este bloqueado (mismo mecanismo
          que usan apps de llamadas/alarmas). -->
