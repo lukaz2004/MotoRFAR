@@ -62,6 +62,33 @@
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
 
+## 🔧 Hardware disponible para la próxima sesión (2026-07-10)
+LuKaZ confirmó que hay un **ESP32 pelado** (sin módulo SA818/DRA818, sin
+antena) **ya flasheado** con el firmware de este proyecto
+(`kv4p_ht_esp32_wroom_32`). Arrancar la próxima sesión de verificación con
+esto en mano.
+
+**Lo que SÍ se puede probar con este setup** (capa de protocolo/conexión,
+sin RF real):
+- Handshake HELLO por USB/WiFi, `isConnectionReady()`/`isRadioConnected()`.
+- El aviso de "enlace colgado" agregado hoy (`STALE_CONNECTION_TIMEOUT_MS`,
+  15s sin calibrar) — conectar, dejar el ESP32 quieto respondiendo, después
+  desconectarlo/matarlo sin que la app se entere, y cronometrar si el aviso
+  aparece en un tiempo razonable.
+- Comandos UDP del protocolo (`COMMAND_HOST_DESIRED_STATE`,
+  `COMMAND_HOST_SET_WIFI_PASSWORD`/`SET_WIFI_SSID`, etc.) y el hallazgo
+  ALTO-3 de seguridad (comandos sin autenticar).
+- `WifiTransport`/reconexión, SSID único por equipo, cambio de clave/SSID
+  desde `WifiSettingScreen.kt`.
+
+**Lo que NO se puede probar sin el módulo de radio** (falta SA818/DRA818 +
+antena): transmisión/recepción RF real, whitelist TX con RF de verdad
+(`CRÍTICO-1` de `AUDITORIA_SEGURIDAD_FIRMWARE.md` está confirmado por
+trazado de código, no por RF real todavía), PTT físico del botón del
+módulo, Man-Down transmitiendo de verdad por 140.970, si alguien recibe
+una alerta en la práctica. Sigue siendo el mismo bloqueador de hardware de
+siempre para esa parte.
+
 ## 🚨 Confiabilidad de alertas — 10 fixes cerrados (2026-07-10), detalle en NEXT_SESSION.md
 Toda la cadena de Man-Down/EMERGENCIA revisada de punta a punta tras una
 auditoría profunda (`AUDITORIA_CONFIABILIDAD_ALERTAS.md`,
