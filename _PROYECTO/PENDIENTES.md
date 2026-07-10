@@ -62,6 +62,17 @@
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
 
+## 🔐 Protocolo UDP del firmware sin autenticación de aplicación (2026-07-09)
+ALTO-1 + ALTO-3 de la auditoría de seguridad 2026-07-09
+(`AUDITORIA_SEGURIDAD_FIRMWARE.md`): cualquier dispositivo que gane el único
+slot del SoftAP (`max_connections=1`) puede mandar comandos crudos sin
+autenticarse, incluyendo los nuevos `COMMAND_HOST_SET_WIFI_PASSWORD`/
+`SET_WIFI_SSID` sin pedir confirmar la clave actual — puede dejar al dueño
+real bloqueado afuera del equipo, recuperable solo reflasheando por USB.
+Mismo protocolo, misma raíz que el hallazgo original de la auditoría del
+2026-07-06. **No es un fix de una sesión — es rediseño de protocolo
+(token/HMAC).** Necesita su propia sesión de diseño dedicada.
+
 ## 🗺️ Mapas offline por provincia — pipeline CORRIDO, release publicado (2026-07-09)
 ✅ Las 24 provincias (23 + CABA) generadas como `.map` Mapsforge y publicadas
 en GitHub Release `mapas-v1` de `lukaz2004/MotoRFAR` (público, ~366MB total).
