@@ -245,6 +245,18 @@ class MainActivity : ComponentActivity() {
         _uiState.update { it.copy(locationGranted = granted) }
     }
 
+    // 2026-07-10: POST_NOTIFICATIONS ya estaba declarado en el manifest, pero
+    // eso no alcanza en Android 13+ (API 33) -- sin pedirlo en runtime, la
+    // cuenta regresiva de Man-Down, las alertas del grupo, y la confirmación
+    // de envío pueden simplemente no aparecer nunca, sin ningún indicio.
+    // Pedido contextual (recién al activar Man-Down), mismo criterio que el
+    // resto de permisos en esta app.
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* el resultado no cambia el flujo -- si lo niega, Man-Down igual
+           queda activado (sigue transmitiendo), solo no va a poder avisar
+           con notificaciones. Nada más que hacer acá. */ }
+
     // ── ServiceConnection ─────────────────────────────────────────────
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -693,6 +705,14 @@ class MainActivity : ComponentActivity() {
                                 onToggleManDown          = { enabled ->
                                     manDownEnabled = enabled
                                     radioService?.setManDownEnabled(enabled)
+                                    if (enabled &&
+                                        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+                                        androidx.core.content.ContextCompat.checkSelfPermission(
+                                            this@MainActivity, Manifest.permission.POST_NOTIFICATIONS
+                                        ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    }
                                     executor.execute {
                                         RadioServiceAccessor.getAppDb(viewModel)
                                             .saveAppSetting(AppSetting.SETTING_MAN_DOWN, enabled.toString())
