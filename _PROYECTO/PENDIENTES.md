@@ -62,11 +62,20 @@
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
 
-## 🔧 Hardware disponible para la próxima sesión (2026-07-10)
+## 🔧 Hardware disponible + objetivo explícito: cerrar FIRMWARE de una vez (2026-07-10)
 LuKaZ confirmó que hay un **ESP32 pelado** (sin módulo SA818/DRA818, sin
 antena) **ya flasheado** con el firmware de este proyecto
-(`kv4p_ht_esp32_wroom_32`). Arrancar la próxima sesión de verificación con
-esto en mano.
+(`kv4p_ht_esp32_wroom_32`), y pidió explícitamente **cerrar todo el frente
+de firmware de una vez** en una sesión dedicada con este equipo, en vez de
+seguir dejándolo como "pendiente de hardware" sesión tras sesión. Antes de
+arrancar esa sesión, conseguir/conectar el módulo SA818/DRA818 + antena si
+es posible — sin eso, la parte más importante (RF real, whitelist con RF,
+PTT físico, Man-Down transmitiendo de verdad) sigue sin poder cerrarse.
+Lista de lo que hoy está "🟡 pendiente de SA818 físico" en
+`00_MAPA_MAESTRO.md`/`02_AUDITORIA.md`/`03_CALENDARIO.md`: FW-2 (test RF
+real de whitelist), FW-3a (`--open-rx`, failsafe de WiFi en TX), FW-4 (J2
+dispara TX), APP-2 (Hello/handshake + audio RX/TX real por WiFi) — todo
+esto es candidato a cerrarse junto en esa sesión si el módulo está.
 
 **Lo que SÍ se puede probar con este setup** (capa de protocolo/conexión,
 sin RF real):
