@@ -62,6 +62,17 @@
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
 
+## 💡 Web/marketing — video explicando el protocolo de respuesta a EMERGENCIA (2026-07-10)
+Propuesta sin construir, dicha por LuKaZ: una vez que la funcionalidad de
+alertas esté resuelta y estable en la app (ver hallazgos de confiabilidad
+de alertas más abajo), hacer contenido para la web/redes explicando el
+protocolo de respuesta que ahora vive en el cartel de EMERGENCIA entrante
+(`AlertBanner.kt`, commit 2026-07-10): parar a revisar, llamar por los 3
+canales, y si no hay respuesta pedir ayuda o avisar a emergencias/
+autoridades reales. Da contexto real de uso, no solo specs técnicas.
+Orden explícito de LuKaZ: primero cerrar funcionalidad de la app, después
+contextualizar la web — no adelantar este contenido todavía.
+
 ## 🔐 Protocolo UDP del firmware sin autenticación de aplicación (2026-07-09)
 ALTO-1 + ALTO-3 de la auditoría de seguridad 2026-07-09
 (`AUDITORIA_SEGURIDAD_FIRMWARE.md`): cualquier dispositivo que gane el único
