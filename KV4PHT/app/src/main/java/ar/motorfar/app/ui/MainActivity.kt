@@ -974,12 +974,24 @@ class MainActivity : ComponentActivity() {
                 // En modo escucha el PTT no transmite (guard de seguridad)
                 if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
                 vibrate()
-                ToneHelper.playPttDown(vol)
+                // 2026-07-10: antes sonaba playPttDown() SIEMPRE, incluso si
+                // startPtt() fallaba -- mismo tono para "transmitiendo" y para
+                // "rechazado", igual que un HT real donde el tono de PTT
+                // aceptado tiene que ser distinto del de canal ocupado/no
+                // permitido. Ahora el tono de éxito solo suena si realmente
+                // arrancó; si no, suena el mismo tono de denegado que usa el
+                // resto de la app (modo escucha, canal Emergencia bloqueado).
                 val svc = radioService
                 if (svc != null && uiState.value.isConnected) {
-                    if (!svc.startPtt()) notifyPttNotAllowed()
+                    if (svc.startPtt()) {
+                        ToneHelper.playPttDown(vol)
+                    } else {
+                        ToneHelper.playAlertBeep(vol)
+                        notifyPttNotAllowed()
+                    }
                 } else {
                     // Modo simulación: sin radio, solo feedback visual (anillos TX)
+                    ToneHelper.playPttDown(vol)
                     _uiState.update { it.copy(isTxActive = true) }
                 }
             }

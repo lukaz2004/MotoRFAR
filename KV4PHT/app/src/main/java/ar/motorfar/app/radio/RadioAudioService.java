@@ -1818,6 +1818,15 @@ public class RadioAudioService extends Service {
                     // depende de que la Activity este bindeada), mismo
                     // criterio que notifyIncomingAlert().
                     ar.motorfar.app.ui.ToneHelper.playPttDown(1.0f);
+                } else {
+                    // 2026-07-10: mismo criterio que el PTT en pantalla --
+                    // tono de "rechazado" (playAlertBeep, el mismo que usa el
+                    // resto de la app para modo escucha/canal bloqueado)
+                    // distinto del tono de "transmitiendo" arriba. Igual que
+                    // un HT real: el operador tiene que poder distinguir por
+                    // oido si el PTT prendio o si quedo afuera (fuera de
+                    // whitelist, radio ocupada en TX de otra cosa, etc.).
+                    ar.motorfar.app.ui.ToneHelper.playAlertBeep(1.0f);
                 }
             } else if (getMode() == RadioMode.TX) {
                 endPtt();
