@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -62,16 +63,30 @@ fun AlertBanner(
                 .border(BorderHairline, borderColor, ControlShape)
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
-            Text(
-                text = "$label — ${alert.fromAlias}",
-                color = textColor,
-                fontFamily = ShareTechMono,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$label — ${alert.fromAlias}",
+                    color = textColor,
+                    fontFamily = ShareTechMono,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                // 2026-07-10: protocolo humano para cuando SI llega una
+                // EMERGENCIA -- sin esto, "qué hacer" quedaba solo en la
+                // cabeza de quien arma el grupo, no en la app. Escrito acá
+                // porque es el momento exacto en que alguien lo necesita,
+                // no enterrado en Ajustes.
+                if (isEmergency) {
+                    Text(
+                        text = "Parate a revisar. Llamalo por los 3 canales. Sin respuesta: pedí ayuda o avisá a emergencias/autoridades.",
+                        color = textColor,
+                        fontFamily = ShareTechMono,
+                        fontSize = 11.sp
+                    )
+                }
+            }
             Text(
                 text = "×",
                 color = textColor,
