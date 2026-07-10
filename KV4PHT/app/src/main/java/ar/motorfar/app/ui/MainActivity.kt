@@ -312,6 +312,19 @@ class MainActivity : ComponentActivity() {
         override fun radioMissing() {
             _uiState.update { it.copy(isConnected = false, sMeterLevel = 0) }
         }
+        // 2026-07-10: "CONECTADO" en pantalla solo confirma que el socket
+        // existe, no que el equipo sigue respondiendo -- este aviso es lo
+        // unico que hoy puede detectar un enlace colgado. No lo marcamos
+        // isConnected=false (no calibrado con hardware real, ver comentario
+        // en RadioAudioService) -- solo un aviso para que el usuario sepa
+        // desconfiar y probar reconectar a mano.
+        override fun connectionMaybeStale() {
+            android.widget.Toast.makeText(
+                this@MainActivity,
+                "El equipo no responde hace un rato -- puede estar colgado. Probá reconectar.",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
         override fun sMeterUpdate(value: Int) {
             _uiState.update { it.copy(sMeterLevel = value) }
         }

@@ -145,6 +145,20 @@ public class RadioAudioService extends Service {
     public static final String EXTRA_MANDOWN_FULLSCREEN = "ar.motorfar.app.EXTRA_MANDOWN_FULLSCREEN";
     public static final List<Digipeater> DEFAULT_DIGIPEATERS = List.of(new Digipeater("WIDE1*"), new Digipeater("WIDE2-1"));
     private static final long SCAN_SQUELCHED_ADVANCE_DELAY_MS = 250L;
+    // 2026-07-10: isConnectionReady()/isRadioConnected() solo chequean si el
+    // objeto de transporte existe (socket UDP presente), NO si el ESP32 sigue
+    // realmente respondiendo -- con WiFi (UDP, sin conexion real a nivel
+    // protocolo) el socket local puede seguir "conectado" aunque el equipo se
+    // haya apagado o quedado fuera de rango. Este heartbeat es solo
+    // INFORMATIVO (no bloquea PTT ni alertas, no toca isRadioConnected()) --
+    // sin poder probar con SA818 fisico no hay forma segura de calibrar un
+    // timeout que bloquee sin arriesgar falsos positivos sobre un enlace que
+    // en realidad esta bien. 15s es punto de partida conservador, a calibrar
+    // con uso real (mismo criterio que los umbrales de Man-Down).
+    private static final long STALE_CONNECTION_CHECK_INTERVAL_MS = 5_000L;
+    private static final long STALE_CONNECTION_TIMEOUT_MS = 15_000L;
+    private volatile long lastDeviceStateMs = 0L;
+    private boolean staleConnectionWarned = false;
 
     // === Used for the persistent notification ===
     private PowerManager.WakeLock wakeLock;
@@ -265,6 +279,11 @@ public class RadioAudioService extends Service {
     public interface RadioAudioServiceCallbacks {
         default void radioMissing() {}
         default void radioConnected() {}
+        // 2026-07-10: aviso INFORMATIVO de que puede haber una conexion
+        // colgada (socket presente pero sin respuesta del equipo hace rato)
+        // -- no bloquea nada, solo le avisa al usuario que "CONECTADO" en
+        // pantalla puede no ser confiable en este momento.
+        default void connectionMaybeStale() {}
         default void hideSnackBar() {}
         default void radioModuleHandshake() {}
         default void radioModuleNotFound() {}
@@ -1406,8 +1425,29 @@ public class RadioAudioService extends Service {
         if (wakeLock != null && !wakeLock.isHeld()) {
             wakeLock.acquire();
         }
+        lastDeviceStateMs = System.currentTimeMillis();
+        staleConnectionWarned = false;
+        handler.removeCallbacks(staleConnectionCheck);
+        handler.postDelayed(staleConnectionCheck, STALE_CONNECTION_CHECK_INTERVAL_MS);
         getCallbacks().radioConnected();
     }
+
+    // 2026-07-10: ver comentario en STALE_CONNECTION_TIMEOUT_MS -- solo avisa,
+    // no bloquea isRadioConnected() ni corta nada. Se reprograma solo mientras
+    // haya una conexion activa; se cancela en closePortAndReset().
+    private final Runnable staleConnectionCheck = new Runnable() {
+        @Override
+        public void run() {
+            if (!isConnectionReady()) return; // ya se desconecto por otra via, nada que avisar
+            long silentFor = System.currentTimeMillis() - lastDeviceStateMs;
+            if (silentFor > STALE_CONNECTION_TIMEOUT_MS && !staleConnectionWarned) {
+                staleConnectionWarned = true;
+                Log.w(TAG, connectLog("staleConnectionCheck(): sin DeviceState hace " + silentFor + "ms, posible enlace colgado"));
+                getCallbacks().connectionMaybeStale();
+            }
+            handler.postDelayed(this, STALE_CONNECTION_CHECK_INTERVAL_MS);
+        }
+    };
 
     private void startProtocolHandshake() {
         int handshakeId = ++handshakeSeq;
@@ -1793,6 +1833,11 @@ public class RadioAudioService extends Service {
     }
 
     private void handleDeviceState(Protocol.DeviceState state) {
+        // 2026-07-10: prueba de vida real del equipo (ver staleConnectionCheck).
+        lastDeviceStateMs = System.currentTimeMillis();
+        if (staleConnectionWarned) {
+            staleConnectionWarned = false; // volvio a responder, se puede avisar de nuevo si se cuelga otra vez
+        }
         radioModule.updateDeviceState(state);
         getCallbacks().moduleTxStateChanged(radioModule.isDeviceTxActive());
         if (radioModule.isAppliedStateInSync() && radioModule.getTxFrequency() > 0) {
