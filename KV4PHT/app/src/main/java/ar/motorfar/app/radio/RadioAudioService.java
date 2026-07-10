@@ -1808,10 +1808,21 @@ public class RadioAudioService extends Service {
                 if (getMode() == RadioMode.RX && isTxAllowed()) {
                     startPtt();
                     getCallbacks().forcedPttStart();
+                    // 2026-07-10: forcedPttStart()/forcedPttEnd() son callbacks
+                    // default no-op, nunca implementados en ningún lado -- el
+                    // boton fisico del equipo transmitia sin ningun aviso
+                    // sonoro/haptico. Critico para el caso real que motiva que
+                    // exista un boton fisico: pantalla rota tras una caida, el
+                    // usuario opera a ciegas -- necesita saber si el toque
+                    // registro algo. Tono directo desde el Service (no
+                    // depende de que la Activity este bindeada), mismo
+                    // criterio que notifyIncomingAlert().
+                    ar.motorfar.app.ui.ToneHelper.playPttDown(1.0f);
                 }
             } else if (getMode() == RadioMode.TX) {
                 endPtt();
                 getCallbacks().forcedPttEnd();
+                ar.motorfar.app.ui.ToneHelper.playPttUp(1.0f);
             }
         }
     }
