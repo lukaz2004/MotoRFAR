@@ -58,6 +58,7 @@ fun AliasSettingScreen(
     onConfigureTones: () -> Unit = {},
     onConfigureWifi: () -> Unit = {},
     onClearRoute: () -> Unit = {},
+    onExportRoute: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
 ) {
@@ -362,6 +363,17 @@ fun AliasSettingScreen(
             fontFamily = ShareTechMono,
             fontSize = 15.sp
         )
+        OutlinedButton(
+            onClick  = onExportRoute,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive),
+            colors   = ButtonDefaults.outlinedButtonColors(
+                contentColor = colors.borderActive
+            )
+        ) {
+            Text("EXPORTAR RUTA (GPX)", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
+        }
         OutlinedButton(
             onClick  = { showClearRouteDialog = true },
             modifier = Modifier.fillMaxWidth(),

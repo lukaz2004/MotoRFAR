@@ -90,8 +90,15 @@ ajuste chico).
   forma de borrarlo desde la UI. Ahora: `RoutePoint.sessionId` agrupa por salida
   (migración Room 7→8), se carga solo la última sesión al abrir la app, y hay
   botón de borrar (con confirmación) en la barra superior.
-- ⬜ **Exportar a GPX / compartir el track**: no se hizo (más superficie — archivo
-  + share intent). Evaluar si hace falta antes de construirlo.
+- ✅ **Exportar a GPX / compartir el track (cerrado 2026-07-11):** botón
+  "EXPORTAR RUTA (GPX)" en Ajustes, arriba de "Borrar ruta guardada".
+  `MainActivity.exportRouteToGpx()` arma un GPX 1.1 (`<trk>/<trkseg>/<trkpt>`)
+  con la última sesión guardada (`_routePoints`), lo escribe en
+  `cacheDir/rutas/` y dispara `ACTION_SEND` vía `FileProvider` (agregado en
+  el manifest + `res/xml/file_paths.xml`, no existía antes). Si no hay ruta
+  guardada, Toast en vez de compartir un GPX vacío. Sin build real para
+  confirmar (sandbox sin Android SDK) — correr `assembleDebug` antes de dar
+  por cerrado del todo.
 - 💡 **Propuesta sin construir**: marcar POIs propios (ej. "buen lugar para
   acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
   infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,
@@ -224,7 +231,12 @@ ajuste chico).
 - ✅ Build: `assembleDebug` OK.
 - ⬜ **Requiere SA818 + ESP32 con FW-3a**: verificar Hello/handshake por WiFi, audio RX/TX real.
 - ✅ UI "Conectate a MotoRFAR-HT": hecho hace rato (`WifiConnectBanner.kt`, PR #9) — este bullet había quedado desactualizado.
-- ⬜ Config credenciales AP desde app: firmware ya tiene el comando (`COMMAND_HOST_SET_WIFI_PASSWORD`, 2026-07-06), falta el lado app (ver sección de auditoría de seguridad más arriba).
+- ✅ Config credenciales AP desde app: `WifiSettingScreen.kt` (clave WPA2 + SSID,
+  con confirmación) ya está armada de punta a punta —
+  `RadioAudioService.setWifiPassword()`/`setWifiSsid()` + `Protocol.java`
+  mandan `COMMAND_HOST_SET_WIFI_PASSWORD`/`_SSID`, y la pantalla es alcanzable
+  desde Ajustes (`navigate("wifi")`). Hecho 2026-07-06 — este bullet había
+  quedado desactualizado (verificado en código 2026-07-11).
 - ✅ UI CTCSS/DCS por canal: hecho 2026-07-06 (`TonesSettingScreen.kt`) — este bullet había quedado desactualizado.
 - ⬜ Windowing: quitar/rediseñar en FW-3b (hoy inerte).
 

@@ -647,6 +647,7 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("wifi") { launchSingleTop = true }
                                 },
                                 onClearRoute             = { clearRoute() },
+                                onExportRoute            = { exportRouteToGpx() },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
                                 },
@@ -785,6 +786,43 @@ class MainActivity : ComponentActivity() {
         _routePoints.value = emptyList()
         executor.execute {
             RadioServiceAccessor.getAppDb(viewModel).routePointDao().deleteForAlias(userAlias)
+        }
+    }
+
+    private fun exportRouteToGpx() {
+        val points = _routePoints.value
+        if (points.isEmpty()) {
+            android.widget.Toast.makeText(this, getString(R.string.route_export_empty), android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US)
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val trkpts = points.joinToString("\n") { p ->
+            "      <trkpt lat=\"${p.latitude}\" lon=\"${p.longitude}\"><time>${sdf.format(java.util.Date(p.timestamp))}</time></trkpt>"
+        }
+        val gpx = """<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Baqueano" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Ruta $userAlias</name>
+    <trkseg>
+$trkpts
+    </trkseg>
+  </trk>
+</gpx>
+"""
+        try {
+            val dir = java.io.File(cacheDir, "rutas").apply { mkdirs() }
+            val file = java.io.File(dir, "baqueano-ruta-${System.currentTimeMillis()}.gpx")
+            file.writeText(gpx)
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/gpx+xml"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "Compartir ruta"))
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "No se pudo exportar la ruta", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
