@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package ar.motorfar.app.data;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -30,6 +31,10 @@ import java.util.List;
 public interface ChannelMemoryDao {
     @Query("SELECT * FROM channel_memories")
     List<ChannelMemory> getAll();
+
+    // Reactiva: Room la re-emite sola en cada write a channel_memories (reseed, rename, etc.)
+    @Query("SELECT * FROM channel_memories")
+    LiveData<List<ChannelMemory>> getAllLive();
 
     @Query("SELECT DISTINCT `group` FROM channel_memories ")
     List<String> getGroups();

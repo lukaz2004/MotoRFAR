@@ -118,7 +118,7 @@ private fun TopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         androidx.compose.foundation.Image(
-            painter            = androidx.compose.ui.res.painterResource(R.mipmap.ic_launcher_moto),
+            painter            = androidx.compose.ui.res.painterResource(R.mipmap.ic_launcher_baqueano),
             contentDescription = "Baqueano",
             // 2026-07-07: seguía viéndose diminuto -- el PNG es la capa
             // "foreground" de un ícono adaptativo, que por convención de

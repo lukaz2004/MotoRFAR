@@ -25,28 +25,30 @@
   se pudo reproducir ni verificar en el emulador (requiere el estado real
   del módulo de radio con equipo conectado) — pendiente confirmar que el
   aviso aparece en el dispositivo real cuando pasa.
-- ⬜ **Hallazgo nuevo, sin tocar:** la pantalla de onboarding (Términos +
-  Alias, primer inicio de la app) todavía dice "MotoRFAR" y "GRUPO" en vez
-  de "Baqueano"/"PRINCIPAL" — quedó afuera del rebrand y de los renames de
-  esta sesión porque son strings separados de las pantallas de Ajustes que
-  sí se corrigieron. Encontrado navegando el onboarding para probar el ícono.
+- ✅ **Onboarding con strings viejos (cerrado 2026-07-11):** `TermsScreen.kt`
+  decía "MotoRFAR" (título + 2 párrafos de términos) y "GRUPO" en vez de
+  "PRINCIPAL" para 139.970 MHz — corregido a "Baqueano"/"PRINCIPAL".
+  `ChannelSelectOnboarding.kt` y `AliasSetupOnboarding.kt` revisados, sin
+  strings viejos (el "GRUPO" de "¿EN QUÉ CANAL ESTÁ TU GRUPO?" es lenguaje
+  genérico, no el nombre del canal — no se tocó).
+- ✅ **`MainViewModel.channelMemories` ahora reactivo (cerrado 2026-07-11):**
+  agregado `ChannelMemoryDao.getAllLive()` (Room `LiveData<List<ChannelMemory>>`,
+  se re-emite sola en cada write a `channel_memories`) y `MainViewModel` la
+  expone directamente en vez de un snapshot cargado una sola vez en
+  `loadData()`. Corrige la desincronización con `ChannelRow` y el fallback a
+  "SIMPLEX" en `tuneToChannel()`. Sin verificar con build real (sandbox sin
+  Android SDK) — correr `assembleDebug` antes de dar por cerrado del todo.
+- ✅ **Renombrado `ic_launcher_moto.png` → `ic_launcher_baqueano.png`
+  (cerrado 2026-07-11):** las 5 densidades + las 2 referencias
+  (`ic_launcher_foreground.xml`, `MainScreen.kt`) actualizadas.
 - ⬜ Probar en dispositivo físico: botón "ESTOY BIEN · CANCELAR" de Man-Down
   tocado a mano, y alerta de otro integrante llegando con la app cerrada.
 - ⬜ `onTaskRemoved()` mata el Service si el usuario desliza la app fuera de
   "recientes" — Man-Down se apaga igual. Decisión de producto pendiente.
-- ⬜ **Hallazgo real, no resuelto:** `MainViewModel.channelMemories` es un
-  snapshot cargado una sola vez (`loadData()`), no una LiveData reactiva de
-  Room — queda desincronizado del canal real que usa `ChannelRow` (que sí es
-  reactivo). `tuneToChannel()` (tocar un canal a mano) a veces muestra
-  "SIMPLEX" en vez del nombre real. No afecta el flujo automático de
-  Emergencia (usa un string literal), pero conviene unificarlo a la fuente
-  reactiva.
 - ⬜ Animaciones de emergencia (PTT rojo, ecualizador rojo, botón parpadeando)
   verificadas por el mecanismo (mismo estado derivado, probado tocando el
   canal Emergencia a mano) pero no por el flujo automático real de 2s hold
   con radio conectada — requiere equipo físico.
-- ⬜ Renombrar `ic_launcher_moto.png` — dice "moto" pero ya es el escudo
-  Baqueano (rebrand viejo, solo el nombre del archivo quedó desactualizado).
 - ⬜ No existe pantalla de historial de rutas — solo se guarda/muestra la
   última sesión por alias; "Borrar ruta guardada" borra todo, no por viaje.
 - ⬜ Sin verificar en dispositivo físico: pantalla de tonos, scroll de

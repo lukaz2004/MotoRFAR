@@ -41,8 +41,9 @@ public class MainViewModel extends AndroidViewModel {
     private final AppDatabase appDb;
 
     AtomicBoolean loaded = new AtomicBoolean(false);
-    // LiveData holding the list of ChannelMemory objects
-    private final MutableLiveData<List<ChannelMemory>> channelMemories = new MutableLiveData<>();
+    // LiveData reactiva de Room: se re-emite sola en cada write a channel_memories
+    // (reseed, rename, etc.), no un snapshot cargado una sola vez.
+    private final LiveData<List<ChannelMemory>> channelMemories;
     // LiveData holding the list of APRSMessage objects
     private final MutableLiveData<List<APRSMessage>> aprsMessages = new MutableLiveData<>();
 
@@ -51,10 +52,10 @@ public class MainViewModel extends AndroidViewModel {
     public MainViewModel(@NotNull Application application) {
         super(application);
         appDb = AppDatabase.getInstance(application.getApplicationContext());
+        channelMemories = appDb.channelMemoryDao().getAllLive();
     }
 
     private void loadData() {
-        channelMemories.postValue(getAppDb().channelMemoryDao().getAll());
         aprsMessages.postValue(getAppDb().aprsMessageDao().getAll());
         loaded.set(true);
     }
