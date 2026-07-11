@@ -5,11 +5,14 @@ import android.content.pm.PackageManager
 import android.preference.PreferenceManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -38,6 +41,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.motorfar.app.R
 import ar.motorfar.app.ui.compose.state.GroupMember
+import ar.motorfar.app.ui.compose.state.PoiMarker
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARColors
 import ar.motorfar.app.ui.compose.components.OfflineTilesDialog
@@ -59,6 +63,7 @@ private const val INITIAL_ZOOM = 15.0
 @Composable
 fun MapScreen(
     groupMembers: List<GroupMember>,
+    poiMarkers: List<PoiMarker> = emptyList(),
     routePoints: List<ar.motorfar.app.data.RoutePoint> = emptyList(),
     locationGranted: Boolean = false,
     headingDeg: Float? = null,
@@ -77,6 +82,8 @@ fun MapScreen(
     // 2026-07-06: se movió acá desde la pantalla principal -- el usuario lo
     // marcó como fuera de lugar ahí ("es algo del mapa").
     onSendWaypoint: () -> Unit = {},
+    // Marca un POI (punto de interés) con etiqueta en la posición actual y lo comparte al grupo.
+    onSendPoi: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -91,6 +98,9 @@ fun MapScreen(
     var hudLat  by remember { mutableStateOf(OBELISCO.latitude) }
     var hudLon  by remember { mutableStateOf(OBELISCO.longitude) }
     var hudZoom by remember { mutableStateOf(INITIAL_ZOOM) }
+
+    // Diálogo para elegir la etiqueta del POI (mantener WAYPOINT presionado)
+    var showPoiDialog by remember { mutableStateOf(false) }
 
     // Descarga offline de tiles
     var showDownloadDialog by remember { mutableStateOf(false) }
@@ -251,6 +261,17 @@ fun MapScreen(
                     }
                     mv.overlays.add(marker)
                 }
+                // Marcadores de POI (puntos de interés marcados a mano, propios o del grupo)
+                poiMarkers.forEach { poi ->
+                    val poiMarker = Marker(mv).apply {
+                        position = GeoPoint(poi.lat, poi.lon)
+                        title    = poi.label
+                        snippet  = poi.alias
+                        icon     = buildPoiMarker(context = mv.context, label = poi.label)
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    }
+                    mv.overlays.add(poiMarker)
+                }
                 // Marcador de foco (ubicación de una alerta abierta desde el chat)
                 focusPoint?.let { fp ->
                     val fm = Marker(mv).apply {
@@ -331,12 +352,14 @@ fun MapScreen(
                     }
                 }
             )
-            // Enviar waypoint: transmite tu posición GPS al grupo en un toque
+            // Enviar waypoint: transmite tu posición GPS al grupo en un toque.
+            // Mantener presionado: marca un POI con etiqueta (ej. "cruce peligroso").
             MapControlButton(
-                iconRes = R.drawable.ic_send,
-                label   = "WAYPOINT",
-                colors  = colors,
-                onClick = onSendWaypoint
+                iconRes     = R.drawable.ic_send,
+                label       = "WAYPOINT",
+                colors      = colors,
+                onClick     = onSendWaypoint,
+                onLongClick = { showPoiDialog = true }
             )
         }
 
@@ -417,6 +440,17 @@ fun MapScreen(
             )
         }
 
+        if (showPoiDialog) {
+            PoiLabelDialog(
+                colors    = colors,
+                onDismiss = { showPoiDialog = false },
+                onConfirm = { label ->
+                    showPoiDialog = false
+                    onSendPoi(label)
+                }
+            )
+        }
+
         // Indicador de modo "orientado a ruta"
         if (routeOriented) {
             Surface(
@@ -438,6 +472,64 @@ fun MapScreen(
     }
 }
 
+private val POI_PRESETS = listOf(
+    "Cruce peligroso",
+    "Buen lugar para acampar",
+    "Agua / combustible"
+)
+
+/** Diálogo para elegir la etiqueta de un POI antes de compartirlo al grupo (preset o texto propio). */
+@Composable
+private fun PoiLabelDialog(
+    colors: MotoRFARColors,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var customLabel by remember { mutableStateOf("") }
+
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { androidx.compose.material3.Text("MARCAR POI") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                androidx.compose.material3.Text(
+                    text  = "Comparte un punto marcado con el grupo (ej. cruce peligroso, buen lugar para parar).",
+                    color = colors.textSecondary,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                POI_PRESETS.forEach { preset ->
+                    androidx.compose.material3.Text(
+                        text     = preset,
+                        color    = colors.textPrimary,
+                        fontSize = 15.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onConfirm(preset) }
+                            .padding(vertical = 10.dp)
+                    )
+                }
+                androidx.compose.material3.OutlinedTextField(
+                    value = customLabel,
+                    onValueChange = { customLabel = it.take(24) },
+                    label = { androidx.compose.material3.Text("Personalizado") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(
+                onClick = { onConfirm(customLabel) },
+                enabled = customLabel.isNotBlank()
+            ) { androidx.compose.material3.Text("ENVIAR") }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { androidx.compose.material3.Text("CANCELAR") }
+        }
+    )
+}
+
 /** Botón de control del mapa: ícono + etiqueta corta (orientación, mi ubicación). */
 @Composable
 private fun MapControlButton(
@@ -446,12 +538,18 @@ private fun MapControlButton(
     colors: MotoRFARColors,
     onClick: () -> Unit,
     active: Boolean = false,
-    accent: Boolean = false
+    accent: Boolean = false,
+    onLongClick: (() -> Unit)? = null
 ) {
     val tint = when {
         accent -> colors.accent
         active -> colors.accent
         else   -> colors.textSecondary
+    }
+    val clickModifier = if (onLongClick != null) {
+        Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+    } else {
+        Modifier.clickable(onClick = onClick)
     }
     Surface(
         shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
@@ -459,7 +557,7 @@ private fun MapControlButton(
         border   = androidx.compose.foundation.BorderStroke(
             1.dp, if (active) colors.accent else colors.borderSubtle
         ),
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = clickModifier
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -625,6 +723,56 @@ private fun buildGroupMarker(
         typeface = android.graphics.Typeface.MONOSPACE
     }
     canvas.drawText(label.uppercase(), cx, cy + pinR + dp(12f), labelPaint)
+
+    return android.graphics.drawable.BitmapDrawable(context.resources, bmp)
+}
+
+// Ámbar fijo (no depende del tema) para que un POI se distinga de un miembro del
+// grupo (que usa el color de acento del tema) de un vistazo, en claro u oscuro.
+private const val POI_COLOR = 0xFFFFA726.toInt()
+
+/** Marcador de POI: un diamante ámbar con la etiqueta debajo (distinto del círculo de miembros). */
+private fun buildPoiMarker(context: android.content.Context, label: String): android.graphics.drawable.Drawable {
+    val density = context.resources.displayMetrics.density
+    fun dp(v: Float) = v * density
+
+    val half    = dp(11f)
+    val labelH  = dp(16f)
+    val w       = (half * 2 + dp(40f)).toInt()
+    val h       = (half * 2 + labelH).toInt()
+
+    val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    val cx = w / 2f
+    val cy = half + dp(1f)
+
+    val diamond = android.graphics.Path().apply {
+        moveTo(cx, cy - half)
+        lineTo(cx + half, cy)
+        lineTo(cx, cy + half)
+        lineTo(cx - half, cy)
+        close()
+    }
+
+    val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.argb(230, 8, 12, 8)
+    }
+    canvas.drawPath(diamond, fill)
+
+    val ring = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = dp(2f)
+        color = POI_COLOR
+    }
+    canvas.drawPath(diamond, ring)
+
+    val labelPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = POI_COLOR
+        textSize = dp(11f)
+        textAlign = android.graphics.Paint.Align.CENTER
+        typeface = android.graphics.Typeface.MONOSPACE
+    }
+    canvas.drawText(label.uppercase().take(16), cx, cy + half + dp(12f), labelPaint)
 
     return android.graphics.drawable.BitmapDrawable(context.resources, bmp)
 }

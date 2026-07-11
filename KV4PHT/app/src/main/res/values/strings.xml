@@ -170,4 +170,6 @@
     <string name="waypoint_no_radio">Sin radio · waypoint no transmitido</string>
     <string name="ptt_not_allowed">RADIO OCUPADA · esperá un segundo y probá de nuevo</string>
     <string name="route_export_empty">No hay ruta guardada para exportar</string>
+    <string name="poi_sent">POI · enviado al grupo</string>
+    <string name="poi_no_radio">Sin radio · POI no transmitido</string>
 </resources>

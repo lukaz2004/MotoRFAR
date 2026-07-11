@@ -99,10 +99,19 @@ ajuste chico).
   guardada, Toast en vez de compartir un GPX vacío. Sin build real para
   confirmar (sandbox sin Android SDK) — correr `assembleDebug` antes de dar
   por cerrado del todo.
-- 💡 **Propuesta sin construir**: marcar POIs propios (ej. "buen lugar para
-  acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
-  infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,
-  ya transmite posición por VHF) en vez de ser algo nuevo desde cero.
+- ✅ **Marcar y compartir POIs propios (cerrado 2026-07-11):** mantener
+  presionado el botón WAYPOINT del mapa abre un diálogo (`PoiLabelDialog`)
+  con 3 presets ("Cruce peligroso", "Buen lugar para acampar", "Agua /
+  combustible") + texto propio. Reusa la infraestructura de posición
+  existente: `RadioAudioService.sendPoi()` manda el mismo beacon APRS que
+  WAYPOINT pero con destino "POI" (en vez de "BEACON") y la etiqueta como
+  comentario del `PositionField` — así el receptor lo distingue de una
+  actualización de posición de un miembro real. Nuevo `PoiMarker` (marcador
+  ámbar en diamante en el mapa, distinto de los círculos de miembros), propio
+  y de los demás. **Alcance recortado a propósito:** los POIs viven solo en
+  memoria (`_poiMarkers`, últimos 20) — no persisten a Room ni sobreviven un
+  reinicio de la app, a diferencia de la ruta. Si hace falta que persistan,
+  es trabajo aparte. Sin build real para confirmar (sandbox sin Android SDK).
 - ✅ **Man-Down: countdown variable según fuerza G del golpe** (hecho 2026-07-05).
   `FallDetectionManager` pasa el pico de aceleración al callback; `countdownSecondsFor()`
   en `MainActivity.kt` mapea: >60 m/s² (~6G) → 8s, 40-60 (~4-6G) → 15s, 25-40

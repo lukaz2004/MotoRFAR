@@ -31,4 +31,8 @@ public final class RadioServiceAccessor {
     public static String getAprsSourceCall(APRSPacket packet) {
         return packet.getSourceCall();
     }
+
+    public static String getAprsDestinationCall(APRSPacket packet) {
+        return packet.getDestinationCall();
+    }
 }

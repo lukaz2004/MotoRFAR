@@ -13,6 +13,7 @@ sealed class MainUiAction {
     data class SetTheme(val theme: AppTheme)      : MainUiAction()
     object ToggleRouteActive                      : MainUiAction()
     object SendWaypoint                           : MainUiAction()
+    data class SendPoi(val label: String)         : MainUiAction()
     object CancelFallCountdown                    : MainUiAction()
     object ClearRoute                             : MainUiAction()
 }

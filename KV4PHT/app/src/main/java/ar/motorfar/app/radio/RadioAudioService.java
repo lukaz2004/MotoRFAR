@@ -1842,6 +1842,23 @@ public class RadioAudioService extends Service {
      */
     @RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
     public void sendPositionBeacon() {
+        sendPositionBeaconOrPoi(null);
+    }
+
+    /**
+     * Envía un punto de interés (POI) con etiqueta al grupo -- mismo mecanismo
+     * que el beacon de posición normal, pero con destino "POI" en vez de
+     * "BEACON" para que el receptor lo muestre como marcador propio en el
+     * mapa en vez de confundirlo con la posición de un miembro.
+     *
+     * @param label Texto corto del POI (ej. "Cruce peligroso").
+     */
+    @RequiresPermission(allOf = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
+    public void sendPoi(String label) {
+        sendPositionBeaconOrPoi(label);
+    }
+
+    private void sendPositionBeaconOrPoi(final String poiLabel) {
         boolean isScanning = getMode() == RadioMode.SCAN;
         boolean isRx = getMode() == RadioMode.RX;
         boolean isCurrent = "Current".equals(aprsBeaconFrequency);
@@ -1878,17 +1895,17 @@ public class RadioAudioService extends Service {
         locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, token)
             .addOnSuccessListener(location -> {
                 if (location != null) {
-                    performPositionBeacon(location.getLatitude(), location.getLongitude());
+                    performPositionBeacon(location.getLatitude(), location.getLongitude(), poiLabel);
                 } else {
                     getCallbacks().unknownLocation();
                 }
             }).addOnFailureListener(e -> getCallbacks().unknownLocation());
     }
 
-    private void performPositionBeacon(final double latitude, final double longitude) {
+    private void performPositionBeacon(final double latitude, final double longitude, final String poiLabel) {
         if ("Current".equals(aprsBeaconFrequency)) {
             getCallbacks().startingAprsBeacon(activeFrequencyStr);
-            sendPositionBeacon(latitude, longitude, false);
+            sendPositionBeacon(latitude, longitude, false, poiLabel);
             return;
         }
 
@@ -1907,7 +1924,7 @@ public class RadioAudioService extends Service {
 
         // Give it a moment to tune and stabilize
         handler.postDelayed(() -> {
-            sendPositionBeacon(latitude, longitude, true);
+            sendPositionBeacon(latitude, longitude, true, poiLabel);
 
             // Wait for transmission to finish before restoring
             handler.postDelayed(() -> {
@@ -1925,14 +1942,16 @@ public class RadioAudioService extends Service {
     }
 
     /**
-     * Sends a position beacon via APRS.
+     * Sends a position beacon (or a labeled POI) via APRS.
      * This method can only be called when the radio is in RX mode.
      *
      * @param latitude  The latitude to beacon.
      * @param longitude The longitude to beacon.
      * @param wasSwitch True if we switched frequencies for this beacon.
+     * @param poiLabel  If non-blank, sends as a POI (destination "POI",
+     *                  label as comment) instead of a plain position beacon.
      */
-    private void sendPositionBeacon(final double latitude, final double longitude, final boolean wasSwitch) {
+    private void sendPositionBeacon(final double latitude, final double longitude, final boolean wasSwitch, final String poiLabel) {
         if (getMode() != RadioMode.RX) {
             Log.d(TAG, "Skipping position beacon because not in RX mode");
             return;
@@ -1944,14 +1963,23 @@ public class RadioAudioService extends Service {
             isApprox ? Math.round(longitude * 100.0) / 100.0 : longitude
         );
         try {
-            final PositionField posField = new PositionField(("=" + myPos.toCompressedString()).getBytes(), "", 1);
-            final APRSPacket aprsPacket = new APRSPacket(callsign, "BEACON", DEFAULT_DIGIPEATERS, posField.getRawBytes());
+            final boolean isPoi = poiLabel != null && !poiLabel.trim().isEmpty();
+            final String comment = isPoi ? sanitizePoiLabel(poiLabel) : "";
+            final String destination = isPoi ? "POI" : "BEACON";
+            final PositionField posField = new PositionField(("=" + myPos.toCompressedString() + comment).getBytes(), "", 1);
+            final APRSPacket aprsPacket = new APRSPacket(callsign, destination, DEFAULT_DIGIPEATERS, posField.getRawBytes());
             aprsPacket.getPayload().addAprsData(APRSTypes.T_POSITION, posField);
             txAX25Packet(new Packet(aprsPacket.toAX25Frame()));
             getCallbacks().sentAprsBeacon(myPos.getLatitude(), myPos.getLongitude(), activeFrequencyStr, wasSwitch);
         } catch (Exception e) {
             Log.w(TAG, "Exception while trying to beacon APRS location.", e);
         }
+    }
+
+    /** Mismo saneo que sendChatMessage: estos caracteres los usa el framing del protocolo. */
+    private static String sanitizePoiLabel(String label) {
+        String cleaned = label.replace('|', ' ').replace('~', ' ').replace('{', ' ').trim();
+        return cleaned.length() > 24 ? cleaned.substring(0, 24) : cleaned;
     }
 
     /**

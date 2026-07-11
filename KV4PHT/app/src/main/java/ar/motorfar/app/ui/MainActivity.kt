@@ -117,6 +117,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
+    // POIs propios y del grupo (marcados a mano, ej. "cruce peligroso") -- solo en
+    // memoria, no persisten a un reinicio de la app (a diferencia de la ruta).
+    private val _poiMarkers = MutableStateFlow<List<ar.motorfar.app.ui.compose.state.PoiMarker>>(emptyList())
 
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
     private var chatMessageIdCounter = 0L
@@ -282,18 +285,32 @@ class MainActivity : ComponentActivity() {
         override fun packetReceived(aprsPacket: APRSPacket) {
             val infoField = RadioServiceAccessor.getAprsPayload(aprsPacket) ?: return
             val alias = RadioServiceAccessor.getAprsSourceCall(aprsPacket)?.trim() ?: return
+            val destination = RadioServiceAccessor.getAprsDestinationCall(aprsPacket)?.trim()
 
             val posField = infoField.getAprsData(APRSTypes.T_POSITION) as? PositionField
             if (posField != null) {
-                val member = GroupMember(
-                    alias      = alias,
-                    lat        = posField.position.latitude,
-                    lon        = posField.position.longitude,
-                    distanceM  = 0,
-                    bearing    = 0f,
-                    lastSeenMs = System.currentTimeMillis()
-                )
-                _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+                if (destination == "POI") {
+                    // POI de otro integrante -- marcador propio, no actualiza su posición en vivo
+                    val label = posField.comment?.trim().orEmpty().ifBlank { "POI" }
+                    val poi = ar.motorfar.app.ui.compose.state.PoiMarker(
+                        alias        = alias,
+                        lat          = posField.position.latitude,
+                        lon          = posField.position.longitude,
+                        label        = label,
+                        receivedAtMs = System.currentTimeMillis()
+                    )
+                    _poiMarkers.update { list -> (list + poi).takeLast(20) }
+                } else {
+                    val member = GroupMember(
+                        alias      = alias,
+                        lat        = posField.position.latitude,
+                        lon        = posField.position.longitude,
+                        distanceM  = 0,
+                        bearing    = 0f,
+                        lastSeenMs = System.currentTimeMillis()
+                    )
+                    _groupMembers.update { list -> list.filter { it.alias != alias } + member }
+                }
             }
 
             val msgPacket = infoField as? MessagePacket
@@ -438,6 +455,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val state by uiState.collectAsState()
             val groupMembers by _groupMembers.collectAsState()
+            val poiMarkers by _poiMarkers.collectAsState()
             val chatMessages by _chatMessages.collectAsState()
             val mapFocus by _mapFocus.collectAsState()
             val routePoints by _routePoints.collectAsState()
@@ -594,6 +612,7 @@ class MainActivity : ComponentActivity() {
                             val triggerDownload by _triggerMapDownload.collectAsState()
                             MapScreen(
                                 groupMembers    = groupMembers,
+                                poiMarkers      = poiMarkers,
                                 routePoints     = routePoints,
                                 locationGranted = state.locationGranted,
                                 headingDeg      = state.headingDeg,
@@ -606,7 +625,8 @@ class MainActivity : ComponentActivity() {
                                 onPttUp         = { handleAction(MainUiAction.PttReleased) },
                                 triggerDownload = triggerDownload,
                                 onDownloadTriggerConsumed = { _triggerMapDownload.value = false },
-                                onSendWaypoint  = { handleAction(MainUiAction.SendWaypoint) }
+                                onSendWaypoint  = { handleAction(MainUiAction.SendWaypoint) },
+                                onSendPoi       = { label -> handleAction(MainUiAction.SendPoi(label)) }
                             )
                         }
                         composable("settings") {
@@ -989,8 +1009,51 @@ $trkpts
                     locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                 }
             }
+            is MainUiAction.SendPoi -> {
+                if (listenOnly) { ToneHelper.playAlertBeep(vol); notifyListenOnlyBlocked(); return }
+
+                val hasPerm = androidx.core.content.ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+                if (hasPerm) {
+                    performSendPoi(action.label)
+                } else {
+                    // Reutilizamos el launcher de permisos para GPS
+                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+            }
             MainUiAction.CancelFallCountdown -> cancelFallCountdown()
             MainUiAction.ClearRoute -> clearRoute()
+        }
+    }
+
+    private fun performSendPoi(label: String) {
+        val vol = alertVolume / 100f
+        val svc = radioService
+        val loc = getLastKnownLocation()
+        if (svc != null && uiState.value.isConnected && loc != null) {
+            svc.sendPoi(label)
+
+            // Marcador propio inmediato -- no esperamos la vuelta por RF para verlo en el mapa
+            _poiMarkers.update { list ->
+                (list + ar.motorfar.app.ui.compose.state.PoiMarker(
+                    alias        = userAlias,
+                    lat          = loc.latitude,
+                    lon          = loc.longitude,
+                    label        = label,
+                    receivedAtMs = System.currentTimeMillis()
+                )).takeLast(20)
+            }
+
+            ToneHelper.playPttUp(vol)
+            android.widget.Toast.makeText(
+                this, getString(R.string.poi_sent), android.widget.Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            android.widget.Toast.makeText(
+                this, getString(R.string.poi_no_radio), android.widget.Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -999,7 +1062,7 @@ $trkpts
         val svc = radioService
         if (svc != null && uiState.value.isConnected) {
             svc.sendPositionBeacon()
-            
+
             // También guardamos nuestro waypoint en la base de datos local
             getLastKnownLocation()?.let { saveRoutePoint(it.latitude, it.longitude) }
 
