@@ -62,10 +62,21 @@
   Sin build real para confirmar (sandbox sin Android SDK).
 - ⬜ Sin verificar en dispositivo físico: pantalla de tonos, scroll de
   Ajustes, UI de WiFi/SSID, retoques estéticos de pantalla principal, mapa.
-- ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
-  con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
-  La autenticación de aplicación de verdad es un rediseño de protocolo, no
-  un fix de una sesión — necesita su propia sesión de diseño.
+- 🟡 **Autenticación UDP (token/HMAC) — diseño cerrado 2026-07-11, sin
+  activar todavía.** Spec completo en `AUTH_UDP_DISENO.md`: HMAC-SHA256
+  truncado (8 bytes) sobre `COMMAND_HOST_DESIRED_STATE`, reusando la clave
+  WPA2 vigente como secreto (decisión de LuKaZ, informada: NO cierra el
+  hueco real de ALTO-1 del audit — cualquiera que ya tenga la clave puede
+  firmar igual — pero sí filtra basura/replay y deja el wire format listo
+  para una migración futura a secreto de emparejamiento físico si hace
+  falta más adelante). Lado Android: hecho el terreno (persistencia de la
+  clave en `AppSetting.SETTING_WIFI_PASSWORD`, utilidad `UdpAuth.java` con
+  el HMAC) pero **a propósito sin wireado al envío real** — activarlo sin
+  que el firmware sepa validar el tag rompe la comunicación con el equipo
+  físico actual. ⬜ **Pendiente real (sesión de firmware en Windows):**
+  todo el checklist de `AUTH_UDP_DISENO.md` — agregar la validación del
+  lado firmware, confirmar que clave-de-fábrica-sin-cambiar sigue andando
+  igual, y recién ahí activar el tag del lado Android.
 - ⬜ Confirmar en el dashboard de Netlify el `publish directory` real (para
   validar que `_headers` quedó en la carpeta correcta).
 - ⬜ Confirmar que el build de release del firmware define `RELEASE` (evita

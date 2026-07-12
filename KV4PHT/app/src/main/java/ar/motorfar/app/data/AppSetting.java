@@ -47,6 +47,11 @@ public class AppSetting {
     public static final String SETTING_MAP_ZOOM = "map_zoom";
     public static final String SETTING_MAP_ROTATE = "map_rotate";
     public static final String SETTING_MAN_DOWN = "man_down_enabled";
+    // 2026-07-11: clave WPA2 vigente del equipo, guardada localmente para poder
+    // recalcular el HMAC de autenticación UDP en sesiones futuras (ver
+    // _PROYECTO/AUTH_UDP_DISENO.md). Sin cifrar (mismo nivel de protección que
+    // el resto de app_settings) -- mejora posible: EncryptedSharedPreferences.
+    public static final String SETTING_WIFI_PASSWORD = "wifi_password";
 
     public AppSetting(@NonNull String name, String value) {
         this.name = name;

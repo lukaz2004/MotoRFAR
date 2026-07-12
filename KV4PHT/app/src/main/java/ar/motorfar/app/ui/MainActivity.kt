@@ -99,6 +99,11 @@ class MainActivity : ComponentActivity() {
     private var listenOnly: Boolean = false
     private var smartBeaconEnabled: Boolean = true
     private var manDownEnabled: Boolean = false
+    // Clave WPA2 vigente del equipo, guardada localmente la última vez que se
+    // cambió desde Ajustes > WiFi. Null si nunca se cambió (todavía en la
+    // clave de fábrica que la app no conoce). Base para el HMAC de
+    // autenticación UDP -- ver _PROYECTO/AUTH_UDP_DISENO.md.
+    private var pairedWifiPassword: String? = null
 
     // Estado de movimiento del GPS (alimenta SmartBeaconing y Modo Ruta)
     @Volatile private var currentSpeedKmh: Double = 0.0
@@ -737,7 +742,16 @@ class MainActivity : ComponentActivity() {
                         composable("wifi") {
                             ar.motorfar.app.ui.compose.WifiSettingScreen(
                                 isConnected    = state.isConnected,
-                                onSavePassword = { pw -> radioService?.setWifiPassword(pw) ?: false },
+                                onSavePassword = { pw ->
+                                    val sent = radioService?.setWifiPassword(pw) ?: false
+                                    // Se guarda localmente aunque la app se desconecte del WiFi
+                                    // justo después (esperado) -- hace falta para recalcular el
+                                    // HMAC de autenticación UDP en la próxima sesión (ver
+                                    // _PROYECTO/AUTH_UDP_DISENO.md). No espera confirmación del
+                                    // firmware (no existe un ACK de este comando todavía).
+                                    if (sent) saveWifiPasswordLocally(pw)
+                                    sent
+                                },
                                 onSaveSsid     = { ssid -> radioService?.setWifiSsid(ssid) ?: false },
                                 onBack         = { navController.popBackStack() }
                             )
@@ -947,6 +961,7 @@ $trkpts
         listenOnly         = settings.getOrDefault(AppSetting.SETTING_LISTEN_ONLY, "false").toBoolean()
         smartBeaconEnabled = settings.getOrDefault(AppSetting.SETTING_SMART_BEACON, "true").toBoolean()
         manDownEnabled     = settings.getOrDefault(AppSetting.SETTING_MAN_DOWN, "false").toBoolean()
+        pairedWifiPassword = settings[AppSetting.SETTING_WIFI_PASSWORD]
         _beaconIntervalFlow.value = beaconIntervalSec * 1000L
         runOnUiThread {
             _uiState.update { it.copy(activeFrequency = activeFrequencyStr, isListenOnly = listenOnly) }
@@ -963,6 +978,13 @@ $trkpts
             db.saveAppSetting(AppSetting.SETTING_USER_ALIAS, alias)
             db.saveAppSetting(AppSetting.SETTING_BEACON_INTERVAL_SEC, intervalSec.toString())
             db.saveAppSetting(AppSetting.SETTING_ALERT_VOLUME, volume.toString())
+        }
+    }
+
+    private fun saveWifiPasswordLocally(password: String) {
+        pairedWifiPassword = password
+        executor.execute {
+            RadioServiceAccessor.getAppDb(viewModel).saveAppSetting(AppSetting.SETTING_WIFI_PASSWORD, password)
         }
     }
 
