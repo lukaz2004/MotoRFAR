@@ -59,6 +59,7 @@ fun AliasSettingScreen(
     onConfigureWifi: () -> Unit = {},
     onClearRoute: () -> Unit = {},
     onExportRoute: () -> Unit = {},
+    onViewRouteHistory: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
 ) {
@@ -362,6 +363,15 @@ fun AliasSettingScreen(
             color    = colors.textSecondary,
             fontFamily = ShareTechMono,
             fontSize = 15.sp
+        )
+        Text(
+            text       = "Ver historial de salidas ›",
+            color      = colors.accent,
+            fontFamily = ShareTechMono,
+            fontSize   = 14.sp,
+            modifier   = Modifier
+                .clickable(onClick = onViewRouteHistory)
+                .padding(vertical = 4.dp)
         )
         OutlinedButton(
             onClick  = onExportRoute,

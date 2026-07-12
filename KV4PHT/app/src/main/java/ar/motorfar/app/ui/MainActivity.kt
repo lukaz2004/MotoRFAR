@@ -128,6 +128,11 @@ class MainActivity : ComponentActivity() {
     private val _mapFocus = MutableStateFlow<Pair<Double, Double>?>(null)
     private val _routePoints = MutableStateFlow<List<ar.motorfar.app.data.RoutePoint>>(emptyList())
     private var currentRouteSessionId: Long = 0L
+    // Lista de salidas pasadas para la pantalla de historial (carga bajo demanda, no en loadSettings)
+    private val _routeHistory = MutableStateFlow<List<ar.motorfar.app.data.RouteSessionSummary>>(emptyList())
+    // No-nulo mientras se está viendo una salida vieja del historial en el mapa -- no
+    // pisa _routePoints (la sesión en vivo) para no mezclar puntos nuevos con una vista histórica.
+    private val _historyPreview = MutableStateFlow<List<ar.motorfar.app.data.RoutePoint>?>(null)
 
     // 2026-07-06: Man-Down (acelerometro, cuenta regresiva, disparo de la alerta)
     // se movio a RadioAudioService -- vivia atado al ciclo de vida de esta
@@ -459,6 +464,8 @@ class MainActivity : ComponentActivity() {
             val chatMessages by _chatMessages.collectAsState()
             val mapFocus by _mapFocus.collectAsState()
             val routePoints by _routePoints.collectAsState()
+            val routeHistory by _routeHistory.collectAsState()
+            val historyPreview by _historyPreview.collectAsState()
 
             MotoRFARTheme(state.theme) {
                 val colors = LocalMotoRFARColors.current
@@ -531,7 +538,10 @@ class MainActivity : ComponentActivity() {
                             if (currentRoute != "map") {
                                 NavigationBarItem(
                                     selected = false,
-                                    onClick  = { navController.navigate("map") { launchSingleTop = true } },
+                                    onClick  = {
+                                        _historyPreview.value = null
+                                        navController.navigate("map") { launchSingleTop = true }
+                                    },
                                     icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
                                     label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono) }
                                 )
@@ -569,7 +579,10 @@ class MainActivity : ComponentActivity() {
                             if (currentRoute != "map") {
                                 NavigationRailItem(
                                     selected = false,
-                                    onClick  = { navController.navigate("map") { launchSingleTop = true } },
+                                    onClick  = {
+                                        _historyPreview.value = null
+                                        navController.navigate("map") { launchSingleTop = true }
+                                    },
                                     icon     = { Icon(painterResource(R.drawable.ic_pin), contentDescription = "MAPA") },
                                     label    = { androidx.compose.material3.Text("MAPA", color = colors.textSecondary, fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono, fontSize = 20.sp) }
                                 )
@@ -613,7 +626,9 @@ class MainActivity : ComponentActivity() {
                             MapScreen(
                                 groupMembers    = groupMembers,
                                 poiMarkers      = poiMarkers,
-                                routePoints     = routePoints,
+                                routePoints     = historyPreview ?: routePoints,
+                                isHistoryPreview = historyPreview != null,
+                                onClosePreview  = { closeHistoryPreview() },
                                 locationGranted = state.locationGranted,
                                 headingDeg      = state.headingDeg,
                                 focusTarget     = mapFocus,
@@ -668,12 +683,27 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onClearRoute             = { clearRoute() },
                                 onExportRoute            = { exportRouteToGpx() },
+                                onViewRouteHistory       = {
+                                    navController.navigate("history") { launchSingleTop = true }
+                                },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
                                 },
                                 onAbout                  = {
                                     startActivity(android.content.Intent(this@MainActivity, AboutActivity::class.java))
                                 }
+                            )
+                        }
+                        composable("history") {
+                            LaunchedEffect(Unit) { loadRouteHistory() }
+                            ar.motorfar.app.ui.compose.RouteHistoryScreen(
+                                sessions        = routeHistory,
+                                onViewSession   = { sessionId ->
+                                    previewRouteSession(sessionId)
+                                    navController.navigate("map") { launchSingleTop = true }
+                                },
+                                onDeleteSession = { sessionId -> deleteRouteSession(sessionId) },
+                                onBack          = { navController.popBackStack() }
                             )
                         }
                         composable("tones") {
@@ -807,6 +837,33 @@ class MainActivity : ComponentActivity() {
         executor.execute {
             RadioServiceAccessor.getAppDb(viewModel).routePointDao().deleteForAlias(userAlias)
         }
+    }
+
+    private fun loadRouteHistory() {
+        executor.execute {
+            val summaries = RadioServiceAccessor.getAppDb(viewModel).routePointDao().getSessionSummaries(userAlias)
+            _routeHistory.value = summaries
+        }
+    }
+
+    private fun previewRouteSession(sessionId: Long) {
+        executor.execute {
+            val points = RadioServiceAccessor.getAppDb(viewModel).routePointDao().getPointsForSession(userAlias, sessionId)
+            _historyPreview.value = points
+        }
+    }
+
+    private fun closeHistoryPreview() {
+        _historyPreview.value = null
+    }
+
+    private fun deleteRouteSession(sessionId: Long) {
+        executor.execute {
+            RadioServiceAccessor.getAppDb(viewModel).routePointDao().deleteSession(userAlias, sessionId)
+            val summaries = RadioServiceAccessor.getAppDb(viewModel).routePointDao().getSessionSummaries(userAlias)
+            _routeHistory.value = summaries
+        }
+        if (_historyPreview.value != null) closeHistoryPreview()
     }
 
     private fun exportRouteToGpx() {

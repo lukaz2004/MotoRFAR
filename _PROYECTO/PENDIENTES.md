@@ -49,8 +49,17 @@
   verificadas por el mecanismo (mismo estado derivado, probado tocando el
   canal Emergencia a mano) pero no por el flujo automático real de 2s hold
   con radio conectada — requiere equipo físico.
-- ⬜ No existe pantalla de historial de rutas — solo se guarda/muestra la
-  última sesión por alias; "Borrar ruta guardada" borra todo, no por viaje.
+- ✅ **Pantalla de historial de rutas (cerrado 2026-07-11):** nueva
+  `RouteHistoryScreen` (Ajustes → "Ver historial de salidas ›") lista todas
+  las salidas guardadas (no solo la última), con "VER EN MAPA" y "BORRAR"
+  por salida individual — antes "Borrar ruta guardada" solo podía borrar
+  todo el historial junto. `RoutePointDao.getSessionSummaries()` (agrupa por
+  `sessionId`) + `deleteSession()` nuevos. "Ver en mapa" carga la salida
+  vieja en un buffer de vista previa separado (`_historyPreview`) que NO
+  pisa la sesión en vivo (`_routePoints`) — evita mezclar puntos nuevos con
+  una ruta histórica si seguís grabando mientras mirás el historial; banner
+  "VIENDO RUTA HISTÓRICA · volver a ruta en vivo" en el mapa mientras dura.
+  Sin build real para confirmar (sandbox sin Android SDK).
 - ⬜ Sin verificar en dispositivo físico: pantalla de tonos, scroll de
   Ajustes, UI de WiFi/SSID, retoques estéticos de pantalla principal, mapa.
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó

@@ -4,12 +4,14 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.preference.PreferenceManager
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -65,6 +67,9 @@ fun MapScreen(
     groupMembers: List<GroupMember>,
     poiMarkers: List<PoiMarker> = emptyList(),
     routePoints: List<ar.motorfar.app.data.RoutePoint> = emptyList(),
+    // No-nulo cuando routePoints muestra una salida vieja del historial en vez de la ruta en vivo.
+    isHistoryPreview: Boolean = false,
+    onClosePreview: () -> Unit = {},
     locationGranted: Boolean = false,
     headingDeg: Float? = null,
     focusTarget: Pair<Double, Double>? = null,
@@ -449,6 +454,33 @@ fun MapScreen(
                     onSendPoi(label)
                 }
             )
+        }
+
+        // Banner: se está viendo una salida vieja del historial, no la ruta en vivo
+        if (isHistoryPreview) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 12.dp)
+                    .background(colors.surface.copy(alpha = 0.9f), androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                androidx.compose.material3.Text(
+                    text     = "VIENDO RUTA HISTÓRICA",
+                    color    = colors.accent,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize = 13.sp
+                )
+                androidx.compose.material3.Text(
+                    text     = "VOLVER A RUTA EN VIVO",
+                    color    = colors.textSecondary,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize = 12.sp,
+                    modifier = Modifier.clickable(onClick = onClosePreview)
+                )
+            }
         }
 
         // Indicador de modo "orientado a ruta"
