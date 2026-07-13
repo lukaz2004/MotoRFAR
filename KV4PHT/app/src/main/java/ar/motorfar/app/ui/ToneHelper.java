@@ -46,6 +46,35 @@ public class ToneHelper {
         playNoise(80, volume * 0.3f);
     }
 
+    /** Jingle de marca al abrir la app: arpegio ascendente de 4 notas. */
+    public static void playAppStartupJingle(float volume) {
+        playTone(523, 130, volume, false);
+        playTone(659, 130, volume, false);
+        playTone(784, 130, volume, false);
+        playTone(1047, 160, volume, true);
+    }
+
+    /** Chime corto al conectar con el equipo por primera vez en la sesión. */
+    public static void playConnectionSuccessChime(float volume) {
+        playTone(659, 100, volume, false);
+        playTone(880, 120, volume, true);
+    }
+
+    /**
+     * Alarma de reinicio del ESP32: tono grave repetido varias veces (no una
+     * melodia) para que se note con ruido de motor/viento en ruta. A
+     * proposito no tiene voz ni tratamiento melodico -- tiene que seguir
+     * sonando a alarma para que el usuario suelte el PTT por reflejo.
+     */
+    public static void playDeviceRebootAlert(float volume) {
+        for (int i = 0; i < 3; i++) {
+            playTone(400, 200, volume, false);
+            sleep(80);
+            playTone(400, 200, volume, false);
+            if (i < 2) sleep(600);
+        }
+    }
+
     /**
      * Sonido de fin de transmisión estilo VHF real: tono de cortesía ("roger
      * beep") agudo y limpio seguido de una breve cola de squelch (static tail).

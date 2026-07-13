@@ -159,6 +159,9 @@ public class RadioAudioService extends Service {
     private static final long STALE_CONNECTION_TIMEOUT_MS = 15_000L;
     private volatile long lastDeviceStateMs = 0L;
     private boolean staleConnectionWarned = false;
+    // 2026-07-13: gatea el chime+voz de "conectado" para que suene una sola
+    // vez por sesion de app, no en cada reconexion rapida normal.
+    private boolean everConnectedThisSession = false;
 
     // === Used for the persistent notification ===
     private PowerManager.WakeLock wakeLock;
@@ -1426,9 +1429,24 @@ public class RadioAudioService extends Service {
             wakeLock.acquire();
         }
         lastDeviceStateMs = System.currentTimeMillis();
+        boolean wasStale = staleConnectionWarned;
         staleConnectionWarned = false;
         handler.removeCallbacks(staleConnectionCheck);
         handler.postDelayed(staleConnectionCheck, STALE_CONNECTION_CHECK_INTERVAL_MS);
+        // 2026-07-13: tono distinto segun el tipo de (re)conexion -- ver
+        // docs/superpowers/specs/2026-07-13-tonos-personalizados-design.md
+        if (wasStale) {
+            // Reconecto despues de un aviso de enlace colgado: puede ser un
+            // reinicio real del ESP32. Alarma larga a proposito (no melodia)
+            // para que se note con ruido de ruta y el usuario suelte el PTT.
+            ar.motorfar.app.ui.ToneHelper.playDeviceRebootAlert(1.0f);
+        } else if (!everConnectedThisSession) {
+            everConnectedThisSession = true;
+            ar.motorfar.app.ui.ToneHelper.playConnectionSuccessChime(1.0f);
+            // TODO(LuKaZ): reproducir aca el clip de voz grabado ("Radio
+            // conectado") una vez que exista el archivo en res/raw/. Ej.:
+            // MediaPlayer.create(this, R.raw.radio_conectado)?.apply { setOnCompletionListener(MediaPlayer::release); start() }
+        }
         getCallbacks().radioConnected();
     }
 
@@ -1468,6 +1486,11 @@ public class RadioAudioService extends Service {
             Log.w(TAG, handshakeLog(handshakeId, "waitForHello(): timed out after " + HELLO_TIMEOUT_MS + "ms"));
             setMode(RadioMode.BAD_FIRMWARE);
             getCallbacks().missingFirmware();
+            // Sin esto, hostToEsp32/wifiTransport quedaban vivos tras el timeout ->
+            // isConnectionReady() seguia dando true para siempre y ConnectionController
+            // nunca volvia a reintentar (encontrado 2026-07-13: la app se quedaba en
+            // "SIN RADIO" sin reintentar nunca mas tras un HELLO que no llego).
+            closePortAndReset();
             connectionController.markAttemptFinished();
         };
         handler.postDelayed(helloTimeoutRunnable, HELLO_TIMEOUT_MS);
@@ -1546,6 +1569,16 @@ public class RadioAudioService extends Service {
         Log.i(TAG, connectLog("radioMissing(): state=" + connectionStateSummary()));
         connectionController.markAttemptFinished();
         closePortAndReset();
+        // 2026-07-13: closePortAndReset() tira el transporte pero nunca tocaba
+        // `mode` -- si hubo un handshake exitoso antes en la sesion (mode==RX),
+        // se quedaba pegado ahi para siempre en CUALQUIER caida que pasara por
+        // este metodo (a diferencia de los otros caminos de falla en
+        // validateHello(), que si hacen setMode(BAD_FIRMWARE)). Con mode
+        // todavia en RX, el gate de ruido de PTT (ver handleDeviceState) no
+        // filtraba nada -- bips de "rechazado" en loop con la UI ya en "SIN
+        // RADIO" (encontrado en vivo: bips no paraban ni reinstalando ni con
+        // la Activity cerrada, porque el Service seguia vivo con mode stale).
+        setMode(RadioMode.BAD_FIRMWARE);
         updateForegroundNotification("Sin radio · Conectate a la red \"Baqueano-\" del equipo");
         if (!radioMissingNotified) {
             radioMissingNotified = true;
@@ -1839,7 +1872,22 @@ public class RadioAudioService extends Service {
             staleConnectionWarned = false; // volvio a responder, se puede avisar de nuevo si se cuelga otra vez
         }
         radioModule.updateDeviceState(state);
-        getCallbacks().moduleTxStateChanged(radioModule.isDeviceTxActive());
+        // 2026-07-13: sin modulo SA818 (o con handshake todavia sin validar --
+        // BAD_FIRMWARE/STARTUP), el equipo manda DeviceState "fantasma" con
+        // lecturas de GPIO flotantes -- este handler corre para CUALQUIER
+        // DeviceState (ver COMMAND_DEVICE_STATE en handleCommands), sin
+        // depender de que el Hello haya validado el modulo. Todo lo que
+        // reacciona a un DeviceState no confiable (tono de PTT, y el
+        // isTxActive que pisaba moduleTxStateChanged() en cada paquete aunque
+        // el usuario tuviera el PTT en pantalla apretado) queda gateado atras
+        // de esto (encontrado en vivo: bips en loop + PTT "se despresiona
+        // solo" con "SIN RADIO" en pantalla).
+        boolean radioOperating = getMode() == RadioMode.RX
+                || getMode() == RadioMode.TX
+                || getMode() == RadioMode.SCAN;
+        if (radioOperating) {
+            getCallbacks().moduleTxStateChanged(radioModule.isDeviceTxActive());
+        }
         if (radioModule.isAppliedStateInSync() && radioModule.getTxFrequency() > 0) {
             updateTxAllowed(radioModule.getTxFrequency());
         }
@@ -1847,7 +1895,7 @@ public class RadioAudioService extends Service {
             getCallbacks().sMeterUpdate(radioModule.getSMeter9Value());
         }
         checkScanDueToSquelch();
-        if (radioModule.didPhysPttChange()) {
+        if (radioOperating && radioModule.didPhysPttChange()) {
             boolean physPttDown = radioModule.isPhysPttDown();
             if (physPttDown) {
                 if (getMode() == RadioMode.RX && isTxAllowed()) {

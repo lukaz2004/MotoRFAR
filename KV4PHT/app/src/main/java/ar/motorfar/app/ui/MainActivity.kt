@@ -335,7 +335,14 @@ class MainActivity : ComponentActivity() {
             _uiState.update { it.copy(isTxActive = false) }
         }
         override fun moduleTxStateChanged(txActive: Boolean) {
-            if (!txActive) {
+            // 2026-07-13: RadioAudioService llama a este callback en CADA
+            // DeviceState que llega (sin gate de mode/hello) -- sin radio real
+            // conectado, el equipo siempre reporta txActive=false, así que
+            // "!txActive" solo (sin mirar el estado previo) tocaba el roger
+            // beep en cada paquete, en loop infinito (encontrado en vivo: bips
+            // sin parar en cualquier pantalla, con mode ya en BAD_FIRMWARE).
+            // Ahora solo suena en la transición real true→false.
+            if (!txActive && uiState.value.isTxActive) {
                 // Fin de TX confirmado por el módulo → roger beep estilo VHF real
                 ToneHelper.playRogerBeep(alertVolume / 100f)
             }
@@ -450,6 +457,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        ToneHelper.playAppStartupJingle(alertVolume / 100f)
 
         // 2026-07-06: si nos abrió la notificación de Man-Down (full-screen
         // intent), mostrarnos encima de la pantalla bloqueada — mismo

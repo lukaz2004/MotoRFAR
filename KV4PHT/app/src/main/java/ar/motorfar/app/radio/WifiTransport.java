@@ -115,6 +115,12 @@ public class WifiTransport {
                     network.bindSocket(sock);                     // ← forces WiFi interface
                     espAddress = addr;
                     socket     = sock;
+                    // 2026-07-13: el ESP32 solo aprende la IP:puerto del cliente (y recien
+                    // ahi manda su HELLO) del PRIMER datagrama UDP que recibe -- ver
+                    // wifiTransport.h en el firmware. Sin este "empujoncito" ninguno de
+                    // los dos lados habla primero y el handshake nunca arranca (encontrado
+                    // en vivo: el socket se bindeaba bien pero HELLO nunca llegaba).
+                    sock.send(new DatagramPacket(new byte[]{0}, 1, addr, UDP_PORT));
                     startReceiving(listener);
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to bind UDP socket to WiFi network", e);
