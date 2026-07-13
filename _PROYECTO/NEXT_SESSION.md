@@ -1,6 +1,35 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-13 — verificación de hardware: firmware del ESP32 está VIEJO, reflash a mitad de camino
+Sesión corta desde el trabajo (LuKaZ sin el módulo SA818, solo el ESP32 pelado
+a mano). Verificado:
+- **ESP32 en COM9 responde** — SoftAP arriba, UDP 4210 escuchando.
+- **Hallazgo real: el firmware flasheado es de ANTES del 2026-07-06.** El
+  SoftAP transmite con SSID `MotoRFAR-HT` (confirmado por escaneo WiFi real
+  desde la PC, 93% señal) — el código actual ya genera `Baqueano-XXXX` único
+  por equipo (`loadOrCreateWifiSsid()`, cambio del 2026-07-06/07). Ninguno de
+  los fixes de las últimas sesiones (SSID único, cambio de clave/SSID desde
+  la app, aviso de enlace colgado del 2026-07-10) está corriendo en este
+  equipo todavía.
+- **Huawei P9 (EVA_L09) autorizado por `adb`** — quedó listo para probar la
+  app en próxima sesión, no hizo falta nada más de este lado.
+- **Reflash intentado, quedó a mitad de camino:** `pio run -t upload` compiló
+  limpio (Flash 67.9%, RAM 21.9%) pero el upload por esptool falló al
+  conectar por COM9 — esta placa necesita sostener el botón **BOOT** a mano
+  en el momento exacto de la conexión (el DTR no lo hace solo, ya anotado en
+  el toolchain). LuKaZ no estaba físicamente presente para hacerlo (sesión
+  desde el trabajo).
+
+**Para la próxima vez que LuKaZ esté en casa con el ESP32 a mano:**
+1. Sostener BOOT y correr de nuevo el comando de flash de `CLAUDE.md`
+   (`pio run -e esp32dev -d '..\kv4p-ht-main\microcontroller-src' -t upload
+   --upload-port COM9`).
+2. Una vez flasheado, retomar el objetivo original del 2026-07-10: probar
+   handshake HELLO, aviso de enlace colgado (`STALE_CONNECTION_TIMEOUT_MS`),
+   comandos UDP del protocolo — con el Huawei ya autorizado, listo para
+   sumarse a la prueba.
+
 ## ⚡ CIERRE 2026-07-10 — auditoría profunda + 10 fixes de confiabilidad de alertas
 Arrancó con un pedido de auditoría de seguridad de rutina y terminó en un
 hallazgo grande: **Man-Down/EMERGENCIA podía transmitir al vacío y la app
