@@ -1,6 +1,30 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-13 (cierre final de la sesión) — 4to fix (SSID/clave) + límite de hardware confirmado
+Cuarto bug de la misma familia: `WifiSettingScreen` gateaba "GUARDAR CLAVE/SSID"
+con `isConnected` (exige handshake completo CON módulo de radio) — en este
+ESP32 sin SA818 esos botones quedaban permanentemente deshabilitados, aunque
+el firmware procesa `COMMAND_HOST_SET_WIFI_PASSWORD`/`SSID` sin depender del
+módulo. Fix: nuevo callback `wifiLinkChanged(boolean)` (se dispara apenas el
+Hello es válido, antes del chequeo de radio module status); `WifiSettingScreen`
+ahora gatea con `isWifiLinkUp` en vez de `isConnected`. **Probado en vivo:
+funciona.** Commit `51fff02`.
+
+**Límite de hardware confirmado (no es bug, es diseño correcto):** con el
+ESP32 sin SA818, tanto el aviso de enlace colgado (`staleConnectionCheck`,
+solo se programa dentro de `radioConnected()`) como los comandos de radio
+(`COMMAND_HOST_DESIRED_STATE` — canal, frecuencia, beacon, chat; gateados por
+`transportReady` en `RadioModuleController`, que solo se activa en
+`markRadioTransportReady()`) dependen de pasar el chequeo de módulo de radio
+encontrado, que este hardware nunca pasa. **No hay forma de probar esos dos
+caminos sin un SA818 físico conectado** — pendiente para cuando esté
+disponible. Lo único operable sin el módulo es lo que ya se probó (WiFi
+SSID/clave), porque no pasa por `radioModule`.
+
+**Total de la sesión: 4 bugs reales + 1 confirmación de límite de hardware,
+todo commiteado** (`a8e790a`, `93cb853`, `51fff02`).
+
 ## ⚡ CIERRE 2026-07-13 (continuación misma sesión) — 3 bugs más, todos ligados a DeviceState sin gatear cuando no hay radio
 Después del handshake WiFi (ver cierre debajo), LuKaZ reportó bips de alerta que
 no paraban en cualquier pantalla, con "SIN RADIO" en pantalla — y el PTT en
