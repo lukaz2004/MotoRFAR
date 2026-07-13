@@ -312,6 +312,9 @@ class MainActivity : ComponentActivity() {
         override fun radioMissing() {
             _uiState.update { it.copy(isConnected = false, sMeterLevel = 0) }
         }
+        override fun wifiLinkChanged(up: Boolean) {
+            _uiState.update { it.copy(isWifiLinkUp = up) }
+        }
         // 2026-07-10: "CONECTADO" en pantalla solo confirma que el socket
         // existe, no que el equipo sigue respondiendo -- este aviso es lo
         // unico que hoy puede detectar un enlace colgado. No lo marcamos
@@ -791,7 +794,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("wifi") {
                             ar.motorfar.app.ui.compose.WifiSettingScreen(
-                                isConnected    = state.isConnected,
+                                isConnected    = state.isWifiLinkUp,
                                 onSavePassword = { pw -> radioService?.setWifiPassword(pw) ?: false },
                                 onSaveSsid     = { ssid -> radioService?.setWifiSsid(ssid) ?: false },
                                 onBack         = { navController.popBackStack() }

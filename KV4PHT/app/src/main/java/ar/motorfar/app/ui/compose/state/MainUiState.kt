@@ -11,6 +11,13 @@ data class MainUiState(
     val isTxActive: Boolean             = false,
     val isRxActive: Boolean             = false,
     val isConnected: Boolean            = false,
+    // 2026-07-13: distinto de isConnected -- isConnected exige handshake
+    // completo CON modulo de radio encontrado (nunca se pone true sin SA818
+    // fisico). Cambiar SSID/clave WiFi es un comando que el firmware procesa
+    // sin importar el estado del modulo de radio -- solo necesita el enlace
+    // WiFi/UDP arriba (Hello recibido). Gatear esos botones en isConnected
+    // los dejaba inutilizables en un equipo sin SA818.
+    val isWifiLinkUp: Boolean           = false,
     val theme: AppTheme                 = AppTheme.GREEN,
     val activeAlert: ReceivedAlert?     = null,
     val isListenOnly: Boolean           = false,

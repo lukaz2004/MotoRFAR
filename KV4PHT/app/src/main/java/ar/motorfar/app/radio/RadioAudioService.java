@@ -290,6 +290,12 @@ public class RadioAudioService extends Service {
         default void hideSnackBar() {}
         default void radioModuleHandshake() {}
         default void radioModuleNotFound() {}
+        // 2026-07-13: distinto de radioConnected() -- este avisa que el
+        // enlace WiFi/UDP con el equipo esta arriba y respondiendo (Hello
+        // valido recibido), sin importar si encontro modulo de radio (SA818).
+        // Comandos que el firmware procesa igual sin radio (cambiar SSID/clave
+        // WiFi) deberian habilitarse con esto, no con radioConnected().
+        default void wifiLinkChanged(boolean up) {}
         default void audioTrackCreated() {}
         default void packetReceived(APRSPacket aprsPacket) {}
         // 2026-07-06: mirror opcional para la UI si la Activity esta bindeada;
@@ -1538,6 +1544,10 @@ public class RadioAudioService extends Service {
         }
 
         handleHello(helloPayload);
+        // El enlace WiFi/UDP respondio con un Hello valido -- comandos que no
+        // dependen del modulo de radio (cambiar SSID/clave) ya se pueden
+        // mandar, sin importar lo que diga el chequeo de abajo.
+        getCallbacks().wifiLinkChanged(true);
         if (Protocol.RadioStatus.RADIO_STATUS_NOT_FOUND.equals(version.getRadioModuleStatus())) {
             Log.w(TAG, handshakeLog(handshakeId, "radio module not found"));
             setMode(RadioMode.BAD_FIRMWARE);
@@ -1580,6 +1590,7 @@ public class RadioAudioService extends Service {
         // la Activity cerrada, porque el Service seguia vivo con mode stale).
         setMode(RadioMode.BAD_FIRMWARE);
         updateForegroundNotification("Sin radio · Conectate a la red \"Baqueano-\" del equipo");
+        getCallbacks().wifiLinkChanged(false);
         if (!radioMissingNotified) {
             radioMissingNotified = true;
             getCallbacks().radioMissing(); // Notify UI only on transition into missing state
