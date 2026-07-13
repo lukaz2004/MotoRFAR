@@ -1,6 +1,190 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ⚡ CIERRE 2026-07-13 (continuación misma sesión) — 3 bugs más, todos ligados a DeviceState sin gatear cuando no hay radio
+Después del handshake WiFi (ver cierre debajo), LuKaZ reportó bips de alerta que
+no paraban en cualquier pantalla, con "SIN RADIO" en pantalla — y el PTT en
+pantalla "se despresionaba solo" al mantenerlo apretado. Los 3 bugs, todos en
+`RadioAudioService.handleDeviceState()` / callbacks relacionados, con la MISMA
+causa raíz: **el firmware manda `COMMAND_DEVICE_STATE` a través de
+`handleCommands()` sin ninguna relación con si el Hello validó el módulo de
+radio** — sin SA818 físico conectado (hardware de esta sesión), esos paquetes
+traen lecturas de GPIO flotantes/"fantasma", y el código reaccionaba a todos
+sin filtrar por si el radio realmente terminó el handshake:
+
+1. **`radioMissing()` no reseteaba `mode`:** si hubo un handshake exitoso antes
+   en la sesión (`mode==RX`), cualquier caída posterior que pasara por
+   `radioMissing()` (a diferencia de los caminos de `validateHello()` que sí
+   hacen `setMode(BAD_FIRMWARE)`) dejaba `mode` pegado en `RX` para siempre.
+   Fix: `radioMissing()` ahora también hace `setMode(BAD_FIRMWARE)`.
+2. **`moduleTxStateChanged(false)` sonaba el roger beep en cada paquete, no
+   solo en la transición real TX→no-TX** — sin radio real, el equipo siempre
+   reporta `txActive=false`, así que sonaba sin parar. Fix en `MainActivity.kt`:
+   solo suena si el estado previo (`uiState.value.isTxActive`) era `true`.
+3. **El PTT físico (`didPhysPttChange()`) y el propio `moduleTxStateChanged()`
+   corrían para CUALQUIER `DeviceState`**, no solo cuando el radio está
+   operando. Esto también pisaba `isTxActive` en la UI en cada paquete —
+   aunque el usuario tuviera el PTT en pantalla apretado, un DeviceState
+   fantasma lo hacía "soltarse solo" visualmente. Fix: ambos ahora están
+   detrás de un gate `radioOperating = mode ∈ {RX, TX, SCAN}` en
+   `handleDeviceState()`.
+
+**Verificado en vivo** (rebuild + reinstall + reabrir la app cada vez): bips
+pararon, PTT se sostiene bien mientras se mantiene apretado. Los 5 fixes de
+esta sesión (2 del cierre de WiFi + estos 3) siguen **sin commitear**.
+
+## ⚡ CIERRE 2026-07-13 (nueva sesión) — WiFi resuelto: 2 bugs reales encontrados y arreglados, handshake HELLO confirmado en vivo
+Continuación directa del cierre anterior (ver debajo, "WiFi da timeout, causa sin
+confirmar"). La hipótesis de esa sesión (el ESP32 se resetea por watchdog sin el
+SA818) **quedó descartada por evidencia real** — con el monitor serie corriendo
+durante varios intentos de conexión, el ESP32 nunca se reinició ni una vez.
+
+**Causa real del "contraseña incorrecta" / timeout inicial:** la memoria NVS del
+equipo estaba vacía (`nvs_open failed: NOT_FOUND` en el boot), así que la clave
+WPA2 `12345678` seteada en la sesión anterior no sobrevivió — el firmware generó
+sola una clave nueva derivada de la MAC. Se leyó la MAC real (`b4:bf:e9:02:06:c8`)
+con esptool en modo bootloader (BOOT sostenido a mano) y se calculó la clave
+vigente: **`bqE9BFB4`** (case-sensitive). Con esa clave el celular conectó.
+Aparte: la app **no tiene ningún campo para unirse a la red por primera vez** —
+`WifiSettingScreen.kt` solo sirve para cambiar la clave/SSID una vez ya conectado;
+la asociación WiFi real es siempre por Ajustes nativos de Android.
+
+**2 bugs reales en el código, encontrados con logcat real (Huawei P9 por adb) y
+arreglados — commits pendientes de crear:**
+1. **`WifiTransport.java` (`onAvailable()`):** el ESP32 solo aprende la IP:puerto
+   del cliente (y recién ahí manda su HELLO) del PRIMER datagrama UDP que
+   recibe — ver comentario en `wifiTransport.h` del firmware. La app nunca
+   mandaba nada antes de esperar el HELLO: los dos lados esperaban que el otro
+   hablara primero, deadlock total. Nunca se había probado este camino con la
+   app real antes de hoy (antes solo con un script Python `fw3a_smoke.py`).
+   Fix: mandar un datagrama de 1 byte apenas se bindea el socket UDP.
+2. **`RadioAudioService.java` (`scheduleHelloTimeout()`):** cuando el HELLO daba
+   timeout (60s), el código nunca llamaba a `closePortAndReset()` — `hostToEsp32`/
+   `wifiTransport` quedaban vivos, `isConnectionReady()` seguía dando `true` para
+   siempre, y `ConnectionController` nunca volvía a reintentar. La app quedaba
+   en "SIN RADIO" para siempre sin ningún reintento automático. Fix: limpiar el
+   estado antes de marcar el intento terminado.
+
+**Verificado en vivo:** con los dos fixes, se vio en logcat **85 segundos
+seguidos de telemetría real del firmware llegando por WiFi** (`measureLoopFrequency`
+a ~98Hz) — el handshake HELLO se completó de punta a punta por primera vez en
+todo el proyecto. Después se cortó la conexión, pero fue porque LuKaZ apagó el
+WiFi del celular a mano (no un bug nuevo) — y con el fix del bug 2, la app
+reintentó sola en vez de quedarse colgada.
+
+**Herramientas nuevas que valieron la pena:**
+- `pio device monitor` (no el script casero roto) para ver el boot real del
+  ESP32 sin ambigüedad.
+- `adb` (el Huawei P9 ya estaba autorizado de sesiones anteriores) para sacar
+  screenshots (`adb exec-out screencap -p`) y logcat filtrado por proceso
+  (`adb logcat -d --pid=...`) del celu directamente — mucho más confiable que
+  pedirle capturas de pantalla a LuKaZ, que quedaban atrapadas en el celular.
+
+**Pendiente para la próxima:**
+- ⬜ Commitear los 2 fixes (`WifiTransport.java`, `RadioAudioService.java`) —
+  quedaron aplicados en el working tree, sin commitear todavía.
+- ⬜ Retomar el objetivo original: probar el aviso de enlace colgado
+  (`STALE_CONNECTION_TIMEOUT_MS`) y los comandos UDP del protocolo, ahora que
+  el handshake sí funciona.
+- ⬜ Confirmar si los 3 tonos personalizados (arranque/conexión/alarma) suenan
+  bien — el de conexión ya sonó hoy ("bips adicionales" que reportó LuKaZ),
+  falta confirmación explícita de que era el tono correcto.
+- ⬜ El botón "SIN RADIO" en rojo es genérico: no distingue "sin WiFi" de "WiFi
+  ok pero sin módulo SA818" — no es un bug, pero podría ser más claro. No
+  tocado hoy, fuera de foco.
+
+## ⚡ CIERRE 2026-07-13 (definitivo) — WiFi da timeout, causa sin confirmar; script de diagnóstico serie roto
+Sesión larga, varios frentes. Resumen de lo que quedó firme y lo que no.
+
+**✅ Firme, sin dudas:**
+- Firmware actual reflasheado en el ESP32 y verificado por hash (esptool, las
+  4 particiones OK). Maniobra correcta documentada abajo.
+- SSID único confirmado en el aire: `Baqueano-BFB4` (visible por escaneo WiFi
+  real desde PC y celular).
+- Huawei P9 con la app recién compilada instalada — incluye los 3 tonos
+  personalizados nuevos (arranque, conexión, alarma de reinicio; ver spec
+  local `docs/superpowers/specs/2026-07-13-tonos-personalizados-design.md`)
+  y el diseño de autenticación UDP (`docs/superpowers/specs/2026-07-13-autenticacion-protocolo-udp-design.md`,
+  **diseño aprobado, sin implementar en código todavía**).
+- Clave WPA2 del equipo cambiada a `12345678` (por comando USB, para
+  testing en casa — NO es la clave que generó el firmware solo).
+
+**❌ Sin resolver — la app no logra conectarse por WiFi al equipo:**
+- El celular intenta asociarse a `Baqueano-BFB4` con la clave `12345678` y
+  siempre termina en "Finalizó el tiempo de espera para la conexión... Error
+  de conexión" (timeout genérico de Android, NO "contraseña incorrecta"
+  específico).
+- Hipótesis principal, sin confirmar: el ESP32 se resetea solo (crash o
+  watchdog) en algún punto del arranque posterior a levantar el WiFi,
+  probablemente por no tener el módulo SA818/DRA818 conectado — el propio
+  firmware avisa "vas a ver resets del watchdog, es esperado" en el banner
+  de boot. Si el reset ocurre a mitad del handshake WPA2/DHCP del celular,
+  explicaría el timeout.
+- **Esta hipótesis NO está confirmada con evidencia limpia** — ver bug de
+  tooling abajo.
+
+**🐛 Hallazgo importante sobre la herramienta de diagnóstico (para la próxima sesión):**
+El script casero de captura serie (`read_esp32.ps1`, armado sobre la marcha
+hoy en el scratchpad de la sesión, no vive en el repo) tiene un bug real: si
+el puerto COM se cierra a mitad de captura (ej. el usuario desconecta el
+USB), el `catch` solo atrapa `TimeoutException` — una desconexión real tira
+otra excepción que cae fuera del catch y el loop reintenta sin parar,
+generando cientos de miles de "bytes" que en realidad son el mismo mensaje
+de error repetido, no datos reales del ESP32. Esto invalida las lecturas de
+"cantidad de bytes"/"velocidad" de varias capturas de hoy — **no confiar en
+esas cifras de esta sesión**. El texto capturado en sí (cuando el puerto
+seguía abierto) parece real, pero la frecuencia de repetición no se pudo
+medir de forma confiable.
+- **Para la próxima sesión de firmware:** o se arregla ese script (manejar
+  cualquier excepción de puerto cerrado, no solo timeout) o se usa el
+  monitor serie de PlatformIO (`pio device monitor`), que ya maneja esto
+  bien y es la herramienta estándar — más confiable que reinventar la rueda
+  a las apuradas.
+
+**Próximo paso sugerido:** con una herramienta de captura serie confiable,
+confirmar o descartar el crash-loop real (buscar mensaje de pánico/Guru
+Meditation, no solo contar líneas repetidas). Si se confirma, es 100%
+esperable sin el módulo SA818 — no bloquea seguir diseñando/codeando en
+otros frentes, pero sí bloquea cualquier prueba de protocolo real por WiFi
+hasta conseguir el módulo o entender exactamente qué crashea sin él.
+
+**Pendiente sin verificar (quedó interrumpido por el problema de WiFi):**
+si los 3 tonos personalizados nuevos suenan bien en el Huawei — la sesión
+se desvió a debuggear la conexión WiFi antes de poder confirmar el chime de
+"conexión exitosa" en uso real (nunca llegó a conectar). El de arranque de
+la app sí debería haberse escuchado al abrir la app instalada.
+
+## ⚡ ACTUALIZACIÓN 2026-07-13 (más tarde) — reflash del ESP32 COMPLETADO
+Con LuKaZ ya en casa y el ESP32 a mano, se terminó lo que había quedado a
+mitad de camino más temprano hoy:
+- **Causa real de los intentos fallidos de flasheo:** no bastaba con
+  sostener BOOT antes de arrancar el comando — el gesto tiene que hacerse
+  **mientras esptool ya está activamente intentando conectar** (sostener
+  BOOT, tocar EN una vez sin soltar BOOT, soltar BOOT después). El wrapper
+  de `pio run -t upload` además ocultaba el error real de esptool
+  ("Wrong boot mode detected") — diagnosticado invocando `esptool.py`
+  directo.
+- **Flasheo exitoso** vía `esptool.py write_flash` directo (bootloader +
+  partitions + boot_app0 + firmware, offsets estándar Arduino-ESP32), hash
+  verificado en las 4 particiones, sin errores.
+- **El "hard reset" automático de esptool al final (RTS→EN) NO fue
+  confiable en esta placa** — el chip quedó sin arrancar el firmware nuevo
+  hasta que LuKaZ desconectó/reconectó el USB a mano. Con eso, confirmado
+  por LuKaZ mirando la lista de WiFi de su celular: **aparece `Baqueano-`**
+  (SSID único nuevo), reemplazando al `MotoRFAR-HT` viejo — firmware
+  actual corriendo de verdad.
+- **Huawei P9 con la app recién compilada instalada** (incluye los 3 tonos
+  personalizados nuevos: arranque, conexión, alarma de reinicio — ver
+  `docs/superpowers/specs/2026-07-13-tonos-personalizados-design.md`).
+
+**Para la próxima sesión con este hardware:** ya está todo listo para
+retomar el objetivo original — probar handshake HELLO, el aviso de enlace
+colgado, comandos UDP del protocolo — firmware actualizado, teléfono
+autorizado y con la app instalada. Nota de maniobra para no repetir la
+misma pérdida de tiempo: cualquier reflash futuro en este ESP32 necesita
+BOOT+EN sincronizado con el comando ya corriendo, y power-cycle manual
+después si el equipo no arranca solo.
+
 ## ⚡ CIERRE 2026-07-13 — verificación de hardware: firmware del ESP32 está VIEJO, reflash a mitad de camino
 Sesión corta desde el trabajo (LuKaZ sin el módulo SA818, solo el ESP32 pelado
 a mano). Verificado:
