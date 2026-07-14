@@ -62,6 +62,7 @@ fun AliasSettingScreen(
     onDownloadMaps: () -> Unit = {},
     onConfigureTones: () -> Unit = {},
     onConfigureWifi: () -> Unit = {},
+    onConfigureOfflineMaps: () -> Unit = {},
     onClearRoute: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
@@ -395,6 +396,23 @@ fun AliasSettingScreen(
             )
         ) {
             Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text     = "Mapa vectorial offline por provincia (más liviano, sin tiles).",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 15.sp
+        )
+        OutlinedButton(
+            onClick  = onConfigureOfflineMaps,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive)
+        ) {
+            Text("MAPAS OFFLINE POR PROVINCIA →", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
         }
 
         Spacer(Modifier.height(4.dp))

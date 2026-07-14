@@ -12,4 +12,15 @@
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">repeaterbook.com</domain>
     </domain-config>
+    <!-- Android 7.0 (API 24) no trae ISRG Root X1 de fábrica (recién en 7.1.1).
+         GitHub/Fastly usa Let's Encrypt, y sin este anchor la cadena TLS no valida
+         en esos equipos aunque el resto de la app (tiles OSM, etc.) ande bien. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">githubusercontent.com</domain>
+        <domain includeSubdomains="true">github.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/isrg_root_x1" />
+        </trust-anchors>
+    </domain-config>
 </network-security-config>

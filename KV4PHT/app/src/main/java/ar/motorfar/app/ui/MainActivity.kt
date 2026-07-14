@@ -755,6 +755,9 @@ class MainActivity : ComponentActivity() {
                                 onConfigureWifi          = {
                                     navController.navigate("wifi") { launchSingleTop = true }
                                 },
+                                onConfigureOfflineMaps   = {
+                                    navController.navigate("offline_maps") { launchSingleTop = true }
+                                },
                                 onClearRoute             = { clearRoute() },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
@@ -798,6 +801,11 @@ class MainActivity : ComponentActivity() {
                                 onSavePassword = { pw -> radioService?.setWifiPassword(pw) ?: false },
                                 onSaveSsid     = { ssid -> radioService?.setWifiSsid(ssid) ?: false },
                                 onBack         = { navController.popBackStack() }
+                            )
+                        }
+                        composable("offline_maps") {
+                            ar.motorfar.app.ui.compose.OfflineVectorMapsScreen(
+                                onBack = { navController.popBackStack() }
                             )
                         }
                         composable("chat") {

@@ -1,6 +1,78 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ✅ CIERRE 2026-07-14 — Mapas offline por provincia: probado y funcionando en el Huawei P9
+Tres causas independientes bloqueaban la pantalla nueva de mapas offline (cada
+una tapaba a la siguiente, se fueron pelando una por una con evidencia real
+de logcat/TLS, no a los tiros):
+1. **Repo privado.** `lukaz2004/MotoRFAR` estaba privado -- `raw.githubusercontent.com`
+   y los assets del release devuelven 404 sin auth aunque el release no sea
+   draft. LuKaZ lo puso público a mano (yo no puedo cambiar visibilidad de
+   repos). Antes de recomendarlo se revisó todo el historial de commits (no
+   solo el HEAD) buscando secrets/API keys/credenciales -- nada encontrado;
+   `.gitignore` ya excluía `keystore.properties`/`*.jks`/`.env` desde antes.
+2. **Android 7.0 (API 24, el Huawei P9) no trae ISRG Root X1 de fábrica**
+   (recién viene en 7.1.1+). GitHub/Fastly usa Let's Encrypt -- sin ese root
+   como trust-anchor, la cadena TLS no valida en ese equipo especifico,
+   aunque el resto de la app (tiles OSM, etc.) sí ande. Fix: se bundleó el
+   cert (`res/raw/isrg_root_x1.pem`) y se agregó un `domain-config` en
+   `network_security_config.xml` scoped a `github.com`/`githubusercontent.com`
+   con ese cert como anchor extra (no se tocó el resto de la política HTTPS).
+3. **Bug de Compose real, ya con el manifest y la descarga andando:**
+   `LaunchedEffect(state)` en `ProvinceRow` (`OfflineVectorMapsScreen.kt`)
+   estaba keyeado sobre el mismo objeto `state` que su propio callback de
+   progreso reemplazaba en cada chunk leído -- cada tick de progreso
+   cancelaba y relanzaba el efecto, matando la descarga en curso apenas
+   arrancaba (por eso "no descarga" pasaba siempre, al toque). El archivo
+   igual terminaba de escribirse y pasaba la verificación de hash (la
+   cancelación llegaba después del write, por cómo corren las corrutinas de
+   IO bloqueante), pero la UI mostraba error igual. Fix: key estable
+   (`LaunchedEffect(info.iso, state is DownloadState.Downloading)`).
+
+**Verificado en el dispositivo real (Huawei P9, Android 7.0), no solo build verde:**
+lista de provincias carga, descarga de CABA (7,4 MB) se completa con hash
+verificado (7.764.134 bytes, coincide con el manifest), "VER MAPA" renderiza
+el vector Mapsforge con calles/costa/pan-zoom. `DESCARGAR MAPA DE ARGENTINA`
+(OSMDroid) sigue mostrando su mensaje de "no permite descarga masiva" --
+eso es la política del propio servidor OSM, no un bug, ya andaba así.
+
+## 🗺️ CIERRE 2026-07-13 — Mapas offline vectoriales (Mapsforge), pantalla nueva
+Sub-proyecto 2 de mapas offline (ver PENDIENTES.md) implementado: la app solo
+tenía OSMDroid (raster), pero el manifest ya publicado (`provincias.json`)
+generó `.map` vectoriales Mapsforge -- motores incompatibles. Se agregó
+Mapsforge como motor SEPARADO, sin tocar `MapScreen.kt` (OSMDroid en vivo,
+con GPS/ruta/waypoints, frágil):
+- Dependencias nuevas (`build.gradle`): `mapsforge-map-android`,
+  `mapsforge-map-reader`, `mapsforge-themes` (0.25.0, Maven Central). Ojo:
+  `MapsforgeThemes` vive en el artifact `mapsforge-themes`, no en
+  `mapsforge-map`/`mapsforge-map-android` -- si falta, tira "Unresolved
+  reference" aunque el import esté bien escrito.
+- `ProvinceMapRepository.kt` (paquete `ar.motorfar.app.maps`): trae el
+  manifest en vivo desde GitHub (raw.githubusercontent.com, no bundleado en
+  el APK), descarga con `HttpURLConnection` + verifica SHA-256, borra el
+  archivo si no matchea.
+- `OfflineVectorMapsScreen.kt`: lista de provincias con descarga + progreso,
+  visor Mapsforge de solo lectura (pan/zoom, sin GPS/ruta/marcadores --
+  eso queda para otra sesión si se pide).
+- Ruta `"offline_maps"` en el `NavHost` de `MainActivity.kt`, acceso desde
+  Ajustes (`AliasSettingScreen.kt`, botón "MAPAS OFFLINE POR PROVINCIA →").
+
+**Build verde, instalado en el Huawei P9 -- falta la prueba manual real**:
+entrar a Ajustes → Mapas offline, descargar la provincia más chica (revisar
+`size_bytes` en el manifest) y confirmar que el mapa renderiza con pan/zoom,
+y que `MapScreen.kt` sigue andando igual que antes.
+
+## 🌐 Decisión 2026-07-13 — dominio propio: `baqueanoapp.com`
+`baqueano.com`/`.com.ar` están tomados por terceros (verificado por WHOIS/NIC.ar).
+`baqueanoapp.com` está libre (verificado). Plan más económico aprobado por
+LuKaZ: comprar SOLO el dominio (~US$10-20/año, Namecheap o Hostinger), seguir
+usando **Netlify gratis** para el hosting del sitio (ya funciona, no hace
+falta pagar hosting nuevo), y **Zoho Mail plan free** (hasta 5 casillas,
+`vos@baqueanoapp.com`, $0/año, sin IMAP/POP en el free). Pendiente: LuKaZ
+tiene que comprar el dominio y dar de alta Zoho Mail a mano (pagos/altas de
+cuenta no los hace el asistente) — avisar cuando esté para apuntar el DNS de
+Netlify + los MX de Zoho al dominio nuevo.
+
 ## ⚡ CIERRE 2026-07-13 (cierre final de la sesión) — 4to fix (SSID/clave) + límite de hardware confirmado
 Cuarto bug de la misma familia: `WifiSettingScreen` gateaba "GUARDAR CLAVE/SSID"
 con `isConnected` (exige handshake completo CON módulo de radio) — en este
