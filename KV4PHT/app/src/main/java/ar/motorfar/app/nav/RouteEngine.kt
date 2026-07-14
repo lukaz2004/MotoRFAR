@@ -20,7 +20,14 @@ class RouteCalculationException(message: String) : Exception(message)
  */
 object RouteEngine {
 
-    private const val PROFILE_NAME = "trekking"
+    // car-vario respeta el sentido de circulación como una restricción dura
+    // (onewayspeedlimit=0 en contramano) -- correcto para moto/4x4, a
+    // diferencia de "trekking" (penaliza pero permite ir en contramano,
+    // pensado para bici/a pie donde eso es legal). El proyecto es
+    // multi-modal (moto/4x4/bici/senderismo), pero default seguro: el error
+    // de sugerirle a un vehículo ir en contramano es peligroso e ilegal; el
+    // error de ser demasiado estricto para un peatón no lo es.
+    private const val PROFILE_NAME = "car-vario"
     private const val PROFILE_ASSET_DIR = "brouter_profile"
 
     private fun ensureProfileExtracted(context: Context): File {
