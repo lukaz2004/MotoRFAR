@@ -189,8 +189,12 @@ El release tenía `createdAt` de dos días antes de que se lanzara el pipeline
 de esta sesión — confirmado con LuKaZ que viene de otra sesión de chat previa
 que ya lo había corrido (ver detalle en `NEXT_SESSION.md`, CIERRE 2026-07-09
 segunda parte).
-- ⬜ Sub-proyecto 2 (ventana in-app que consume el manifest) — arrancable
-  ahora que hay URLs reales, todavía sin construir.
+- ✅ **Sub-proyecto 2 cerrado (nota desactualizada, ya estaba hecho)**:
+  `OfflineVectorMapsScreen.kt` ya consume el manifest real y descarga
+  provincias -- cableado en `MainActivity.kt` (Ajustes → "MAPAS OFFLINE POR
+  PROVINCIA →" → ruta `offline_maps`). Verificado y arreglado en el Huawei
+  P9 real al principio de esta sesión (bug de certificado TLS de GitHub +
+  bug de `LaunchedEffect` que reiniciaba la descarga en loop).
 
 ## 🧭 Navegación turn-by-turn — MVP hecho y probado (2026-07-14), fase 2 pendiente
 Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`. **MVP construido y probado en
@@ -240,9 +244,27 @@ sin voz ni recálculo automático.
   tratar de distinguir un scroll manual de uno programático). Probado en el
   Huawei P9 real: centra en la posición real al activarse, vuelve a "MI GPS"
   sin romper nada al desactivarlo.
-- ⬜ Los 4 puntos "abierto para pulir" del diseño original (tile inicial sin
-  GPS fix, UI del cartel de advertencia, destino sobre miembro sin fix
-  reciente) siguen abiertos, ninguno bloquea el MVP actual.
+- Los 4 puntos "abierto para pulir" del diseño original -- repasados
+  2026-07-14, 3 de 4 ya resueltos por la arquitectura que se terminó
+  construyendo (no por descuido):
+  - ✅ "Tile inicial obligatorio": el diseño original asumía una descarga
+    obligatoria al arrancar; se construyó distinto (bajo demanda, en el
+    momento de calcular la ruta) -- la pregunta de "qué pasa sin fix GPS
+    al inicio" ya no aplica.
+  - ✅ "UI del cartel de advertencia": no se construyó un cartel aparte:
+    los errores (sin fix GPS, tile/ruta) se muestran inline en el mismo
+    cartel de estado de navegación ya existente.
+  - ✅ "Ducking con transmisión real coincidiendo": resuelto por el fix de
+    audio de hoy -- la radio se agacha de volumen ante el pedido
+    transitorio del TTS en vez de competir, sea cual sea el tráfico RX.
+  - ✅ **Destino sobre miembro del grupo (hecho 2026-07-14)**: tocar el
+    marcador de un integrante en el mapa ahora traza una ruta hacia su
+    última posición conocida. Si esa posición está vieja (`isStale`), se
+    avisa con un Toast pero la ruta se calcula igual -- mejor ofrecer una
+    ruta con aviso que no ofrecer nada. Build verde, sin crash en el
+    Huawei P9; **sin probar el tap en un marcador real** -- no había otro
+    equipo transmitiendo en esta sesión para generar un integrante real
+    en el mapa.
 
 ## ✅ Confirmado con código (no había que arreglar nada) — 2026-07-05
 - El PTT físico (botón del equipo o externo por jack) funciona con cualquier

@@ -504,6 +504,25 @@ fun MapScreen(
                             stale    = stale
                         )
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                        // Tocar a un integrante traza una ruta hacia su última posición
+                        // conocida -- si esa posición está vieja (isStale), se avisa con
+                        // un Toast pero igual se calcula la ruta (mejor una ruta a una
+                        // posición desactualizada, con aviso, que no ofrecer nada).
+                        setOnMarkerClickListener { _, _ ->
+                            pickingDestination = false
+                            addressResults = emptyList()
+                            if (stale) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "Última posición conocida de ${member.alias} -- puede estar desactualizada",
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            val dest = GeoPoint(member.lat, member.lon)
+                            focusPoint = dest
+                            calculateRouteTo(dest)
+                            true
+                        }
                     }
                     mv.overlays.add(marker)
                 }
