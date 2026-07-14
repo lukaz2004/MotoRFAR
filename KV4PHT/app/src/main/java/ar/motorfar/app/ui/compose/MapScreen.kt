@@ -131,6 +131,7 @@ private fun distanceToSegmentMeters(p: GeoPoint, a: GeoPoint, b: GeoPoint): Floa
 @Composable
 fun MapScreen(
     groupMembers: List<GroupMember>,
+    pois: List<ar.motorfar.app.ui.compose.state.PoiMarker> = emptyList(),
     routePoints: List<ar.motorfar.app.data.RoutePoint> = emptyList(),
     locationGranted: Boolean = false,
     headingDeg: Float? = null,
@@ -144,6 +145,8 @@ fun MapScreen(
     // 2026-07-06: se movió acá desde la pantalla principal -- el usuario lo
     // marcó como fuera de lugar ahí ("es algo del mapa").
     onSendWaypoint: () -> Unit = {},
+    // 2026-07-14: POI propio compartido al grupo (label, lat, lon).
+    onSendPoi: (String, Double, Double) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -182,6 +185,11 @@ fun MapScreen(
     // (no se auto-desactiva si arrastrás el mapa) -- más simple y predecible
     // que tratar de distinguir un scroll del usuario de uno programático.
     var followingLocation by remember { mutableStateOf(false) }
+    // POI propio: elegir punto tocando el mapa (mismo patrón que pickingDestination,
+    // estado separado para no pisar el flujo de navegación) + diálogo de etiqueta.
+    var pickingPoiLocation by remember { mutableStateOf(false) }
+    var poiPendingPoint by remember { mutableStateOf<GeoPoint?>(null) }
+    var poiLabelInput by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val turnAnnouncer = remember { TurnAnnouncer(context) }
     DisposableEffect(Unit) {
@@ -305,9 +313,21 @@ fun MapScreen(
                     calculateRouteTo(p)
                     return true
                 }
+                if (pickingPoiLocation) {
+                    pickingPoiLocation = false
+                    poiPendingPoint = p
+                    return true
+                }
                 return false
             }
-            override fun longPressHelper(p: GeoPoint): Boolean = false
+            // Mantener presionado cualquier punto del mapa marca un POI ahí --
+            // sin necesidad de activar "MARCAR POI" antes (que además ya cubre
+            // el caso rápido de marcar tu posición actual).
+            override fun longPressHelper(p: GeoPoint): Boolean {
+                pickingPoiLocation = false
+                poiPendingPoint = p
+                return true
+            }
         })
     }
 
@@ -526,6 +546,19 @@ fun MapScreen(
                     }
                     mv.overlays.add(marker)
                 }
+                // POIs compartidos al grupo (propios y recibidos)
+                mv.overlays.removeAll { it is Marker && it.relatedObject == "poi" }
+                pois.forEach { poi ->
+                    val poiMarker = Marker(mv).apply {
+                        position = GeoPoint(poi.lat, poi.lon)
+                        title    = poi.label
+                        snippet  = "De: ${poi.fromAlias}"
+                        icon     = buildPoiMarker(mv.context, poi.label)
+                        relatedObject = "poi"
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                    }
+                    mv.overlays.add(poiMarker)
+                }
                 // Marcador de foco (ubicación de una alerta abierta desde el chat)
                 focusPoint?.let { fp ->
                     val fm = Marker(mv).apply {
@@ -643,6 +676,26 @@ fun MapScreen(
                     } else {
                         pickingDestination = !pickingDestination
                         addressResults = emptyList()
+                    }
+                }
+            )
+            // POI propio: marca un punto (tu posición o uno tocado en el mapa) con
+            // una etiqueta de texto y lo comparte al grupo por VHF.
+            MapControlButton(
+                iconRes = R.drawable.ic_pin,
+                label   = if (pickingPoiLocation) "TOCÁ EL MAPA" else "MARCAR POI",
+                colors  = colors,
+                active  = pickingPoiLocation,
+                onClick = {
+                    if (pickingPoiLocation) {
+                        pickingPoiLocation = false
+                    } else {
+                        val loc = myLocationOverlay.myLocation
+                        if (loc != null) {
+                            poiPendingPoint = loc
+                        } else {
+                            pickingPoiLocation = true
+                        }
                     }
                 }
             )
@@ -785,6 +838,39 @@ fun MapScreen(
                     }
                 }
             }
+        }
+
+        // Diálogo de etiqueta para el POI pendiente (punto ya elegido, falta el texto)
+        poiPendingPoint?.let { point ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { poiPendingPoint = null; poiLabelInput = "" },
+                title = { androidx.compose.material3.Text("Marcar POI") },
+                text = {
+                    androidx.compose.material3.TextField(
+                        value = poiLabelInput,
+                        onValueChange = { poiLabelInput = it },
+                        placeholder = { androidx.compose.material3.Text("Ej: cruce peligroso, buen lugar para acampar...") },
+                        singleLine = true
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(
+                        onClick = {
+                            val label = poiLabelInput.trim()
+                            if (label.isNotEmpty()) {
+                                onSendPoi(label, point.latitude, point.longitude)
+                            }
+                            poiPendingPoint = null
+                            poiLabelInput = ""
+                        }
+                    ) { androidx.compose.material3.Text("Enviar al grupo") }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { poiPendingPoint = null; poiLabelInput = "" }) {
+                        androidx.compose.material3.Text("Cancelar")
+                    }
+                }
+            )
         }
 
         // PTT directo desde el mapa, solo en su esquina -- sin botones chicos al lado
@@ -1059,5 +1145,65 @@ private fun buildFocusMarker(context: android.content.Context, accent: Int): and
     // Punto central
     val dot = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = accent }
     canvas.drawCircle(cx, cy, dp(3f), dot)
+    return android.graphics.drawable.BitmapDrawable(context.resources, bmp)
+}
+
+/**
+ * Marcador de POI compartido al grupo: mismo estilo que buildGroupMarker pero
+ * en naranja fijo (no el accent del tema) para no confundirse con la posición
+ * de un integrante, con "P" en vez de una inicial de alias.
+ */
+private fun buildPoiMarker(context: android.content.Context, label: String): android.graphics.drawable.Drawable {
+    val density = context.resources.displayMetrics.density
+    fun dp(v: Float) = v * density
+    val poiColor = android.graphics.Color.rgb(255, 165, 0)
+
+    val pinR    = dp(16f)
+    val labelH  = dp(16f)
+    val padding = dp(4f)
+    val w       = (pinR * 2 + dp(40f)).toInt()
+    val h       = (pinR * 2 + labelH + padding).toInt()
+
+    val bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    val cx = w / 2f
+    val cy = pinR + dp(1f)
+
+    val halo = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = poiColor
+        alpha = 60
+    }
+    canvas.drawCircle(cx, cy, pinR + dp(3f), halo)
+
+    val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.argb(230, 40, 25, 0)
+    }
+    canvas.drawCircle(cx, cy, pinR, fill)
+
+    val ring = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = dp(2f)
+        color = poiColor
+    }
+    canvas.drawCircle(cx, cy, pinR, ring)
+
+    val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = poiColor
+        textSize = dp(16f)
+        textAlign = android.graphics.Paint.Align.CENTER
+        isFakeBoldText = true
+        typeface = android.graphics.Typeface.MONOSPACE
+    }
+    val textY = cy - (textPaint.descent() + textPaint.ascent()) / 2f
+    canvas.drawText("P", cx, textY, textPaint)
+
+    val labelPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = poiColor
+        textSize = dp(11f)
+        textAlign = android.graphics.Paint.Align.CENTER
+        typeface = android.graphics.Typeface.MONOSPACE
+    }
+    canvas.drawText(label.take(14).uppercase(), cx, cy + pinR + dp(12f), labelPaint)
+
     return android.graphics.drawable.BitmapDrawable(context.resources, bmp)
 }

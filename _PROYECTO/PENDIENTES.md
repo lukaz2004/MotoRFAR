@@ -281,10 +281,22 @@ sin voz ni recálculo automático.
   botón de borrar (con confirmación) en la barra superior.
 - ✅ **Hecho (2026-07-14)**: exportar a GPX / compartir el track — ver
   CIERRE de "pantalla de historial de rutas + exportar GPX" más arriba.
-- 💡 **Propuesta sin construir**: marcar POIs propios (ej. "buen lugar para
-  acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
-  infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,
-  ya transmite posición por VHF) en vez de ser algo nuevo desde cero.
+- ✅ **POIs propios (hecho 2026-07-14)**: botón "MARCAR POI" en el mapa --
+  usa tu posición actual de un toque, o mantené presionado cualquier punto
+  del mapa para elegir otro. Pide una etiqueta de texto libre y lo manda al
+  grupo por el chat VHF ya existente (`sendChatMessage(null, ...)`, target
+  "CQ", mismo mecanismo que el chat de grupo) con un formato de texto propio
+  ("📍 POI: etiqueta · lat,lon") -- se decidió así en vez de un paquete APRS
+  Object Report nuevo porque la librería APRS vendorizada trae un
+  `ObjectField` incompleto (no serializa posición/timestamp reales) y
+  arreglarlo es trabajo de protocolo aparte; este formato no necesita
+  interoperar con software APRS genérico. Quien lo recibe lo parsea
+  (`MainActivity.packetReceived`) y lo dibuja como marcador naranja
+  independiente de los de "posición de integrante". Probado el diálogo y la
+  entrada de texto en el Huawei P9 real; **el envío/recepción real por RF no
+  se pudo probar** -- no hay radio conectada en este entorno de pruebas
+  ("SIN RADIO"), mismo límite que ya tiene WAYPOINT ahí. El camino de código
+  es el mismo que WAYPOINT (ya validado con equipo real).
 - ✅ **Man-Down: countdown variable según fuerza G del golpe** (hecho 2026-07-05).
   `FallDetectionManager` pasa el pico de aceleración al callback; `countdownSecondsFor()`
   en `MainActivity.kt` mapea: >60 m/s² (~6G) → 8s, 40-60 (~4-6G) → 15s, 25-40
@@ -413,7 +425,13 @@ sin voz ni recálculo automático.
 - ✅ Build: `assembleDebug` OK.
 - ⬜ **Requiere SA818 + ESP32 con FW-3a**: verificar Hello/handshake por WiFi, audio RX/TX real.
 - ✅ UI "Conectate a MotoRFAR-HT": hecho hace rato (`WifiConnectBanner.kt`, PR #9) — este bullet había quedado desactualizado.
-- ⬜ Config credenciales AP desde app: firmware ya tiene el comando (`COMMAND_HOST_SET_WIFI_PASSWORD`, 2026-07-06), falta el lado app (ver sección de auditoría de seguridad más arriba).
+- ✅ **Config credenciales AP desde app (nota desactualizada, ya estaba hecho)**:
+  `WifiSettingScreen.kt` ya tiene campos de clave y SSID nuevos, conectados
+  en `MainActivity.kt` (`onSavePassword`/`onSaveSsid`) a
+  `RadioAudioService.setWifiPassword()`/`setWifiSsid()`, que llaman a los
+  comandos reales del firmware (`Protocol.java`). Verificado 2026-07-14
+  repasando el código -- sigue sin auth de protocolo (ver ALTO-1/ALTO-3 más
+  arriba), pero la UI en sí está completa.
 - ✅ UI CTCSS/DCS por canal: hecho 2026-07-06 (`TonesSettingScreen.kt`) — este bullet había quedado desactualizado.
 - ⬜ Windowing: quitar/rediseñar en FW-3b (hoy inerte).
 

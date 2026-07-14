@@ -137,6 +137,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private val _groupMembers = MutableStateFlow<List<GroupMember>>(emptyList())
+    // POIs propios compartidos al grupo -- reusa el chat VHF existente (sendChatMessage
+    // a "CQ") en vez de un tipo de paquete APRS nuevo: la librería APRS vendorizada trae
+    // un ObjectField incompleto (no serializa posición/timestamp reales), arreglarlo bien
+    // es trabajo de protocolo aparte. Este formato de texto es propio de esta app, no
+    // necesita interoperar con software APRS genérico.
+    private val _pois = MutableStateFlow<List<ar.motorfar.app.ui.compose.state.PoiMarker>>(emptyList())
+    private val poiMessageRegex = Regex("^📍 POI: (.+) · (-?\\d+\\.\\d+),(-?\\d+\\.\\d+)$")
 
     private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
     private var chatMessageIdCounter = 0L
@@ -401,7 +408,20 @@ class MainActivity : ComponentActivity() {
                         _uiState.update { if (it.activeAlert?.fromAlias == alias) it.copy(activeAlert = null) else it }
                     }, 30_000L)
                 } else {
-                    // Mensaje de chat normal (no es alerta) → al chat VHF
+                    val poiMatch = poiMessageRegex.matchEntire(body)
+                    if (poiMatch != null) {
+                        val (label, latStr, lonStr) = poiMatch.destructured
+                        val poi = ar.motorfar.app.ui.compose.state.PoiMarker(
+                            label        = label,
+                            lat          = latStr.toDouble(),
+                            lon          = lonStr.toDouble(),
+                            fromAlias    = alias,
+                            receivedAtMs = System.currentTimeMillis()
+                        )
+                        _pois.update { it + poi }
+                    }
+                    // Mensaje de chat normal (o POI, que también se lee como texto
+                    // si algo falla en el parseo de arriba) → al chat VHF
                     addChatMessage(alias, body, outgoing = false)
                     ToneHelper.playAlertBeep(alertVolume / 100f)
                 }
@@ -512,6 +532,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val state by uiState.collectAsState()
             val groupMembers by _groupMembers.collectAsState()
+            val pois by _pois.collectAsState()
             val chatMessages by _chatMessages.collectAsState()
             val mapFocus by _mapFocus.collectAsState()
             val routePoints by _routePoints.collectAsState()
@@ -690,6 +711,7 @@ class MainActivity : ComponentActivity() {
                             }
                             MapScreen(
                                 groupMembers    = groupMembers,
+                                pois            = pois,
                                 routePoints     = routePoints,
                                 locationGranted = state.locationGranted,
                                 headingDeg      = state.headingDeg,
@@ -700,7 +722,8 @@ class MainActivity : ComponentActivity() {
                                 isEmergency     = state.isEmergencyActive,
                                 onPttDown       = { handleAction(MainUiAction.PttPressed) },
                                 onPttUp         = { handleAction(MainUiAction.PttReleased) },
-                                onSendWaypoint  = { handleAction(MainUiAction.SendWaypoint) }
+                                onSendWaypoint  = { handleAction(MainUiAction.SendWaypoint) },
+                                onSendPoi       = { label, lat, lon -> performSendPoi(label, lat, lon) }
                             )
                         }
                         composable("settings") {
@@ -1116,6 +1139,32 @@ class MainActivity : ComponentActivity() {
             android.widget.Toast.makeText(
                 this, getString(R.string.waypoint_sent), android.widget.Toast.LENGTH_SHORT
             ).show()
+        } else {
+            android.widget.Toast.makeText(
+                this, getString(R.string.waypoint_no_radio), android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun performSendPoi(label: String, lat: Double, lon: Double) {
+        val vol = alertVolume / 100f
+        val svc = radioService
+        if (svc != null && uiState.value.isConnected) {
+            val text = "📍 POI: $label · $lat,$lon"
+            svc.sendChatMessage(null, text)
+            // Se agrega de una en el propio dispositivo -- no hay que esperar a
+            // "recibir" el propio paquete para verlo en el mapa.
+            _pois.update {
+                it + ar.motorfar.app.ui.compose.state.PoiMarker(
+                    label        = label,
+                    lat          = lat,
+                    lon          = lon,
+                    fromAlias    = userAlias,
+                    receivedAtMs = System.currentTimeMillis()
+                )
+            }
+            ToneHelper.playPttUp(vol)
+            android.widget.Toast.makeText(this, "POI enviado al grupo", android.widget.Toast.LENGTH_SHORT).show()
         } else {
             android.widget.Toast.makeText(
                 this, getString(R.string.waypoint_no_radio), android.widget.Toast.LENGTH_SHORT
