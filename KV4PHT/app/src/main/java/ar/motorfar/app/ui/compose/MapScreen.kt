@@ -45,6 +45,8 @@ import ar.motorfar.app.nav.RouteCalculationException
 import ar.motorfar.app.nav.RouteEngine
 import ar.motorfar.app.nav.RouteTileException
 import ar.motorfar.app.nav.RouteTileRepository
+import ar.motorfar.app.nav.TurnHint
+import btools.router.VoiceHint
 import ar.motorfar.app.ui.compose.state.GroupMember
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARColors
@@ -71,6 +73,10 @@ private const val INITIAL_ZOOM = 15.0
 private const val OFF_ROUTE_THRESHOLD_METERS = 70f
 private const val REROUTE_CHECK_INTERVAL_MS = 8000L
 
+// Cartel de "próximo giro": frecuencia de actualización. Más seguido que el
+// chequeo de desvío porque acá sí importa que la distancia se vea fluida.
+private const val TURN_HUD_UPDATE_INTERVAL_MS = 3000L
+
 /**
  * Distancia mínima (metros) de un punto a la polilínea de la ruta -- se usa
  * para detectar desvío. Point-to-segment (no solo al vértice más cercano)
@@ -84,6 +90,20 @@ private fun distanceToRouteMeters(point: GeoPoint, route: List<GeoPoint>): Float
         if (d < minDist) minDist = d
     }
     return minDist
+}
+
+/** Índice (en `route`) del extremo del segmento más cercano a `point` -- marca cuánto avanzaste sobre la ruta. */
+private fun nearestRouteSegmentEndIndex(point: GeoPoint, route: List<GeoPoint>): Int {
+    var minDist = Float.MAX_VALUE
+    var bestIndex = 0
+    for (i in 1 until route.size) {
+        val d = distanceToSegmentMeters(point, route[i - 1], route[i])
+        if (d < minDist) {
+            minDist = d
+            bestIndex = i
+        }
+    }
+    return bestIndex
 }
 
 /** Proyección plana local (equirectangular) -- suficiente para segmentos cortos de ruta. */
@@ -143,6 +163,9 @@ fun MapScreen(
     var pickingDestination by remember { mutableStateOf(false) }
     var navRoute by remember { mutableStateOf<List<GeoPoint>>(emptyList()) }
     var navDestination by remember { mutableStateOf<GeoPoint?>(null) }
+    var navTurnHints by remember { mutableStateOf<List<TurnHint>>(emptyList()) }
+    var nextTurn by remember { mutableStateOf<TurnHint?>(null) }
+    var nextTurnDistanceM by remember { mutableStateOf<Float?>(null) }
     var navDistanceKm by remember { mutableStateOf<Float?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
     var isCalculatingRoute by remember { mutableStateOf(false) }
@@ -194,7 +217,9 @@ fun MapScreen(
             try {
                 val tileDir = File(context.filesDir, "brouter_tiles")
                 RouteTileRepository.ensureTileDownloaded(origin.latitude, origin.longitude, tileDir)
-                navRoute = RouteEngine.calculateRoute(context, origin, dest, tileDir)
+                val result = RouteEngine.calculateRoute(context, origin, dest, tileDir)
+                navRoute = result.points
+                navTurnHints = result.turnHints
                 val results = FloatArray(1)
                 var totalM = 0f
                 for (i in 1 until navRoute.size) {
@@ -209,9 +234,11 @@ fun MapScreen(
             } catch (e: RouteTileException) {
                 navError = e.message
                 navRoute = emptyList()
+                navTurnHints = emptyList()
             } catch (e: RouteCalculationException) {
                 navError = e.message
                 navRoute = emptyList()
+                navTurnHints = emptyList()
             } finally {
                 isCalculatingRoute = false
             }
@@ -296,6 +323,36 @@ fun MapScreen(
                 calculateRouteTo(dest)
                 return@LaunchedEffect
             }
+        }
+    }
+
+    // Cartel de "próximo giro": ubica el giro más próximo por delante de tu
+    // posición actual (usando el índice del segmento más cercano) y muestra
+    // la distancia en línea recta a ese punto. Aproximado (no es distancia
+    // caminada sobre la ruta), pero suficiente para un cartel de HUD.
+    androidx.compose.runtime.LaunchedEffect(navRoute, navTurnHints) {
+        if (navRoute.size < 2 || navTurnHints.isEmpty()) {
+            nextTurn = null
+            nextTurnDistanceM = null
+            return@LaunchedEffect
+        }
+        while (true) {
+            val loc = myLocationOverlay.myLocation
+            if (loc != null) {
+                val progressIndex = nearestRouteSegmentEndIndex(loc, navRoute)
+                val upcoming = navTurnHints.filter { it.trackIndex >= progressIndex }.minByOrNull { it.trackIndex }
+                nextTurn = upcoming
+                nextTurnDistanceM = upcoming?.let { hint ->
+                    val results = FloatArray(1)
+                    android.location.Location.distanceBetween(
+                        loc.latitude, loc.longitude,
+                        hint.point.latitude, hint.point.longitude,
+                        results
+                    )
+                    results[0]
+                }
+            }
+            kotlinx.coroutines.delay(TURN_HUD_UPDATE_INTERVAL_MS)
         }
     }
 
@@ -525,6 +582,7 @@ fun MapScreen(
                     if (navRoute.isNotEmpty()) {
                         navRoute = emptyList()
                         navDestination = null
+                        navTurnHints = emptyList()
                         navDistanceKm = null
                         navError = null
                     } else {
@@ -629,6 +687,48 @@ fun MapScreen(
                     fontSize   = 14.sp,
                     modifier   = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
+            }
+        }
+
+        // Próximo giro: flecha + distancia (aprox., línea recta al punto del
+        // giro) calculados a partir de los VoiceHint de BRouter. Sin voz --
+        // ver PENDIENTES.md, fase 2.
+        nextTurn?.let { turn ->
+            val (symbol, label) = turnHintLabel(turn.command)
+            Surface(
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 124.dp),
+                color    = colors.background.copy(alpha = 0.85f),
+                shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                border   = BorderStroke(1.dp, colors.borderActive)
+            ) {
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    androidx.compose.material3.Text(
+                        text = symbol,
+                        color = colors.accent,
+                        fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                        fontSize = 22.sp
+                    )
+                    Column {
+                        androidx.compose.material3.Text(
+                            text = label,
+                            color = colors.textPrimary,
+                            fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                            fontSize = 13.sp
+                        )
+                        nextTurnDistanceM?.let { d ->
+                            androidx.compose.material3.Text(
+                                text = if (d >= 1000f) "en %.1f km".format(d / 1000f) else "en %d m".format(d.toInt()),
+                                color = colors.textSecondary,
+                                fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -842,6 +942,20 @@ private fun darkTacticalTileFilter(): android.graphics.ColorMatrixColorFilter {
     val desat = android.graphics.ColorMatrix().apply { setSaturation(0.35f) }
     invert.postConcat(desat)
     return android.graphics.ColorMatrixColorFilter(invert)
+}
+
+/** Símbolo + texto para un TurnHint.command (constantes de btools.router.VoiceHint). Glifos Unicode -- sin assets nuevos. */
+private fun turnHintLabel(command: Int): Pair<String, String> = when (command) {
+    VoiceHint.TL, VoiceHint.TSLL, VoiceHint.TSHL -> "◀" to "Girá a la izquierda"
+    VoiceHint.TR, VoiceHint.TSLR, VoiceHint.TSHR -> "▶" to "Girá a la derecha"
+    VoiceHint.TLU -> "↩" to "Retomá en sentido contrario"
+    VoiceHint.TRU, VoiceHint.TU -> "↪" to "Retomá en sentido contrario"
+    VoiceHint.KL -> "◤" to "Mantené la izquierda"
+    VoiceHint.KR -> "◥" to "Mantené la derecha"
+    VoiceHint.RNDB, VoiceHint.RNLB -> "⟳" to "Rotonda"
+    VoiceHint.EL -> "◀" to "Salí a la izquierda"
+    VoiceHint.ER -> "▶" to "Salí a la derecha"
+    else -> "▲" to "Seguí derecho"
 }
 
 /** Formatea la latitud para el HUD: "S 34.6037°". */

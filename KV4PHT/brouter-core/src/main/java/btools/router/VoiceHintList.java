@@ -18,7 +18,9 @@ public class VoiceHintList {
 
   private int transportMode = TRANS_MODE_BIKE;
   int turnInstructionMode;
-  List<VoiceHint> list = new ArrayList<>();
+  // public: ar.motorfar.app.nav.RouteEngine (otro paquete) lee esta lista
+  // para el cartel de "próximo giro" en el HUD.
+  public List<VoiceHint> list = new ArrayList<>();
 
   public void setTransportMode(boolean isCar, boolean isBike) {
     transportMode = isCar ? TRANS_MODE_CAR : (isBike ? TRANS_MODE_BIKE : TRANS_MODE_FOOT);

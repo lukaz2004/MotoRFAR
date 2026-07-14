@@ -5,12 +5,18 @@ import btools.router.OsmNodeNamed
 import btools.router.ProfileCache
 import btools.router.RoutingContext
 import btools.router.RoutingEngine
+import btools.router.VoiceHint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.osmdroid.util.GeoPoint
 import java.io.File
 
 class RouteCalculationException(message: String) : Exception(message)
+
+/** Un giro a señalizar en el HUD -- command usa las constantes de btools.router.VoiceHint (TL, TR, RNDB, etc). */
+data class TurnHint(val command: Int, val roundaboutExit: Int, val point: GeoPoint, val trackIndex: Int)
+
+data class RouteResult(val points: List<GeoPoint>, val turnHints: List<TurnHint>)
 
 /**
  * Wrapper sobre btools.router.RoutingEngine (BRouter vendorizado, ver
@@ -54,13 +60,19 @@ object RouteEngine {
         return node
     }
 
-    suspend fun calculateRoute(context: Context, from: GeoPoint, to: GeoPoint, tileDir: File): List<GeoPoint> =
+    suspend fun calculateRoute(context: Context, from: GeoPoint, to: GeoPoint, tileDir: File): RouteResult =
         withContext(Dispatchers.Default) {
             val profileDir = ensureProfileExtracted(context)
             val rc = RoutingContext()
             rc.localFunction = PROFILE_NAME
             System.setProperty("profileBaseDir", profileDir.absolutePath)
             ProfileCache.parseProfile(rc)
+            // 1=auto -- el perfil no define turnInstructionMode, así que parseProfile
+            // lo deja en 0 (default) y BRouter nunca registra los datos de giro
+            // alternativo que necesita processVoiceHints() para calcular comandos
+            // reales (queda con voiceHints.list vacío). Hay que pisarlo DESPUÉS de
+            // parseProfile, no antes -- parseProfile es quien lo resetea a 0.
+            rc.turnInstructionMode = 1
             try {
                 val waypoints = listOf(toOsmNode(from, "from"), toOsmNode(to, "to"))
                 val engine = RoutingEngine(null, null, tileDir, waypoints, rc)
@@ -74,9 +86,22 @@ object RouteEngine {
                 if (track == null || track.nodes.isEmpty()) {
                     throw RouteCalculationException("No se pudo calcular una ruta a este destino.")
                 }
-                track.nodes.map { node ->
+                val points = track.nodes.map { node ->
                     GeoPoint(node.getILat() / 1_000_000.0 - 90.0, node.getILon() / 1_000_000.0 - 180.0)
                 }
+                // END (llegada) y BL (beeline, tramo sin datos de ruteo) no son
+                // giros a señalizar en el HUD.
+                val turnHints = track.voiceHints?.list.orEmpty()
+                    .filter { it.cmd != VoiceHint.END && it.cmd != VoiceHint.BL }
+                    .map { hint ->
+                        TurnHint(
+                            command = hint.cmd,
+                            roundaboutExit = hint.getExitNumber(),
+                            point = GeoPoint(hint.ilat / 1_000_000.0 - 90.0, hint.ilon / 1_000_000.0 - 180.0),
+                            trackIndex = hint.indexInTrack
+                        )
+                    }
+                RouteResult(points, turnHints)
             } finally {
                 ProfileCache.releaseProfile(rc)
             }

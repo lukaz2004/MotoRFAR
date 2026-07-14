@@ -201,6 +201,12 @@ sin voz ni recálculo automático.
   junto a "IR A" que geocodifica con Nominatim (`GeocodingRepository.kt`,
   `countrycodes=ar` para no matchear un lugar homónimo en otro país) y dispara
   la misma ruta que tocar el mapa. Requiere internet en el momento de buscar.
+- ✅ **Señalización visual de giros (hecho y probado 2026-07-14)**: cartel en
+  el HUD con flecha + distancia ("◀ Girá a la izquierda, en 120 m") usando el
+  `VoiceHintList` que BRouter ya calculaba internamente (había que ampliar la
+  visibilidad de esos campos en el vendorizado -- eran package-private -- y
+  setear `rc.turnInstructionMode = 1` DESPUÉS de `parseProfile()`, porque el
+  perfil lo resetea a 0 si no se pisa después). Sin voz.
 - ⬜ **Fase 2, sin construir todavía:** voz (TextToSpeech) + el "ducking"
   cooperativo real con `RadioAudioService.java` -- **no es un agregado
   simple**: hoy ese archivo re-pide foco de audio exclusivo en cada paquete
