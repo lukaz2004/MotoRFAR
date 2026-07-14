@@ -224,7 +224,7 @@ fun MapScreen(
         isCalculatingRoute = true
         coroutineScope.launch {
             try {
-                val tileDir = File(context.filesDir, "brouter_tiles")
+                val tileDir = File(context.filesDir, RouteTileRepository.TILE_DIR_NAME)
                 RouteTileRepository.ensureTileDownloaded(origin.latitude, origin.longitude, tileDir)
                 val result = RouteEngine.calculateRoute(context, origin, dest, tileDir)
                 navRoute = result.points

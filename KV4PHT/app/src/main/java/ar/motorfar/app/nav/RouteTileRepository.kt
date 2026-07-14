@@ -18,6 +18,9 @@ class RouteTileException(message: String) : Exception(message)
 /** Descarga bajo demanda el tile .rd5 de BRouter (grilla de 5x5 grados) que cubre un punto. */
 object RouteTileRepository {
 
+    /** Compartido con CountryTileRepository -- mismo directorio para que la descarga masiva y la bajo-demanda se vean entre sí. */
+    const val TILE_DIR_NAME = "brouter_tiles"
+
     /** Mismo cálculo que btools.mapaccess.NodesCache.fileForSegment(), verificado contra la fuente vendorizada. */
     fun tileNameFor(lat: Double, lon: Double): String {
         val tileLon = (floor(lon / 5.0) * 5).toInt()

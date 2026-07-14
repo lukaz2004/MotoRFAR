@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
@@ -30,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,10 +41,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ar.motorfar.app.nav.CountryDownloadProgress
+import ar.motorfar.app.nav.CountryTileRepository
+import ar.motorfar.app.nav.RouteTileRepository
 import ar.motorfar.app.ui.compose.theme.EmergencyBorder
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARTheme
 import ar.motorfar.app.ui.compose.theme.ShareTechMono
+import kotlinx.coroutines.launch
+import java.io.File
 
 // Intervalo de baliza en modo manual (fallback). Con SmartBeaconing activo,
 // el intervalo se calcula dinámicamente según la velocidad.
@@ -69,6 +76,10 @@ fun AliasSettingScreen(
 ) {
     val colors = LocalMotoRFARColors.current
     var showClearRouteDialog by remember { mutableStateOf(false) }
+    var showTileDownloadConfirm by remember { mutableStateOf(false) }
+    var tileDownloadProgress by remember { mutableStateOf<CountryDownloadProgress?>(null) }
+    var tileDownloadJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    val downloadScope = rememberCoroutineScope()
 
     var aliasInput   by remember { mutableStateOf(currentAlias) }
     var smartBeacon  by remember { mutableStateOf(currentSmartBeacon) }
@@ -397,6 +408,32 @@ fun AliasSettingScreen(
 
         Spacer(Modifier.height(4.dp))
 
+        // ── Navegación offline (rutas de todo el país) ──────────────────
+        Text(
+            text     = "NAVEGACIÓN OFFLINE",
+            color    = colors.textPrimary,
+            fontFamily = ShareTechMono,
+            fontSize = 18.sp,
+            letterSpacing = 2.sp
+        )
+        Text(
+            text     = "Bajá los datos de ruteo (BRouter) de todo el país, para poder calcular una ruta en cualquier parte de Argentina sin señal. Puede pesar varios cientos de MB -- se recomienda hacerlo con WiFi.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 15.sp
+        )
+        OutlinedButton(
+            onClick  = { showTileDownloadConfirm = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive),
+            enabled  = tileDownloadProgress == null || tileDownloadProgress?.completed == tileDownloadProgress?.total
+        ) {
+            Text("DESCARGAR RUTAS DE TODO EL PAÍS →", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
+        }
+
+        Spacer(Modifier.height(4.dp))
+
         // ── Ruta guardada ─────────────────────────────────────────────
         Text(
             text     = "RUTA GUARDADA",
@@ -505,6 +542,58 @@ fun AliasSettingScreen(
                 androidx.compose.material3.TextButton(onClick = { showClearRouteDialog = false }) { Text("Cancelar") }
             }
         )
+    }
+
+    if (showTileDownloadConfirm) {
+        // context (línea ~257) está scopeado al Column de arriba -- acá afuera hace falta de nuevo.
+        val dialogContext = LocalContext.current
+        AlertDialog(
+            onDismissRequest = { showTileDownloadConfirm = false },
+            title = { Text("¿Descargar rutas de todo el país?") },
+            text  = { Text("Puede pesar varios cientos de MB y tardar varios minutos. Se recomienda hacerlo con WiFi. Se puede seguir usando la app mientras baja.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showTileDownloadConfirm = false
+                    val destDir = File(dialogContext.filesDir, RouteTileRepository.TILE_DIR_NAME)
+                    tileDownloadJob = downloadScope.launch {
+                        CountryTileRepository.downloadAll(destDir) { progress ->
+                            tileDownloadProgress = progress
+                        }
+                    }
+                }) { Text("Descargar") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showTileDownloadConfirm = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    tileDownloadProgress?.let { progress ->
+        if (progress.completed < progress.total) {
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text("Descargando rutas del país…") },
+                text = {
+                    Column {
+                        Text("${progress.completed} / ${progress.total} zonas" + (progress.currentTile?.let { " -- $it" } ?: ""))
+                        if (progress.failedTiles.isNotEmpty()) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "${progress.failedTiles.size} zona(s) sin datos de ruteo (esperable en zonas oceánicas).",
+                                color = colors.textSecondary,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        tileDownloadJob?.cancel()
+                        tileDownloadProgress = null
+                    }) { Text("Cancelar") }
+                }
+            )
+        }
     }
 }
 

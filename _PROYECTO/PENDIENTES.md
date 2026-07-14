@@ -224,8 +224,14 @@ sin voz ni recálculo automático.
   se recalcula sola desde donde estás al mismo destino. Chequeo cada 8s.
   Verificado por build + revisión de lógica; no se probó en campo con un
   desvío real (no hay forma práctica de simular GPS mock en este dispositivo).
-- ⬜ Descarga en background de tiles `.rd5` para todo el país (hoy solo baja
-  el tile bajo demanda de donde estás parado).
+- ✅ **Descarga de tiles para todo el país (hecho y probado 2026-07-14)**:
+  botón "DESCARGAR RUTAS DE TODO EL PAÍS" en Ajustes (`CountryTileRepository.kt`)
+  -- 40 celdas de 5°×5° cubriendo Argentina (bounding box rectangular con
+  margen, no el contorno real), descarga secuencial, cada celda fallida
+  (océano sin datos) se salta sin abortar el lote, cancelable a mitad de
+  camino. Probado en el Huawei P9 real por WiFi: bajó 7 tiles reales
+  (160 KB a 14 MB cada uno), saltó 1 celda oceánica sin datos, y Cancelar
+  cortó el lote correctamente.
 - ⬜ Los 4 puntos "abierto para pulir" del diseño original (tile inicial sin
   GPS fix, UI del cartel de advertencia, destino sobre miembro sin fix
   reciente) siguen abiertos, ninguno bloquea el MVP actual.
