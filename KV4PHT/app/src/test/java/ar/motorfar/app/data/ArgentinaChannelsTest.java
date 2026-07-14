@@ -31,9 +31,9 @@ public class ArgentinaChannelsTest {
     }
 
     @Test
-    public void firstChannel_isGrupo_139970() {
+    public void firstChannel_isPrincipal_139970() {
         ChannelMemory ch = ArgentinaChannels.getAll().get(0);
-        assertEquals("GRUPO", ch.name);
+        assertEquals("PRINCIPAL", ch.name);
         assertEquals("139.9700", ch.frequency);
     }
 
@@ -61,8 +61,8 @@ public class ArgentinaChannelsTest {
     }
 
     @Test
-    public void preloadVersion_isV6ChannelsTactical() {
+    public void preloadVersion_isV8ChannelsPrincipal() {
         // Bumping this value forces existing installs to re-seed channels.
-        assertEquals("v6_channels_tactical", ArgentinaChannels.PRELOADED_VALUE);
+        assertEquals("v8_channels_principal", ArgentinaChannels.PRELOADED_VALUE);
     }
 }

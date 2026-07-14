@@ -70,15 +70,21 @@
   no `-e esp32dev-release`. Si algún día se flashea firmware para uso
   real en campo (no solo pruebas de banco), usar `-e esp32dev-release`
   o actualizar el comando en `CLAUDE.md` antes de flashear.
-- ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
-  conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
-- ⬜ **Hallazgo nuevo (2026-07-14), preexistente, no introducido hoy:**
-  `./gradlew testDebugUnitTest` falla en compilación —
-  `ProtocolKissTest.java:882` tiene un `super(null)` ambiguo entre los dos
-  constructores de `Sender` (`Sender(SerialInputOutputManager)` vs
-  `Sender(FrameWriter)`, agregados en el PR de WiFi transport,
-  commit `185a757`). No bloquea `assembleDebug` (compila la app real bien),
-  solo el test suite. Requiere desambiguar el cast en esa línea del test.
+- ✅ **Cerrado (2026-07-14):** `./gradlew app:dependencies` corrido, árbol
+  revisado. Sin CVEs conocidos para las dependencias de nicho
+  (`esp32-flash-lib`, `minimal-json:0.9.5`, `slf4j-api:1.7.36`,
+  `concentus`) — búsqueda web sin resultados de vulnerabilidades. Compose/
+  AndroidX/Kotlin resuelven a versiones razonablemente actuales.
+- ✅ **Cerrado (2026-07-14):** `ProtocolKissTest.java:882` tenía un
+  `super(null)` ambiguo entre los dos constructores de `Sender`
+  (`Sender(SerialInputOutputManager)` vs `Sender(FrameWriter)`, agregados
+  en el PR de WiFi transport, commit `185a757`) — rompía la compilación de
+  `testDebugUnitTest` (no afectaba `assembleDebug`, solo el test suite).
+  Desambiguado con cast explícito. De paso aparecieron 3 tests que todavía
+  esperaban el nombre viejo "GRUPO"/versión vieja del seed en vez de
+  "PRINCIPAL" (el código de producción ya se había renombrado en una sesión
+  anterior, los tests nunca se actualizaron) — corregidos. `testDebugUnitTest`
+  ahora pasa 171/171.
 
 ## 🔧 Hardware disponible + objetivo explícito: cerrar FIRMWARE de una vez (2026-07-10)
 LuKaZ confirmó que hay un **ESP32 pelado** (sin módulo SA818/DRA818, sin

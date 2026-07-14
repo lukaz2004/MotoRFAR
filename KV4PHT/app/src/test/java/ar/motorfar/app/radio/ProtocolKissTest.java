@@ -879,7 +879,7 @@ public class ProtocolKissTest {
         private final List<Protocol.HostDesiredState> sentStates = new ArrayList<>();
 
         CapturingSender() {
-            super(null);
+            super((com.hoho.android.usbserial.util.SerialInputOutputManager) null);
         }
 
         @Override

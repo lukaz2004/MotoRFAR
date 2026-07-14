@@ -22,10 +22,10 @@ class ChannelSelectorTest {
     }
 
     @Test
-    fun selecting_grupo_updates_active_channel() {
+    fun selecting_principal_updates_active_channel() {
         val initial = MainUiState(activeFrequency = "138.5100", activeChannelName = "ALTERNATIVO")
         val updated = selectChannel(initial, "139.9700")
-        assertEquals("GRUPO", updated.activeChannelName)
+        assertEquals("PRINCIPAL", updated.activeChannelName)
         assertEquals("139.9700", updated.activeFrequency)
     }
 
