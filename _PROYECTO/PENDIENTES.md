@@ -232,6 +232,14 @@ sin voz ni recálculo automático.
   camino. Probado en el Huawei P9 real por WiFi: bajó 7 tiles reales
   (160 KB a 14 MB cada uno), saltó 1 celda oceánica sin datos, y Cancelar
   cortó el lote correctamente.
+- ✅ **Mapa sigue la posición (hecho y probado 2026-07-14)**: botón "MI GPS"
+  pasó a ser un toggle ("SIGUIENDO" cuando está activo) que usa el
+  follow-location nativo de OSMDroid (`MyLocationNewOverlay.enableFollowLocation()`)
+  -- se re-centra solo en cada fix de GPS, sin polling propio. No se
+  auto-desactiva si arrastrás el mapa (toggle explícito, más predecible que
+  tratar de distinguir un scroll manual de uno programático). Probado en el
+  Huawei P9 real: centra en la posición real al activarse, vuelve a "MI GPS"
+  sin romper nada al desactivarlo.
 - ⬜ Los 4 puntos "abierto para pulir" del diseño original (tile inicial sin
   GPS fix, UI del cartel de advertencia, destino sobre miembro sin fix
   reciente) siguen abiertos, ninguno bloquea el MVP actual.

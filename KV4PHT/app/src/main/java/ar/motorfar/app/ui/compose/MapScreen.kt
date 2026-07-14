@@ -177,6 +177,11 @@ fun MapScreen(
     var addressQuery by remember { mutableStateOf("") }
     var isSearchingAddress by remember { mutableStateOf(false) }
     var addressResults by remember { mutableStateOf<List<GeocodeResult>>(emptyList()) }
+    // Seguimiento continuo: usa el follow-location nativo de OSMDroid (re-centra
+    // solo en cada fix de GPS) en vez de un polling propio. Toggle explícito
+    // (no se auto-desactiva si arrastrás el mapa) -- más simple y predecible
+    // que tratar de distinguir un scroll del usuario de uno programático.
+    var followingLocation by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val turnAnnouncer = remember { TurnAnnouncer(context) }
     DisposableEffect(Unit) {
@@ -574,20 +579,25 @@ fun MapScreen(
                     mapView.invalidate()
                 }
             )
-            // Centrar en mi ubicación
+            // Centrar en mi ubicación / seguir la posición en vivo
             MapControlButton(
                 iconRes = R.drawable.ic_pin,
-                label   = "MI GPS",
+                label   = if (followingLocation) "SIGUIENDO" else "MI GPS",
                 colors  = colors,
                 accent  = true,
+                active  = followingLocation,
                 onClick = {
-                    val loc = myLocationOverlay.myLocation
-                    if (loc != null) {
-                        mapView.controller.animateTo(loc)
-                        mapView.controller.setZoom(17.0)
+                    followingLocation = !followingLocation
+                    if (followingLocation) {
+                        myLocationOverlay.enableFollowLocation()
+                        if (myLocationOverlay.myLocation == null) {
+                            mapView.controller.animateTo(OBELISCO)
+                            mapView.controller.setZoom(INITIAL_ZOOM)
+                        } else {
+                            mapView.controller.setZoom(17.0)
+                        }
                     } else {
-                        mapView.controller.animateTo(OBELISCO)
-                        mapView.controller.setZoom(INITIAL_ZOOM)
+                        myLocationOverlay.disableFollowLocation()
                     }
                 }
             )
