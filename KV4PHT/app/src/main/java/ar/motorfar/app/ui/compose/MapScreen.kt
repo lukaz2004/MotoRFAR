@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.motorfar.app.R
+import ar.motorfar.app.nav.GeocodeResult
 import ar.motorfar.app.nav.GeocodingException
 import ar.motorfar.app.nav.GeocodingRepository
 import ar.motorfar.app.nav.RouteCalculationException
@@ -107,6 +109,7 @@ fun MapScreen(
     var isCalculatingRoute by remember { mutableStateOf(false) }
     var addressQuery by remember { mutableStateOf("") }
     var isSearchingAddress by remember { mutableStateOf(false) }
+    var addressResults by remember { mutableStateOf<List<GeocodeResult>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
 
     val hasLocationPermission = locationGranted || remember {
@@ -175,23 +178,34 @@ fun MapScreen(
         }
     }
 
+    fun selectAddressResult(result: GeocodeResult) {
+        addressResults = emptyList()
+        val dest = GeoPoint(result.lat, result.lon)
+        pickingDestination = false
+        focusPoint = dest
+        mapView.controller.animateTo(dest)
+        mapView.controller.setZoom(16.0)
+        calculateRouteTo(dest)
+    }
+
     fun searchAddress() {
         val query = addressQuery.trim()
         if (query.isEmpty()) return
         navError = null
+        addressResults = emptyList()
         isSearchingAddress = true
         coroutineScope.launch {
             try {
-                val result = GeocodingRepository.search(query)
-                if (result == null) {
+                val near = myLocationOverlay.myLocation?.let { it.latitude to it.longitude }
+                val results = GeocodingRepository.search(query, near)
+                if (results.isEmpty()) {
                     navError = "No se encontró esa dirección."
                 } else {
-                    val dest = GeoPoint(result.lat, result.lon)
-                    pickingDestination = false
-                    focusPoint = dest
-                    mapView.controller.animateTo(dest)
-                    mapView.controller.setZoom(16.0)
-                    calculateRouteTo(dest)
+                    // Siempre confirma con una lista, incluso con 1 solo resultado --
+                    // "Belgrano" u otro nombre de calle común puede matchear un
+                    // lugar lejos del que se busca, y hay que ver la localidad/
+                    // provincia antes de calcular una ruta a ciegas.
+                    addressResults = results
                 }
             } catch (e: GeocodingException) {
                 navError = e.message
@@ -456,6 +470,7 @@ fun MapScreen(
                         navError = null
                     } else {
                         pickingDestination = !pickingDestination
+                        addressResults = emptyList()
                     }
                 }
             )
@@ -500,6 +515,34 @@ fun MapScreen(
                             fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
                             fontSize = 13.sp,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Candidatos del buscador: hay que confirmar cuál es antes de trazar
+        // una ruta -- un nombre de calle común ("Belgrano") matchea decenas de
+        // lugares distintos en el país, y elegir el primero a ciegas podría
+        // mandar a cientos de km del destino real.
+        if (addressResults.isNotEmpty()) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopStart).padding(top = 132.dp, start = 12.dp, end = 12.dp),
+                color    = colors.background.copy(alpha = 0.92f),
+                shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                border   = BorderStroke(1.dp, colors.accent)
+            ) {
+                Column {
+                    addressResults.forEach { result ->
+                        androidx.compose.material3.Text(
+                            text = result.displayName,
+                            color = colors.textPrimary,
+                            fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectAddressResult(result) }
+                                .padding(horizontal = 10.dp, vertical = 10.dp)
                         )
                     }
                 }
