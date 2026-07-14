@@ -37,6 +37,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.motorfar.app.R
+import ar.motorfar.app.nav.GeocodingException
+import ar.motorfar.app.nav.GeocodingRepository
 import ar.motorfar.app.nav.RouteCalculationException
 import ar.motorfar.app.nav.RouteEngine
 import ar.motorfar.app.nav.RouteTileException
@@ -103,6 +105,8 @@ fun MapScreen(
     var navDistanceKm by remember { mutableStateOf<Float?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
     var isCalculatingRoute by remember { mutableStateOf(false) }
+    var addressQuery by remember { mutableStateOf("") }
+    var isSearchingAddress by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val hasLocationPermission = locationGranted || remember {
@@ -167,6 +171,32 @@ fun MapScreen(
                 navRoute = emptyList()
             } finally {
                 isCalculatingRoute = false
+            }
+        }
+    }
+
+    fun searchAddress() {
+        val query = addressQuery.trim()
+        if (query.isEmpty()) return
+        navError = null
+        isSearchingAddress = true
+        coroutineScope.launch {
+            try {
+                val result = GeocodingRepository.search(query)
+                if (result == null) {
+                    navError = "No se encontró esa dirección."
+                } else {
+                    val dest = GeoPoint(result.lat, result.lon)
+                    pickingDestination = false
+                    focusPoint = dest
+                    mapView.controller.animateTo(dest)
+                    mapView.controller.setZoom(16.0)
+                    calculateRouteTo(dest)
+                }
+            } catch (e: GeocodingException) {
+                navError = e.message
+            } finally {
+                isSearchingAddress = false
             }
         }
     }
@@ -429,6 +459,51 @@ fun MapScreen(
                     }
                 }
             )
+        }
+
+        // Buscador de direcciones (Nominatim/OSM): alternativa a tocar el mapa
+        // para elegir destino -- requiere internet en el momento de buscar.
+        if (pickingDestination) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopStart).padding(top = 76.dp, start = 12.dp, end = 12.dp),
+                color    = colors.background.copy(alpha = 0.85f),
+                shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                border   = BorderStroke(1.dp, colors.borderSubtle)
+            ) {
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.padding(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    androidx.compose.material3.TextField(
+                        value = addressQuery,
+                        onValueChange = { addressQuery = it },
+                        placeholder = { androidx.compose.material3.Text("Dirección o lugar...", fontSize = 13.sp) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                        ),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onSearch = { searchAddress() }
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Surface(
+                        shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                        color    = colors.accent.copy(alpha = 0.18f),
+                        border   = BorderStroke(1.dp, colors.accent),
+                        modifier = Modifier.clickable(onClick = ::searchAddress)
+                    ) {
+                        androidx.compose.material3.Text(
+                            text = if (isSearchingAddress) "..." else "BUSCAR",
+                            color = colors.accent,
+                            fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
+                        )
+                    }
+                }
+            }
         }
 
         // Estado de la navegación calculada (distancia, calculando, o error)

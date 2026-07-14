@@ -197,6 +197,10 @@ Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`. **MVP construido y probado en
 el Huawei P9 real** (ver CIERRE 2026-07-14 (3) en `NEXT_SESSION.md`): calcula
 y dibuja una ruta real con BRouter vendorizado a un punto tocado en el mapa,
 sin voz ni recálculo automático.
+- ✅ **Buscador de direcciones (hecho y probado 2026-07-14)**: campo de texto
+  junto a "IR A" que geocodifica con Nominatim (`GeocodingRepository.kt`,
+  `countrycodes=ar` para no matchear un lugar homónimo en otro país) y dispara
+  la misma ruta que tocar el mapa. Requiere internet en el momento de buscar.
 - ⬜ **Fase 2, sin construir todavía:** voz (TextToSpeech) + el "ducking"
   cooperativo real con `RadioAudioService.java` -- **no es un agregado
   simple**: hoy ese archivo re-pide foco de audio exclusivo en cada paquete

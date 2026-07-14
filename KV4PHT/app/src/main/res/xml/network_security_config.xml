@@ -20,6 +20,8 @@
         <domain includeSubdomains="true">github.com</domain>
         <!-- brouter.de (tiles de ruteo, ver ar.motorfar.app.nav) tambien es Let's Encrypt. -->
         <domain includeSubdomains="true">brouter.de</domain>
+        <!-- nominatim.openstreetmap.org (buscador de direcciones) tambien es Let's Encrypt. -->
+        <domain includeSubdomains="true">nominatim.openstreetmap.org</domain>
         <trust-anchors>
             <certificates src="system" />
             <certificates src="@raw/isrg_root_x1" />
