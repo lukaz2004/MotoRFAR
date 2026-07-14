@@ -1,6 +1,16 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## ✅ CIERRE 2026-07-14 (2) — se saca "DESCARGAR MAPA DE ARGENTINA", pusheado
+Ese botón (OSMDroid/Mapnik, bulk-download de tiles) nunca podía funcionar:
+`FLAG_NO_BULK` es una bandera estática de política de OSM, no depende del
+área ni del zoom -- iba a fallar siempre, para cualquier tamaño. Se sacó el
+botón completo (`AliasSettingScreen.kt`, wiring en `MainActivity.kt`,
+`startTileDownload()`/diálogo de progreso en `MapScreen.kt`, se borró
+`OfflineTilesDialog.kt` que quedó sin uso). Mapsforge por provincia ya cubre
+la necesidad real. Ambos commits de la sesión de hoy (feature Mapsforge +
+fix TLS, y esta eliminación) están pusheados a `origin/main`.
+
 ## ✅ CIERRE 2026-07-14 — Mapas offline por provincia: probado y funcionando en el Huawei P9
 Tres causas independientes bloqueaban la pantalla nueva de mapas offline (cada
 una tapaba a la siguiente, se fueron pelando una por una con evidencia real
