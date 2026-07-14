@@ -161,10 +161,6 @@ class MainActivity : ComponentActivity() {
     // enteraría de ese segundo aviso.
     private val _showEmergencyReminder = MutableStateFlow(true)
 
-    // 2026-07-06: dispara la descarga de tiles offline del mapa desde el botón
-    // de Ajustes (antes era un ícono en el Mapa; se unificó en un solo lugar).
-    private val _triggerMapDownload = MutableStateFlow(false)
-
     private var pendingAlertType: AlertHelper.AlertType? = null
 
     // 2026-07-06: confirmacion real para STOP/REGROUP (un tap simple, sin hold,
@@ -692,7 +688,6 @@ class MainActivity : ComponentActivity() {
                                     mapLocationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                                 }
                             }
-                            val triggerDownload by _triggerMapDownload.collectAsState()
                             MapScreen(
                                 groupMembers    = groupMembers,
                                 routePoints     = routePoints,
@@ -705,8 +700,6 @@ class MainActivity : ComponentActivity() {
                                 isEmergency     = state.isEmergencyActive,
                                 onPttDown       = { handleAction(MainUiAction.PttPressed) },
                                 onPttUp         = { handleAction(MainUiAction.PttReleased) },
-                                triggerDownload = triggerDownload,
-                                onDownloadTriggerConsumed = { _triggerMapDownload.value = false },
                                 onSendWaypoint  = { handleAction(MainUiAction.SendWaypoint) }
                             )
                         }
@@ -742,12 +735,6 @@ class MainActivity : ComponentActivity() {
                                         RadioServiceAccessor.getAppDb(viewModel)
                                             .saveAppSetting(AppSetting.SETTING_MAN_DOWN, enabled.toString())
                                     }
-                                },
-                                onDownloadMaps           = {
-                                    // 2026-07-06: dispara la descarga real de tiles (antes
-                                    // era un placeholder "Próximamente" sin conectar a nada).
-                                    _triggerMapDownload.value = true
-                                    navController.navigate("map") { launchSingleTop = true }
                                 },
                                 onConfigureTones         = {
                                     navController.navigate("tones") { launchSingleTop = true }

@@ -59,7 +59,6 @@ fun AliasSettingScreen(
     onSave: (alias: String, beaconIntervalSec: Int, volume: Int) -> Unit = { _, _, _ -> },
     onToggleSmartBeacon: (Boolean) -> Unit = {},
     onToggleManDown: (Boolean) -> Unit = {},
-    onDownloadMaps: () -> Unit = {},
     onConfigureTones: () -> Unit = {},
     onConfigureWifi: () -> Unit = {},
     onConfigureOfflineMaps: () -> Unit = {},
@@ -380,26 +379,6 @@ fun AliasSettingScreen(
             fontSize = 18.sp,
             letterSpacing = 2.sp
         )
-        Text(
-            text     = "Descargá el mapa de Argentina para usar sin señal en ruta.",
-            color    = colors.textSecondary,
-            fontFamily = ShareTechMono,
-            fontSize = 15.sp
-        )
-        OutlinedButton(
-            onClick  = onDownloadMaps,
-            modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(4.dp),
-            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive),
-            colors   = ButtonDefaults.outlinedButtonColors(
-                contentColor = colors.accent
-            )
-        ) {
-            Text("DESCARGAR MAPA DE ARGENTINA", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
-        }
-
-        Spacer(Modifier.height(8.dp))
-
         Text(
             text     = "Mapa vectorial offline por provincia (más liviano, sin tiles).",
             color    = colors.textSecondary,
