@@ -19,3 +19,8 @@ dependencyResolutionManagement {
 rootProject.name = "KV4P HT"
 include ':app'
 include ':usbSerialForAndroid'
+include ':brouter-core'
+include ':brouter-mapaccess'
+include ':brouter-codec'
+include ':brouter-expressions'
+include ':brouter-util'

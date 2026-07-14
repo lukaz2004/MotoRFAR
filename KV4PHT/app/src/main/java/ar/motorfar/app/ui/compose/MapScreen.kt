@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,13 +37,20 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import ar.motorfar.app.R
+import ar.motorfar.app.nav.RouteCalculationException
+import ar.motorfar.app.nav.RouteEngine
+import ar.motorfar.app.nav.RouteTileException
+import ar.motorfar.app.nav.RouteTileRepository
 import ar.motorfar.app.ui.compose.state.GroupMember
 import ar.motorfar.app.ui.compose.theme.LocalMotoRFARColors
 import ar.motorfar.app.ui.compose.theme.MotoRFARColors
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -87,6 +95,16 @@ fun MapScreen(
     // Punto de foco: ubicación de una alerta a la que se "fue" desde el chat
     var focusPoint by remember { mutableStateOf<GeoPoint?>(null) }
 
+    // Navegación turn-by-turn (MVP): elegir destino tocando el mapa, calcular
+    // ruta real con BRouter (ar.motorfar.app.nav) y dibujarla. Sin voz ni
+    // recálculo automático -- ver _PROYECTO/NAV_TURN_BY_TURN_DISENO.md.
+    var pickingDestination by remember { mutableStateOf(false) }
+    var navRoute by remember { mutableStateOf<List<GeoPoint>>(emptyList()) }
+    var navDistanceKm by remember { mutableStateOf<Float?>(null) }
+    var navError by remember { mutableStateOf<String?>(null) }
+    var isCalculatingRoute by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
     val hasLocationPermission = locationGranted || remember {
         ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -117,7 +135,61 @@ fun MapScreen(
         }
     }
 
+    fun calculateRouteTo(dest: GeoPoint) {
+        val origin = myLocationOverlay.myLocation
+        if (origin == null) {
+            navError = "Sin fix GPS todavía -- esperá señal e intentá de nuevo."
+            return
+        }
+        navError = null
+        isCalculatingRoute = true
+        coroutineScope.launch {
+            try {
+                val tileDir = File(context.filesDir, "brouter_tiles")
+                RouteTileRepository.ensureTileDownloaded(origin.latitude, origin.longitude, tileDir)
+                navRoute = RouteEngine.calculateRoute(context, origin, dest, tileDir)
+                val results = FloatArray(1)
+                var totalM = 0f
+                for (i in 1 until navRoute.size) {
+                    android.location.Location.distanceBetween(
+                        navRoute[i - 1].latitude, navRoute[i - 1].longitude,
+                        navRoute[i].latitude, navRoute[i].longitude,
+                        results
+                    )
+                    totalM += results[0]
+                }
+                navDistanceKm = totalM / 1000f
+            } catch (e: RouteTileException) {
+                navError = e.message
+                navRoute = emptyList()
+            } catch (e: RouteCalculationException) {
+                navError = e.message
+                navRoute = emptyList()
+            } finally {
+                isCalculatingRoute = false
+            }
+        }
+    }
+
+    val mapEventsOverlay = remember {
+        MapEventsOverlay(object : MapEventsReceiver {
+            override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
+                if (pickingDestination) {
+                    pickingDestination = false
+                    focusPoint = p
+                    calculateRouteTo(p)
+                    return true
+                }
+                return false
+            }
+            override fun longPressHelper(p: GeoPoint): Boolean = false
+        })
+    }
+
     DisposableEffect(Unit) {
+        if (!mapView.overlays.contains(mapEventsOverlay)) {
+            mapView.overlays.add(0, mapEventsOverlay)
+        }
         mapView.onResume()
         onDispose {
             myLocationOverlay.disableMyLocation()
@@ -215,6 +287,15 @@ fun MapScreen(
                         setPoints(routePoints.map { GeoPoint(it.latitude, it.longitude) })
                     }
                     mv.overlays.add(line)
+                }
+                // Dibuja la ruta calculada por BRouter (turn-by-turn, MVP sin voz)
+                if (navRoute.size > 1) {
+                    val navLine = Polyline(mv).apply {
+                        outlinePaint.color = android.graphics.Color.MAGENTA
+                        outlinePaint.strokeWidth = 7f
+                        setPoints(navRoute)
+                    }
+                    mv.overlays.add(navLine)
                 }
 
                 // Refresca marcadores de miembros del grupo con etiqueta táctica
@@ -332,6 +413,44 @@ fun MapScreen(
                 colors  = colors,
                 onClick = onSendWaypoint
             )
+            // Navegación: tocar el mapa elige destino y calcula la ruta (BRouter, offline)
+            MapControlButton(
+                iconRes = R.drawable.ic_pin,
+                label   = if (pickingDestination) "TOCÁ EL MAPA" else "IR A",
+                colors  = colors,
+                active  = pickingDestination,
+                onClick = {
+                    if (navRoute.isNotEmpty()) {
+                        navRoute = emptyList()
+                        navDistanceKm = null
+                        navError = null
+                    } else {
+                        pickingDestination = !pickingDestination
+                    }
+                }
+            )
+        }
+
+        // Estado de la navegación calculada (distancia, calculando, o error)
+        if (isCalculatingRoute || navError != null || navDistanceKm != null) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+                color    = colors.background.copy(alpha = 0.85f),
+                shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                border   = BorderStroke(1.dp, if (navError != null) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.borderActive)
+            ) {
+                androidx.compose.material3.Text(
+                    text = when {
+                        isCalculatingRoute -> "Calculando ruta…"
+                        navError != null   -> navError!!
+                        else               -> "Ruta: %.1f km".format(navDistanceKm)
+                    },
+                    color      = if (navError != null) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.textPrimary,
+                    fontFamily = ar.motorfar.app.ui.compose.theme.ShareTechMono,
+                    fontSize   = 14.sp,
+                    modifier   = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
         }
 
         // PTT directo desde el mapa, solo en su esquina -- sin botones chicos al lado

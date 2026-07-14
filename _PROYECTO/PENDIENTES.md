@@ -192,18 +192,23 @@ segunda parte).
 - ⬜ Sub-proyecto 2 (ventana in-app que consume el manifest) — arrancable
   ahora que hay URLs reales, todavía sin construir.
 
-## 🧭 Navegación turn-by-turn propia — diseño aprobado (2026-07-05)
-Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`: motor **BRouter** (Java puro,
-GPL-3.0, sin pipeline OSM propio), datos de ruteo ~400-600MB para toda
-Argentina (verificado contra tamaños reales de BRouter/Geofabrik/OsmAnd),
-descarga en 2 etapas (tile local obligatorio al primer inicio + resto del país
-en background, nunca bloquea el radio/grupo), voz + flecha visual con ducking
-de audio sobre el radio VHF. Aprobado para pasar a plan de implementación, pero
-**el propio spec marca puntos a pulir antes de arrancar a codear** (ver sección
-"Abierto para pulir" del archivo): tile inicial sin GPS fix, UI del cartel de
-advertencia, integración fina del ducking, destino sobre miembro sin fix
-reciente. Sin código escrito todavía — feature grande (subsistema nuevo, no un
-ajuste chico).
+## 🧭 Navegación turn-by-turn — MVP hecho y probado (2026-07-14), fase 2 pendiente
+Diseño completo en `NAV_TURN_BY_TURN_DISENO.md`. **MVP construido y probado en
+el Huawei P9 real** (ver CIERRE 2026-07-14 (3) en `NEXT_SESSION.md`): calcula
+y dibuja una ruta real con BRouter vendorizado a un punto tocado en el mapa,
+sin voz ni recálculo automático.
+- ⬜ **Fase 2, sin construir todavía:** voz (TextToSpeech) + el "ducking"
+  cooperativo real con `RadioAudioService.java` -- **no es un agregado
+  simple**: hoy ese archivo re-pide foco de audio exclusivo en cada paquete
+  RX (`handleRxAudio()`) y no escucha pedidos de duck, así que hacerlo andar
+  requiere agregar un `OnAudioFocusChangeListener` y dejar de re-pedir GAIN
+  mientras está duckeado. Es cirugía real sobre código de radio ya delicado.
+- ⬜ Recálculo automático por desvío de ruta.
+- ⬜ Descarga en background de tiles `.rd5` para todo el país (hoy solo baja
+  el tile bajo demanda de donde estás parado).
+- ⬜ Los 4 puntos "abierto para pulir" del diseño original (tile inicial sin
+  GPS fix, UI del cartel de advertencia, destino sobre miembro sin fix
+  reciente) siguen abiertos, ninguno bloquea el MVP actual.
 
 ## ✅ Confirmado con código (no había que arreglar nada) — 2026-07-05
 - El PTT físico (botón del equipo o externo por jack) funciona con cualquier

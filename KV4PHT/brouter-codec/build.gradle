@@ -1,0 +1,13 @@
+// Vendorizado de https://github.com/abrensch/brouter (GPL-3.0). Ver LICENSE-BROUTER.
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+    api project(':brouter-util')
+}

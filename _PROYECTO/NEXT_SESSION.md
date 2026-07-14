@@ -1,6 +1,54 @@
 # BAQUEANO — Prompt de arranque de sesión
 > Copiá y pegá esto al inicio de cada chat. Claude lee este archivo + `05_VISION.md` y arranca.
 
+## 🧭 CIERRE 2026-07-14 (3) — Navegación turn-by-turn MVP, probada y funcionando
+Primera versión real de `_PROYECTO/NAV_TURN_BY_TURN_DISENO.md`: calcula y
+dibuja una ruta real (siguiendo calles, no línea recta) a un punto tocado en
+el mapa, usando **BRouter** de verdad. Sin voz, sin recálculo automático, sin
+descarga de todo el país en background -- ver el plan aprobado para el
+alcance completo y lo que quedó explícitamente para fase 2.
+
+**Cambios:**
+- `KV4PHT/brouter-core/`, `brouter-mapaccess/`, `brouter-codec/`,
+  `brouter-expressions/`, `brouter-util/` -- 5 módulos Java vendorizados de
+  `abrensch/brouter` (GPL-3.0, ver `LICENSE-BROUTER` en cada uno). No hay
+  artifact Maven Central/JitPack disponible (solo GitHub Packages, pide
+  auth) -- por eso se vendoriza el código en vez de agregar una dependencia.
+  Compilados a Java 11 (el resto de la app sigue en Java 8 -- son módulos
+  Gradle separados, no afecta el `sourceCompatibility` de `app`).
+- `ar.motorfar.app.nav.RouteTileRepository.kt` -- descarga bajo demanda el
+  tile `.rd5` (grilla BRouter de 5x5°) que cubre la posición actual, desde
+  `brouter.de/brouter/segments4/`.
+- `ar.motorfar.app.nav.RouteEngine.kt` -- wrapper de `btools.router.RoutingEngine`
+  (bloqueante, corre en `Dispatchers.Default`). Perfil "trekking" (genérico
+  moto/4x4/bici/a pie) bundleado como asset (`assets/brouter_profile/`),
+  extraído a `filesDir` la primera vez.
+- `MapScreen.kt`: botón "IR A" nuevo (toggle "elegir destino"), toque en el
+  mapa vía `MapEventsOverlay` de OSMDroid dispara el cálculo, dibuja la ruta
+  como una segunda `Polyline` (magenta) y muestra distancia/estado/error en
+  un cartel arriba del mapa. Todo autocontenido en este archivo -- no se
+  tocó `MainActivity.kt`/`MainUiAction` para esto (más simple que lo
+  planeado originalmente, mismo resultado).
+
+**Bug real encontrado y arreglado en el dispositivo:** `brouter.de` también
+usa Let's Encrypt -- mismo síntoma que GitHub esta mañana (`SSLHandshakeException`
+en el Huawei P9, Android 7.0). Agregado a `network_security_config.xml` en
+el mismo `domain-config` que ya tenía el cert ISRG Root X1. También se
+blindó `RouteTileRepository` contra excepciones de red no capturadas (antes
+crasheaba la app entera en vez de mostrar el cartel de error).
+
+**Probado en el Huawei P9 real:** tocar "IR A", tocar un punto del mapa a
+~500m, descarga el tile, calcula la ruta y la dibuja siguiendo las calles
+reales (confirmado visualmente, no línea recta), cartel muestra "Ruta: 0,5
+km". `RadioAudioService.java` no se tocó para nada.
+
+**Fuera de alcance a propósito (fase 2):** voz (TextToSpeech), el "ducking"
+cooperativo con `RadioAudioService.java` (investigado: hoy re-pide foco de
+audio exclusivo en cada paquete RX y no escucha pedidos de duck, así que
+esto es cirugía real, no un agregado simple), recálculo automático por
+desvío, descarga de tiles para todo el país en background. Los 4 puntos
+"abierto para pulir" del diseño original siguen abiertos.
+
 ## ✅ CIERRE 2026-07-14 (2) — se saca "DESCARGAR MAPA DE ARGENTINA", pusheado
 Ese botón (OSMDroid/Mapnik, bulk-download de tiles) nunca podía funcionar:
 `FLAG_NO_BULK` es una bandera estática de política de OSM, no depende del
