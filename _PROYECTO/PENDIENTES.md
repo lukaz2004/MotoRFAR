@@ -49,8 +49,19 @@
 - ✅ **Cerrado (2026-07-14):** `ic_launcher_moto.png` (5 densidades) renombrado
   a `ic_launcher_baqueano.png` vía `git mv` (conserva historial), referencias
   actualizadas en `ic_launcher_foreground.xml` y `MainScreen.kt`. Build verde.
-- ⬜ No existe pantalla de historial de rutas — solo se guarda/muestra la
-  última sesión por alias; "Borrar ruta guardada" borra todo, no por viaje.
+- ✅ **Cerrado (2026-07-14): pantalla de historial de rutas + exportar GPX.**
+  `RoutePointDao.getSessionSummaries()`/`deleteSession()` (nuevas queries,
+  agrupan por `sessionId`) + `RouteHistoryScreen.kt` (lista salidas
+  anteriores con fecha, cantidad de puntos y km recorridos; "VER" carga esa
+  sesión en el mapa, "BORRAR" borra solo esa salida -- ya no es todo o
+  nada). `GpxExporter.kt` genera GPX 1.1 y lo comparte por share intent vía
+  un `FileProvider` nuevo (`res/xml/file_paths.xml`, `cacheDir/gpx/`).
+  Acceso desde Ajustes → "HISTORIAL DE RUTAS →". Build verde, 171 tests
+  pasan. **Sin probar con datos reales todavía** -- no hay ninguna salida
+  guardada en el dispositivo de prueba (nadie activó "RUTA" con movimiento
+  real); el estado vacío se verificó en el Huawei P9, el flujo completo de
+  ver/exportar/borrar una sesión con datos reales queda para la primera
+  salida real grabada.
 - ⬜ Sin verificar en dispositivo físico: pantalla de tonos, scroll de
   Ajustes, UI de WiFi/SSID, retoques estéticos de pantalla principal, mapa.
 - ⬜ **Autenticación real del protocolo UDP (token/HMAC)**: hoy solo se mitigó
@@ -207,8 +218,8 @@ ajuste chico).
   forma de borrarlo desde la UI. Ahora: `RoutePoint.sessionId` agrupa por salida
   (migración Room 7→8), se carga solo la última sesión al abrir la app, y hay
   botón de borrar (con confirmación) en la barra superior.
-- ⬜ **Exportar a GPX / compartir el track**: no se hizo (más superficie — archivo
-  + share intent). Evaluar si hace falta antes de construirlo.
+- ✅ **Hecho (2026-07-14)**: exportar a GPX / compartir el track — ver
+  CIERRE de "pantalla de historial de rutas + exportar GPX" más arriba.
 - 💡 **Propuesta sin construir**: marcar POIs propios (ej. "buen lugar para
   acampar", "cruce peligroso") y compartirlos al grupo — reusaría la misma
   infraestructura del botón WAYPOINT existente (`MainUiAction.SendWaypoint`,

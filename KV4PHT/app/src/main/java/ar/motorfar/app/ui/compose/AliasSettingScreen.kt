@@ -62,6 +62,7 @@ fun AliasSettingScreen(
     onConfigureTones: () -> Unit = {},
     onConfigureWifi: () -> Unit = {},
     onConfigureOfflineMaps: () -> Unit = {},
+    onOpenRouteHistory: () -> Unit = {},
     onClearRoute: () -> Unit = {},
     onPrivacyPolicy: () -> Unit = {},
     onAbout: () -> Unit = {}
@@ -405,7 +406,24 @@ fun AliasSettingScreen(
             letterSpacing = 2.sp
         )
         Text(
-            text     = "Borra el recorrido de la última salida que quedó guardado en el mapa.",
+            text     = "Consultá salidas anteriores, exportá a GPX o borrá una en particular.",
+            color    = colors.textSecondary,
+            fontFamily = ShareTechMono,
+            fontSize = 15.sp
+        )
+        OutlinedButton(
+            onClick  = onOpenRouteHistory,
+            modifier = Modifier.fillMaxWidth(),
+            shape    = RoundedCornerShape(4.dp),
+            border   = androidx.compose.foundation.BorderStroke(1.dp, colors.borderActive)
+        ) {
+            Text("HISTORIAL DE RUTAS →", fontFamily = ShareTechMono, fontSize = 17.sp, letterSpacing = 1.sp)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text     = "O borrá TODO el historial de una (no se puede deshacer).",
             color    = colors.textSecondary,
             fontFamily = ShareTechMono,
             fontSize = 15.sp

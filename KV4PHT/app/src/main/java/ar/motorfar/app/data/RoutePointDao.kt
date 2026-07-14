@@ -4,6 +4,13 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 
+data class RouteSessionSummary(
+    val sessionId: Long,
+    val startedAt: Long,
+    val endedAt: Long,
+    val pointCount: Int
+)
+
 @Dao
 interface RoutePointDao {
     @Insert
@@ -14,6 +21,18 @@ interface RoutePointDao {
 
     @Query("SELECT * FROM route_points WHERE alias = :alias AND sessionId = :sessionId ORDER BY timestamp ASC")
     fun getPointsForSession(alias: String, sessionId: Long): List<RoutePoint>
+
+    @Query("""
+        SELECT sessionId, MIN(timestamp) AS startedAt, MAX(timestamp) AS endedAt, COUNT(*) AS pointCount
+        FROM route_points
+        WHERE alias = :alias
+        GROUP BY sessionId
+        ORDER BY sessionId DESC
+    """)
+    fun getSessionSummaries(alias: String): List<RouteSessionSummary>
+
+    @Query("DELETE FROM route_points WHERE alias = :alias AND sessionId = :sessionId")
+    fun deleteSession(alias: String, sessionId: Long)
 
     @Query("DELETE FROM route_points WHERE alias = :alias")
     fun deleteForAlias(alias: String)

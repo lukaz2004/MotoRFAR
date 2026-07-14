@@ -745,6 +745,9 @@ class MainActivity : ComponentActivity() {
                                 onConfigureOfflineMaps   = {
                                     navController.navigate("offline_maps") { launchSingleTop = true }
                                 },
+                                onOpenRouteHistory       = {
+                                    navController.navigate("route_history") { launchSingleTop = true }
+                                },
                                 onClearRoute             = { clearRoute() },
                                 onPrivacyPolicy          = {
                                     startActivity(android.content.Intent(this@MainActivity, PrivacyPolicyActivity::class.java))
@@ -793,6 +796,17 @@ class MainActivity : ComponentActivity() {
                         composable("offline_maps") {
                             ar.motorfar.app.ui.compose.OfflineVectorMapsScreen(
                                 onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable("route_history") {
+                            ar.motorfar.app.ui.compose.RouteHistoryScreen(
+                                alias = userAlias,
+                                onBack = { navController.popBackStack() },
+                                onViewSession = { sessionId, points ->
+                                    currentRouteSessionId = sessionId
+                                    _routePoints.value = points
+                                    navController.navigate("map") { launchSingleTop = true }
+                                }
                             )
                         }
                         composable("chat") {
