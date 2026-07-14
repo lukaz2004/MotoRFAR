@@ -113,13 +113,16 @@ resumen completo en `NEXT_SESSION.md` CIERRE 2026-07-10.
 - ⬜ **El problema de fondo sigue abierto a propósito**: nadie garantiza
   tener la radio en 140.970 en el momento de una EMERGENCIA real — no es
   un bug de código, es una limitación de hardware (SA818 escucha una sola
-  frecuencia a la vez) + de uso. Un modo "scan por defecto" es una feature
-  nueva de verdad (afecta timing de recepción — el burst de EMERGENCIA
-  dura ~3.5s, hay que ver si el ciclo de scan actual lo puede perder,
-  consumo de batería, calibración con equipo real) — necesita su propia
-  sesión de diseño, no meterse a codear a ciegas. Mitigado por ahora con
-  protocolo humano escrito en el propio cartel de alerta (parar, llamar
-  por los 3 canales, escalar a emergencias reales si no hay respuesta).
+  frecuencia a la vez) + de uso. Mitigado por ahora con protocolo humano
+  escrito en el propio cartel de alerta (parar, llamar por los 3 canales,
+  escalar a emergencias reales si no hay respuesta).
+  **Descartado explícitamente por LuKaZ (2026-07-14): "scan por defecto"
+  NO se construye.** Las frecuencias fijas son una decisión de diseño a
+  propósito, no un descuido — no se quiere la funcionalidad de escaneo
+  del fork original (kv4p HT). El `RadioMode.SCAN` que ya existe en
+  `RadioAudioService.java` es para recorrer canales/memorias guardadas a
+  mano (feature separada, ya andaba), no tiene relación con esta idea
+  descartada. No reabrir esto sin que LuKaZ lo pida explícitamente.
 
 ## 💡 Web/marketing — video explicando el protocolo de respuesta a EMERGENCIA (2026-07-10)
 Propuesta sin construir, dicha por LuKaZ: una vez que la funcionalidad de
