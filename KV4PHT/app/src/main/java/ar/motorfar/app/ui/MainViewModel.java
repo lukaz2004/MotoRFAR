@@ -41,8 +41,11 @@ public class MainViewModel extends AndroidViewModel {
     private final AppDatabase appDb;
 
     AtomicBoolean loaded = new AtomicBoolean(false);
-    // LiveData holding the list of ChannelMemory objects
-    private final MutableLiveData<List<ChannelMemory>> channelMemories = new MutableLiveData<>();
+    // LiveData reactiva de Room (InvalidationTracker) -- se re-emite sola en
+    // cada insert/update/delete de channel_memories, no es un snapshot único
+    // cacheado como antes (esa versión vieja se desincronizaba del canal real
+    // si la tabla cambiaba después del primer load).
+    private final LiveData<List<ChannelMemory>> channelMemories;
     // LiveData holding the list of APRSMessage objects
     private final MutableLiveData<List<APRSMessage>> aprsMessages = new MutableLiveData<>();
 
@@ -51,17 +54,17 @@ public class MainViewModel extends AndroidViewModel {
     public MainViewModel(@NotNull Application application) {
         super(application);
         appDb = AppDatabase.getInstance(application.getApplicationContext());
+        channelMemories = appDb.channelMemoryDao().observeAll();
     }
 
     private void loadData() {
         // 2026-07-07: AppDatabase.getInstance() dispara el seed de canales en SU
-        // PROPIO executor (fire-and-forget) -- sin esto, esta lectura corría en
-        // otro executor sin ninguna sincronización entre ambos, y si ganaba la
-        // carrera leía la tabla vacía y la cacheaba para siempre en el
-        // MutableLiveData (nunca se vuelve a leer). Llamar acá, sincrónico y
-        // ANTES de leer, garantiza el orden sin importar qué thread sea más rápido.
+        // PROPIO executor (fire-and-forget) -- llamarlo acá, sincrónico y ANTES
+        // de leer, garantiza que la tabla ya esté poblada la primera vez que se
+        // usa. Ya no hace falta ganarle una carrera a un postValue manual:
+        // channelMemories es reactiva (ver constructor) y se re-emite sola si
+        // el seed termina después del primer observe.
         AppDatabase.ensureArgentinaChannelsSeeded(getAppDb());
-        channelMemories.postValue(getAppDb().channelMemoryDao().getAll());
         aprsMessages.postValue(getAppDb().aprsMessageDao().getAll());
         loaded.set(true);
     }

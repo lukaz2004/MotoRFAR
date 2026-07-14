@@ -36,7 +36,7 @@ fun TermsScreen(
     ) {
         Spacer(Modifier.height(32.dp))
         Text(
-            text       = "MotoRFAR",
+            text       = "Baqueano",
             color      = colors.textPrimary,
             fontFamily = ShareTechMono,
             fontSize   = 28.sp,
@@ -57,10 +57,10 @@ fun TermsScreen(
         ) {
             TermsSection(
                 "1. Marco legal y uso del espectro",
-                "MotoRFAR opera bajo la Resolución 5/2015 del Ministerio de Transporte " +
+                "Baqueano opera bajo la Resolución 5/2015 del Ministerio de Transporte " +
                 "de la Nación Argentina, que habilita el uso de estas frecuencias VHF " +
                 "sin licencia individual para comunicaciones de grupos en tránsito:\n\n" +
-                "  139.970 MHz — GRUPO (prioritaria)\n" +
+                "  139.970 MHz — PRINCIPAL (prioritaria)\n" +
                 "  138.510 MHz — ALTERNATIVO (secundaria)\n" +
                 "  140.970 MHz — EMERGENCIA (uso exclusivo)\n\n" +
                 "Cualquier transmisión fuera de estas frecuencias es responsabilidad exclusiva del usuario."
@@ -86,7 +86,7 @@ fun TermsScreen(
             )
             TermsSection(
                 "5. Exención de responsabilidad",
-                "MotoRFAR se provee tal como está (as-is), sin garantías de funcionamiento, " +
+                "Baqueano se provee tal como está (as-is), sin garantías de funcionamiento, " +
                 "cobertura ni recepción. El usuario acepta usarla bajo su exclusiva responsabilidad."
             )
             TermsSection(

@@ -25,28 +25,30 @@
   se pudo reproducir ni verificar en el emulador (requiere el estado real
   del módulo de radio con equipo conectado) — pendiente confirmar que el
   aviso aparece en el dispositivo real cuando pasa.
-- ⬜ **Hallazgo nuevo, sin tocar:** la pantalla de onboarding (Términos +
-  Alias, primer inicio de la app) todavía dice "MotoRFAR" y "GRUPO" en vez
-  de "Baqueano"/"PRINCIPAL" — quedó afuera del rebrand y de los renames de
-  esta sesión porque son strings separados de las pantallas de Ajustes que
-  sí se corrigieron. Encontrado navegando el onboarding para probar el ícono.
+- ✅ **Cerrado (2026-07-14):** `TermsScreen.kt` (onboarding) decía "MotoRFAR"
+  (título + 2 menciones en el texto legal) y "139.970 MHz — GRUPO" en vez
+  de "PRINCIPAL" (inconsistente con `ArgentinaChannels.java`, que ya usa
+  "PRINCIPAL"). Corregido, build verde.
 - ⬜ Probar en dispositivo físico: botón "ESTOY BIEN · CANCELAR" de Man-Down
   tocado a mano, y alerta de otro integrante llegando con la app cerrada.
 - ✅ **`onTaskRemoved()` ya no mata el Service (2026-07-10)** — ver CIERRE
   2026-07-10 en `NEXT_SESSION.md` para el detalle completo.
-- ⬜ **Hallazgo real, no resuelto:** `MainViewModel.channelMemories` es un
-  snapshot cargado una sola vez (`loadData()`), no una LiveData reactiva de
-  Room — queda desincronizado del canal real que usa `ChannelRow` (que sí es
-  reactivo). `tuneToChannel()` (tocar un canal a mano) a veces muestra
-  "SIMPLEX" en vez del nombre real. No afecta el flujo automático de
-  Emergencia (usa un string literal), pero conviene unificarlo a la fuente
-  reactiva.
+- ✅ **Cerrado (2026-07-14): `channelMemories` ahora es reactiva de Room.**
+  `ChannelMemoryDao.observeAll()` (nuevo `@Query` que devuelve
+  `LiveData<List<ChannelMemory>>`) reemplaza el snapshot único que se
+  cacheaba en un `MutableLiveData` manual en `MainViewModel.loadData()`.
+  Ahora se re-emite sola en cada insert/update/delete de `channel_memories`
+  vía el InvalidationTracker de Room — ya no puede desincronizarse del
+  canal real. `highlightMemory()`/`isHighlighted()` no se tocaron (código
+  ya muerto, sin ningún caller real, confirmado por grep). Build verde,
+  sin verificar aún en dispositivo físico (mismo pendiente de siempre).
 - ⬜ Animaciones de emergencia (PTT rojo, ecualizador rojo, botón parpadeando)
   verificadas por el mecanismo (mismo estado derivado, probado tocando el
   canal Emergencia a mano) pero no por el flujo automático real de 2s hold
   con radio conectada — requiere equipo físico.
-- ⬜ Renombrar `ic_launcher_moto.png` — dice "moto" pero ya es el escudo
-  Baqueano (rebrand viejo, solo el nombre del archivo quedó desactualizado).
+- ✅ **Cerrado (2026-07-14):** `ic_launcher_moto.png` (5 densidades) renombrado
+  a `ic_launcher_baqueano.png` vía `git mv` (conserva historial), referencias
+  actualizadas en `ic_launcher_foreground.xml` y `MainScreen.kt`. Build verde.
 - ⬜ No existe pantalla de historial de rutas — solo se guarda/muestra la
   última sesión por alias; "Borrar ruta guardada" borra todo, no por viaje.
 - ⬜ Sin verificar en dispositivo físico: pantalla de tonos, scroll de
@@ -55,12 +57,28 @@
   con `max_connections=1` en el SoftAP (barato, cierra el caso más común).
   La autenticación de aplicación de verdad es un rediseño de protocolo, no
   un fix de una sesión — necesita su propia sesión de diseño.
-- ⬜ Confirmar en el dashboard de Netlify el `publish directory` real (para
-  validar que `_headers` quedó en la carpeta correcta).
-- ⬜ Confirmar que el build de release del firmware define `RELEASE` (evita
-  que quede un `while(true)` sin resetear WDT en el binario de producción).
+- ✅ **Confirmado (2026-07-14) sin necesitar el dashboard**: `curl -I` contra
+  `baqueano.netlify.app` devuelve los headers de `_headers` aplicados
+  (CSP, X-Frame-Options, HSTS, X-Content-Type-Options) — el publish
+  directory está bien configurado, Netlify no los pone por defecto.
+- ✅ **Confirmado (2026-07-14): el build de release SÍ define `RELEASE`.**
+  `platformio.ini:42` (`env:esp32dev-release`) tiene `-DRELEASE=1`. El
+  `while(true)` sin resetear WDT vive en `debug.h:161-167`
+  (`_esp_error_check_failed`) adentro de `#ifndef RELEASE` -- no se
+  compila en release. **Pero ojo:** el comando de build documentado en
+  `CLAUDE.md` usa `-e esp32dev` (el entorno DEBUG, con el hang activo),
+  no `-e esp32dev-release`. Si algún día se flashea firmware para uso
+  real en campo (no solo pruebas de banco), usar `-e esp32dev-release`
+  o actualizar el comando en `CLAUDE.md` antes de flashear.
 - ⬜ Correr `./gradlew app:dependencies` + CVE scanning cuando haya
   conectividad (dependencias de nicho: `esp32-flash-lib`, `concentus`).
+- ⬜ **Hallazgo nuevo (2026-07-14), preexistente, no introducido hoy:**
+  `./gradlew testDebugUnitTest` falla en compilación —
+  `ProtocolKissTest.java:882` tiene un `super(null)` ambiguo entre los dos
+  constructores de `Sender` (`Sender(SerialInputOutputManager)` vs
+  `Sender(FrameWriter)`, agregados en el PR de WiFi transport,
+  commit `185a757`). No bloquea `assembleDebug` (compila la app real bien),
+  solo el test suite. Requiere desambiguar el cast en esa línea del test.
 
 ## 🔧 Hardware disponible + objetivo explícito: cerrar FIRMWARE de una vez (2026-07-10)
 LuKaZ confirmó que hay un **ESP32 pelado** (sin módulo SA818/DRA818, sin

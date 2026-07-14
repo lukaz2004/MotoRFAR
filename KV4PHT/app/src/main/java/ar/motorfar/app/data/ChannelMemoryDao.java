@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package ar.motorfar.app.data;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -30,6 +31,11 @@ import java.util.List;
 public interface ChannelMemoryDao {
     @Query("SELECT * FROM channel_memories")
     List<ChannelMemory> getAll();
+
+    // Reactiva vía InvalidationTracker de Room: se re-emite sola en cada
+    // insert/update/delete de esta tabla, sin necesidad de un postValue manual.
+    @Query("SELECT * FROM channel_memories")
+    LiveData<List<ChannelMemory>> observeAll();
 
     @Query("SELECT DISTINCT `group` FROM channel_memories ")
     List<String> getGroups();
