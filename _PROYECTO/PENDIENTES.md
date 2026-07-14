@@ -207,7 +207,12 @@ sin voz ni recálculo automático.
   RX (`handleRxAudio()`) y no escucha pedidos de duck, así que hacerlo andar
   requiere agregar un `OnAudioFocusChangeListener` y dejar de re-pedir GAIN
   mientras está duckeado. Es cirugía real sobre código de radio ya delicado.
-- ⬜ Recálculo automático por desvío de ruta.
+- ✅ **Recálculo automático por desvío de ruta (hecho 2026-07-14)**: si te
+  alejás de la ruta trazada más de 70m (point-to-segment, no solo al vértice
+  más cercano -- evita falsos positivos en tramos rurales largos y rectos),
+  se recalcula sola desde donde estás al mismo destino. Chequeo cada 8s.
+  Verificado por build + revisión de lógica; no se probó en campo con un
+  desvío real (no hay forma práctica de simular GPS mock en este dispositivo).
 - ⬜ Descarga en background de tiles `.rd5` para todo el país (hoy solo baja
   el tile bajo demanda de donde estás parado).
 - ⬜ Los 4 puntos "abierto para pulir" del diseño original (tile inicial sin

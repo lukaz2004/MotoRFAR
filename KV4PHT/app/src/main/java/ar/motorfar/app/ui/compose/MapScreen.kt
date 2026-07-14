@@ -65,6 +65,44 @@ import java.io.File
 private val OBELISCO = GeoPoint(-34.6037, -58.3816)
 private const val INITIAL_ZOOM = 15.0
 
+// Recálculo automático por desvío de ruta: umbral de distancia y frecuencia
+// de chequeo. 70m da margen a la imprecisión típica de GPS de celular sin
+// disparar falsos positivos por quedarte del lado equivocado de la calle.
+private const val OFF_ROUTE_THRESHOLD_METERS = 70f
+private const val REROUTE_CHECK_INTERVAL_MS = 8000L
+
+/**
+ * Distancia mínima (metros) de un punto a la polilínea de la ruta -- se usa
+ * para detectar desvío. Point-to-segment (no solo al vértice más cercano)
+ * porque BRouter puede devolver tramos rectos largos y espaciados en rutas
+ * rurales, donde medir solo contra vértices daría falsos positivos.
+ */
+private fun distanceToRouteMeters(point: GeoPoint, route: List<GeoPoint>): Float {
+    var minDist = Float.MAX_VALUE
+    for (i in 1 until route.size) {
+        val d = distanceToSegmentMeters(point, route[i - 1], route[i])
+        if (d < minDist) minDist = d
+    }
+    return minDist
+}
+
+/** Proyección plana local (equirectangular) -- suficiente para segmentos cortos de ruta. */
+private fun distanceToSegmentMeters(p: GeoPoint, a: GeoPoint, b: GeoPoint): Float {
+    val metersPerDegLat = 111_320.0
+    val metersPerDegLon = 111_320.0 * kotlin.math.cos(Math.toRadians(a.latitude))
+    val bx = (b.longitude - a.longitude) * metersPerDegLon
+    val by = (b.latitude - a.latitude) * metersPerDegLat
+    val px = (p.longitude - a.longitude) * metersPerDegLon
+    val py = (p.latitude - a.latitude) * metersPerDegLat
+    val lenSq = bx * bx + by * by
+    val t = if (lenSq == 0.0) 0.0 else (((px * bx + py * by) / lenSq).coerceIn(0.0, 1.0))
+    val cx = t * bx
+    val cy = t * by
+    val dx = px - cx
+    val dy = py - cy
+    return kotlin.math.sqrt(dx * dx + dy * dy).toFloat()
+}
+
 @Composable
 fun MapScreen(
     groupMembers: List<GroupMember>,
@@ -104,6 +142,7 @@ fun MapScreen(
     // recálculo automático -- ver _PROYECTO/NAV_TURN_BY_TURN_DISENO.md.
     var pickingDestination by remember { mutableStateOf(false) }
     var navRoute by remember { mutableStateOf<List<GeoPoint>>(emptyList()) }
+    var navDestination by remember { mutableStateOf<GeoPoint?>(null) }
     var navDistanceKm by remember { mutableStateOf<Float?>(null) }
     var navError by remember { mutableStateOf<String?>(null) }
     var isCalculatingRoute by remember { mutableStateOf(false) }
@@ -148,6 +187,7 @@ fun MapScreen(
             navError = "Sin fix GPS todavía -- esperá señal e intentá de nuevo."
             return
         }
+        navDestination = dest
         navError = null
         isCalculatingRoute = true
         coroutineScope.launch {
@@ -238,6 +278,24 @@ fun MapScreen(
         onDispose {
             myLocationOverlay.disableMyLocation()
             mapView.onPause()
+        }
+    }
+
+    // Recálculo automático por desvío: si te alejás de la ruta trazada más de
+    // OFF_ROUTE_THRESHOLD_METERS, se vuelve a calcular desde donde estás ahora
+    // al mismo destino. Se relanza solo cuando navRoute cambia (nueva ruta
+    // calculada), así el chequeo sigue corriendo con la ruta nueva.
+    androidx.compose.runtime.LaunchedEffect(navRoute, navDestination) {
+        val dest = navDestination ?: return@LaunchedEffect
+        if (navRoute.size < 2) return@LaunchedEffect
+        while (true) {
+            kotlinx.coroutines.delay(REROUTE_CHECK_INTERVAL_MS)
+            if (isCalculatingRoute) continue
+            val loc = myLocationOverlay.myLocation ?: continue
+            if (distanceToRouteMeters(loc, navRoute) > OFF_ROUTE_THRESHOLD_METERS) {
+                calculateRouteTo(dest)
+                return@LaunchedEffect
+            }
         }
     }
 
@@ -466,6 +524,7 @@ fun MapScreen(
                 onClick = {
                     if (navRoute.isNotEmpty()) {
                         navRoute = emptyList()
+                        navDestination = null
                         navDistanceKm = null
                         navError = null
                     } else {
@@ -549,10 +608,12 @@ fun MapScreen(
             }
         }
 
-        // Estado de la navegación calculada (distancia, calculando, o error)
+        // Estado de la navegación calculada (distancia, calculando, o error).
+        // 2026-07-14: bajado de top=12.dp a 76.dp -- se solapaba con los
+        // botones MI GPS/WAYPOINT de la fila de arriba.
         if (isCalculatingRoute || navError != null || navDistanceKm != null) {
             Surface(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 76.dp),
                 color    = colors.background.copy(alpha = 0.85f),
                 shape    = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
                 border   = BorderStroke(1.dp, if (navError != null) ar.motorfar.app.ui.compose.theme.EmergencyBorder else colors.borderActive)
