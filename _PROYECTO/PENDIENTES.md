@@ -207,12 +207,17 @@ sin voz ni recálculo automático.
   visibilidad de esos campos en el vendorizado -- eran package-private -- y
   setear `rc.turnInstructionMode = 1` DESPUÉS de `parseProfile()`, porque el
   perfil lo resetea a 0 si no se pisa después). Sin voz.
-- ⬜ **Fase 2, sin construir todavía:** voz (TextToSpeech) + el "ducking"
-  cooperativo real con `RadioAudioService.java` -- **no es un agregado
-  simple**: hoy ese archivo re-pide foco de audio exclusivo en cada paquete
-  RX (`handleRxAudio()`) y no escucha pedidos de duck, así que hacerlo andar
-  requiere agregar un `OnAudioFocusChangeListener` y dejar de re-pedir GAIN
-  mientras está duckeado. Es cirugía real sobre código de radio ya delicado.
+- ✅ **Voz + ducking (hecho 2026-07-14)**: `TurnAnnouncer.kt` (TTS nativo,
+  offline, es-AR con fallback a es genérico) anuncia el próximo giro una vez
+  cuando entra a 200m, pidiendo foco `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`.
+  `RadioAudioService.java` ahora tiene `onRxAudioFocusChange()`: se agacha de
+  volumen (25%) en vez de competir, y `handleRxAudio()` dejó de re-pedir
+  `AUDIOFOCUS_GAIN` en cada paquete RX (antes le arrebataba el foco de vuelta
+  a mitad de frase). Verificado: build limpio, la app no crashea, el motor
+  TTS se conecta de verdad al servicio de Google TTS (`dumpsys activity
+  processes`), y la radio sigue andando. **No verificado con oído real** --
+  ni el audio hablado ni el ducking en vivo con tráfico de radio real; eso
+  necesita prueba manual con el equipo.
 - ✅ **Recálculo automático por desvío de ruta (hecho 2026-07-14)**: si te
   alejás de la ruta trazada más de 70m (point-to-segment, no solo al vértice
   más cercano -- evita falsos positivos en tramos rurales largos y rectos),

@@ -45,6 +45,7 @@ import ar.motorfar.app.nav.RouteCalculationException
 import ar.motorfar.app.nav.RouteEngine
 import ar.motorfar.app.nav.RouteTileException
 import ar.motorfar.app.nav.RouteTileRepository
+import ar.motorfar.app.nav.TurnAnnouncer
 import ar.motorfar.app.nav.TurnHint
 import btools.router.VoiceHint
 import ar.motorfar.app.ui.compose.state.GroupMember
@@ -76,6 +77,10 @@ private const val REROUTE_CHECK_INTERVAL_MS = 8000L
 // Cartel de "próximo giro": frecuencia de actualización. Más seguido que el
 // chequeo de desvío porque acá sí importa que la distancia se vea fluida.
 private const val TURN_HUD_UPDATE_INTERVAL_MS = 3000L
+
+// Voz: distancia a la que se anuncia un giro por primera vez. Una sola vez
+// por giro (de-dup por trackIndex) -- no en cada tick de 3s.
+private const val ANNOUNCE_DISTANCE_METERS = 200f
 
 /**
  * Distancia mínima (metros) de un punto a la polilínea de la ruta -- se usa
@@ -173,6 +178,10 @@ fun MapScreen(
     var isSearchingAddress by remember { mutableStateOf(false) }
     var addressResults by remember { mutableStateOf<List<GeocodeResult>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
+    val turnAnnouncer = remember { TurnAnnouncer(context) }
+    DisposableEffect(Unit) {
+        onDispose { turnAnnouncer.shutdown() }
+    }
 
     val hasLocationPermission = locationGranted || remember {
         ContextCompat.checkSelfPermission(
@@ -336,13 +345,16 @@ fun MapScreen(
             nextTurnDistanceM = null
             return@LaunchedEffect
         }
+        // Local, no remember: se resetea solo cuando el efecto se relanza
+        // (ruta nueva), que es justo cuando queremos volver a poder anunciar.
+        var lastAnnouncedTrackIndex = -1
         while (true) {
             val loc = myLocationOverlay.myLocation
             if (loc != null) {
                 val progressIndex = nearestRouteSegmentEndIndex(loc, navRoute)
                 val upcoming = navTurnHints.filter { it.trackIndex >= progressIndex }.minByOrNull { it.trackIndex }
                 nextTurn = upcoming
-                nextTurnDistanceM = upcoming?.let { hint ->
+                val distance = upcoming?.let { hint ->
                     val results = FloatArray(1)
                     android.location.Location.distanceBetween(
                         loc.latitude, loc.longitude,
@@ -350,6 +362,20 @@ fun MapScreen(
                         results
                     )
                     results[0]
+                }
+                nextTurnDistanceM = distance
+                if (upcoming != null && distance != null &&
+                    distance <= ANNOUNCE_DISTANCE_METERS &&
+                    upcoming.trackIndex != lastAnnouncedTrackIndex
+                ) {
+                    lastAnnouncedTrackIndex = upcoming.trackIndex
+                    val label = turnHintLabel(upcoming.command).second
+                    val distancePhrase = if (distance >= 1000f) {
+                        "en %.1f kilómetros".format(distance / 1000f)
+                    } else {
+                        "en %d metros".format(distance.toInt())
+                    }
+                    turnAnnouncer.speak("$distancePhrase, $label")
                 }
             }
             kotlinx.coroutines.delay(TURN_HUD_UPDATE_INTERVAL_MS)

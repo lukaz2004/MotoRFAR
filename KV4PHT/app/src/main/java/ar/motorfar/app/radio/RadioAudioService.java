@@ -191,6 +191,18 @@ public class RadioAudioService extends Service {
     private AudioTrack audioTrack;
     private float audioTrackVolume = 0.0f;
     private AudioFocusRequest audioFocusRequest;
+    // 2026-07-14: sin esto, handleRxAudio() volvía a pedir AUDIOFOCUS_GAIN
+    // (foco exclusivo) en CADA paquete RX -- eso le arrebataba el foco de
+    // vuelta a mitad de frase a cualquier app que pidiera un duck transitorio
+    // (p.ej. la voz de navegación). Ahora solo se re-pide si de verdad se
+    // perdió. Volatile: el audio corre en otro hilo que el callback de foco.
+    private volatile boolean hasAudioFocus = false;
+    // 1.0 = volumen normal, más bajo = agachado por un duck transitorio de
+    // otra app. No confundir con el "cap" de 0.7f de ensureAudioPlaying, que
+    // es la lógica de rampa/squelch existente -- esto es un multiplicador
+    // aparte sobre el resultado final.
+    private volatile float duckFactor = 1.0f;
+    private static final float RX_AUDIO_DUCK_FACTOR = 0.25f;
     private final OpusUtils.OpusDecoderWrapper opusDecoder =
         new OpusUtils.OpusDecoderWrapper(AUDIO_SAMPLE_RATE, OPUS_FRAME_SIZE);
     private final OpusUtils.OpusEncoderWrapper opusEncoder =
@@ -1123,8 +1135,11 @@ public class RadioAudioService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             audioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(audioAttributes)
+                .setOnAudioFocusChangeListener(this::onRxAudioFocusChange, handler)
                 .build();
         }
+        hasAudioFocus = false;
+        duckFactor = 1.0f;
         AudioTrack.Builder audioTrackBuilder = new AudioTrack.Builder()
             .setAudioAttributes(audioAttributes)
             .setAudioFormat(new AudioFormat.Builder()
@@ -1960,11 +1975,42 @@ public class RadioAudioService extends Service {
             // audioFocusRequest queda null pre-O (ver initAudioTrack) -- esto se
             // llama en CADA paquete RX, así que sin guard crasheaba la app apenas
             // entraba tráfico de radio en Android < 8 (minSdk bajado a 24).
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 2026-07-14: solo se pide si NO se tiene ya el foco -- re-pedirlo
+            // en cada paquete le arrebataba el foco a un duck transitorio
+            // ajeno (ver onRxAudioFocusChange).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !hasAudioFocus) {
                 AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-                audioManager.requestAudioFocus(audioFocusRequest);
+                int result = audioManager.requestAudioFocus(audioFocusRequest);
+                hasAudioFocus = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
             }
             ensureAudioPlaying();
+        }
+    }
+
+    /**
+     * Reacciona a cambios de foco de audio pedidos por OTRA app (p.ej. el
+     * TextToSpeech de navegación pidiendo un duck transitorio). En vez de
+     * competir por el foco, la radio se agacha de volumen y lo recupera solo
+     * cuando el foco vuelve. No confundir con requestManDownAudioFocus/
+     * releaseManDownAudioFocus, que son el pedido de la radio para SU propio
+     * uso (alarma de Man-Down), no una reacción a un pedido externo.
+     */
+    private void onRxAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                duckFactor = RX_AUDIO_DUCK_FACTOR;
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN:
+                duckFactor = 1.0f;
+                hasAudioFocus = true;
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS:
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                duckFactor = 1.0f;
+                hasAudioFocus = false;
+                break;
+            default:
+                break;
         }
     }
 
@@ -1991,7 +2037,7 @@ public class RadioAudioService extends Service {
         float alpha = 0.05f;
         audioTrackVolume = alpha + (1.0f - alpha) * audioTrackVolume;
         if (audioTrackVolume > 0.7f) {
-            audioTrack.setVolume(audioTrackVolume);
+            audioTrack.setVolume(audioTrackVolume * duckFactor);
         }
         else {
             audioTrack.setVolume(0.0f);
